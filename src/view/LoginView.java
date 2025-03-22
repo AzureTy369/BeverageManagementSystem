@@ -17,8 +17,8 @@ public class LoginView extends JFrame {
     // Colors
     private Color primaryColor = new Color(0, 120, 212);
     private Color lightColor = new Color(248, 249, 250);
-    private Color darkColor = new Color(40, 44, 52);
     private Color accentColor = new Color(16, 163, 127);
+    private Color textColor = Color.BLACK;
 
     private EmployeeController employeeController;
 
@@ -46,7 +46,7 @@ public class LoginView extends JFrame {
 
         JLabel lblAppName = new JLabel("BEVERAGE MANAGEMENT SYSTEM");
         lblAppName.setFont(new Font("Arial", Font.BOLD, 18));
-        lblAppName.setForeground(Color.WHITE);
+        lblAppName.setForeground(Color.BLACK);
         headerPanel.add(lblAppName, BorderLayout.CENTER);
 
         mainPanel.add(headerPanel, BorderLayout.NORTH);
@@ -62,7 +62,7 @@ public class LoginView extends JFrame {
 
         JLabel lblTitle = new JLabel("Đăng Nhập Hệ Thống");
         lblTitle.setFont(new Font("Arial", Font.BOLD, 16));
-        lblTitle.setForeground(darkColor);
+        lblTitle.setForeground(textColor);
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.gridwidth = 2;
@@ -71,6 +71,7 @@ public class LoginView extends JFrame {
 
         JLabel lblUsername = new JLabel("Tên đăng nhập:");
         lblUsername.setFont(new Font("Arial", Font.PLAIN, 14));
+        lblUsername.setForeground(textColor);
         gbc.gridx = 0;
         gbc.gridy = 1;
         gbc.gridwidth = 1;
@@ -80,6 +81,7 @@ public class LoginView extends JFrame {
 
         txtUsername = new JTextField(20);
         txtUsername.setFont(new Font("Arial", Font.PLAIN, 14));
+        txtUsername.setForeground(textColor);
         gbc.gridx = 0;
         gbc.gridy = 2;
         gbc.insets = new Insets(0, 5, 8, 5);
@@ -87,12 +89,14 @@ public class LoginView extends JFrame {
 
         JLabel lblPassword = new JLabel("Mật khẩu:");
         lblPassword.setFont(new Font("Arial", Font.PLAIN, 14));
+        lblPassword.setForeground(textColor);
         gbc.gridx = 0;
         gbc.gridy = 3;
         loginPanel.add(lblPassword, gbc);
 
         txtPassword = new JPasswordField(20);
         txtPassword.setFont(new Font("Arial", Font.PLAIN, 14));
+        txtPassword.setForeground(textColor);
         gbc.gridx = 0;
         gbc.gridy = 4;
         loginPanel.add(txtPassword, gbc);

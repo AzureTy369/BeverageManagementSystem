@@ -78,7 +78,60 @@ public class DBConnection {
             stmt.executeUpdate("CREATE TABLE IF NOT EXISTS NhaCungCap (" +
                     "MaNhaCungCap VARCHAR(10) PRIMARY KEY," +
                     "TenNhaCungCap NVARCHAR(100) NOT NULL," +
-                    "SoDienThoai VARCHAR(15) NOT NULL" +
+                    "SoDienThoai VARCHAR(15) NOT NULL," +
+                    "DiaChi NVARCHAR(255)," +
+                    "Email NVARCHAR(100)" +
+                    ")");
+
+            // LoaiSanPham (ProductCategory) table
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS LoaiSanPham (" +
+                    "MaLoaiSP VARCHAR(10) PRIMARY KEY," +
+                    "TenLoaiSP NVARCHAR(100) NOT NULL," +
+                    "MoTa NVARCHAR(255)" +
+                    ")");
+
+            // SanPham (Product) table
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS SanPham (" +
+                    "MaSanPham VARCHAR(10) PRIMARY KEY," +
+                    "TenSanPham NVARCHAR(100) NOT NULL," +
+                    "MaLoaiSP VARCHAR(10) NOT NULL," +
+                    "MoTa NVARCHAR(255)," +
+                    "HinhAnh VARCHAR(255)," +
+                    "GiaBan DECIMAL(10, 2) NOT NULL," +
+                    "FOREIGN KEY (MaLoaiSP) REFERENCES LoaiSanPham(MaLoaiSP)" +
+                    ")");
+
+            // ChiTietSanPham (ProductDetail) table
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS ChiTietSanPham (" +
+                    "MaChiTiet VARCHAR(10) PRIMARY KEY," +
+                    "MaSanPham VARCHAR(10) NOT NULL," +
+                    "SoLuong INT NOT NULL," +
+                    "NgayNhap DATE NOT NULL," +
+                    "HanSuDung DATE," +
+                    "SoLo VARCHAR(50)," +
+                    "MaNhaCungCap VARCHAR(10) NOT NULL," +
+                    "FOREIGN KEY (MaSanPham) REFERENCES SanPham(MaSanPham)," +
+                    "FOREIGN KEY (MaNhaCungCap) REFERENCES NhaCungCap(MaNhaCungCap)" +
+                    ")");
+
+            // HoaDon (Invoice) table for revenue statistics
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS HoaDon (" +
+                    "MaHoaDon VARCHAR(10) PRIMARY KEY," +
+                    "MaNhanVien VARCHAR(10) NOT NULL," +
+                    "NgayLap DATETIME NOT NULL," +
+                    "TongTien DECIMAL(10, 2) NOT NULL," +
+                    "FOREIGN KEY (MaNhanVien) REFERENCES NhanVien(MaNhanVien)" +
+                    ")");
+
+            // ChiTietHoaDon (InvoiceDetail) table for revenue statistics
+            stmt.executeUpdate("CREATE TABLE IF NOT EXISTS ChiTietHoaDon (" +
+                    "MaHoaDon VARCHAR(10) NOT NULL," +
+                    "MaSanPham VARCHAR(10) NOT NULL," +
+                    "SoLuong INT NOT NULL," +
+                    "DonGia DECIMAL(10, 2) NOT NULL," +
+                    "PRIMARY KEY (MaHoaDon, MaSanPham)," +
+                    "FOREIGN KEY (MaHoaDon) REFERENCES HoaDon(MaHoaDon)," +
+                    "FOREIGN KEY (MaSanPham) REFERENCES SanPham(MaSanPham)" +
                     ")");
 
             // Insert default data if not exists
@@ -99,6 +152,18 @@ public class DBConnection {
                 // Insert admin employee
                 stmt.executeUpdate(
                         "INSERT INTO NhanVien VALUES ('NV001', 'admin', 'admin123', 'Admin', 'User', 'CV001', '0987654321')");
+            }
+
+            // Check if there's any data in LoaiSanPham table
+            rs = stmt.executeQuery("SELECT COUNT(*) FROM LoaiSanPham");
+            rs.next();
+            if (rs.getInt(1) == 0) {
+                // Insert some default product categories
+                stmt.executeUpdate(
+                        "INSERT INTO LoaiSanPham VALUES ('LSP001', 'Nước giải khát', 'Các loại đồ uống giải khát')");
+                stmt.executeUpdate("INSERT INTO LoaiSanPham VALUES ('LSP002', 'Bia', 'Các loại bia')");
+                stmt.executeUpdate(
+                        "INSERT INTO LoaiSanPham VALUES ('LSP003', 'Nước suối', 'Các loại nước suối đóng chai')");
             }
 
             stmt.close();
