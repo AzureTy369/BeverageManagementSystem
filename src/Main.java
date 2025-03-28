@@ -1,5 +1,5 @@
-import view.LoginView;
-import database.DBConnection;
+import GUI.LoginView;
+import DAO.DBConnection;
 
 import javax.swing.*;
 
