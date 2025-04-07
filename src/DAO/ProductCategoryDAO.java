@@ -1,6 +1,6 @@
 package DAO;
 
-import DTO.ProductCategory;
+import DTO.ProductCategoryDTO;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -23,19 +23,19 @@ public class ProductCategoryDAO {
                     ")";
             stmt.executeUpdate(sql);
         } catch (SQLException e) {
-            System.err.println("Error creating ProductCategory table: " + e.getMessage());
+            System.err.println("Error creating LoaiSanPham table: " + e.getMessage());
         }
     }
 
-    public List<ProductCategory> getAllCategories() {
-        List<ProductCategory> categories = new ArrayList<>();
+    public List<ProductCategoryDTO> getAllCategories() {
+        List<ProductCategoryDTO> categories = new ArrayList<>();
         String query = "SELECT * FROM LoaiSanPham";
 
         try (Statement stmt = connection.createStatement();
                 ResultSet rs = stmt.executeQuery(query)) {
 
             while (rs.next()) {
-                ProductCategory category = new ProductCategory();
+                ProductCategoryDTO category = new ProductCategoryDTO();
                 category.setCategoryId(rs.getString("MaLoaiSP"));
                 category.setCategoryName(rs.getString("TenLoaiSP"));
                 category.setDescription(rs.getString("MoTa"));
@@ -48,7 +48,7 @@ public class ProductCategoryDAO {
         return categories;
     }
 
-    public ProductCategory getCategoryById(String categoryId) {
+    public ProductCategoryDTO getCategoryById(String categoryId) {
         String query = "SELECT * FROM LoaiSanPham WHERE MaLoaiSP = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -56,7 +56,7 @@ public class ProductCategoryDAO {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    ProductCategory category = new ProductCategory();
+                    ProductCategoryDTO category = new ProductCategoryDTO();
                     category.setCategoryId(rs.getString("MaLoaiSP"));
                     category.setCategoryName(rs.getString("TenLoaiSP"));
                     category.setDescription(rs.getString("MoTa"));
@@ -70,7 +70,7 @@ public class ProductCategoryDAO {
         return null;
     }
 
-    public boolean addCategory(ProductCategory category) {
+    public boolean addCategory(ProductCategoryDTO category) {
         String query = "INSERT INTO LoaiSanPham (MaLoaiSP, TenLoaiSP, MoTa) VALUES (?, ?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -86,7 +86,7 @@ public class ProductCategoryDAO {
         }
     }
 
-    public boolean updateCategory(ProductCategory category) {
+    public boolean updateCategory(ProductCategoryDTO category) {
         String query = "UPDATE LoaiSanPham SET TenLoaiSP = ?, MoTa = ? WHERE MaLoaiSP = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {

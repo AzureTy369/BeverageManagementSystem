@@ -1,10 +1,10 @@
 package DAO;
 
-import DTO.Product;
+import DTO.ProductDTO;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Calendar;
+
 
 public class ProductDAO {
     private Connection connection;
@@ -20,35 +20,36 @@ public class ProductDAO {
             String sql = "CREATE TABLE IF NOT EXISTS SanPham (" +
                     "MaSanPham VARCHAR(10) PRIMARY KEY," +
                     "TenSanPham NVARCHAR(100) NOT NULL," +
-                    "CategoryId VARCHAR(10) NOT NULL," +
+                    "MaLoaiSP VARCHAR(10) NOT NULL," +
                     "MoTa NVARCHAR(255)," +
                     "HinhAnh VARCHAR(255)," +
-                    "GiaBan DECIMAL(10, 2) NOT NULL," +
-                    "FOREIGN KEY (CategoryId) REFERENCES LoaiSanPham(MaLoaiSP)" +
+                    "DonViTinh VARCHAR(20)," +
+                    "GiaBan DECIMAL(10,2) NOT NULL DEFAULT 0," +
+                    "FOREIGN KEY (MaLoaiSP) REFERENCES LoaiSanPham(MaLoaiSP)" +
                     ")";
             stmt.executeUpdate(sql);
         } catch (SQLException e) {
-            System.err.println("Error creating Product table: " + e.getMessage());
+            System.err.println("Error creating SanPham table: " + e.getMessage());
         }
     }
 
-    public List<Product> getAllProducts() {
-        List<Product> products = new ArrayList<>();
-        String query = "SELECT p.*, lsp.TenLoaiSP FROM SanPham p " +
-                "JOIN LoaiSanPham lsp ON p.MaLoaiSP = lsp.MaLoaiSP";
+    public List<ProductDTO> getAllProducts() {
+        List<ProductDTO> products = new ArrayList<>();
+        String query = "SELECT p.*, l.TenLoaiSP as TenLoai FROM SanPham p " +
+                "LEFT JOIN LoaiSanPham l ON p.MaLoaiSP = l.MaLoaiSP";
 
         try (Statement stmt = connection.createStatement();
                 ResultSet rs = stmt.executeQuery(query)) {
 
             while (rs.next()) {
-                Product product = new Product();
+                ProductDTO product = new ProductDTO();
                 product.setProductId(rs.getString("MaSanPham"));
                 product.setProductName(rs.getString("TenSanPham"));
                 product.setCategoryId(rs.getString("MaLoaiSP"));
                 product.setDescription(rs.getString("MoTa"));
                 product.setImage(rs.getString("HinhAnh"));
-                product.setPrice(rs.getDouble("GiaBan"));
-                product.setCategoryName(rs.getString("TenLoaiSP"));
+                product.setUnit(rs.getString("DonViTinh"));
+                product.setCategoryName(rs.getString("TenLoai"));
                 products.add(product);
             }
         } catch (SQLException e) {
@@ -58,10 +59,10 @@ public class ProductDAO {
         return products;
     }
 
-    public List<Product> getProductsByCategory(String categoryId) {
-        List<Product> products = new ArrayList<>();
-        String query = "SELECT p.*, lsp.TenLoaiSP FROM SanPham p " +
-                "JOIN LoaiSanPham lsp ON p.MaLoaiSP = lsp.MaLoaiSP " +
+    public List<ProductDTO> getProductsByCategory(String categoryId) {
+        List<ProductDTO> products = new ArrayList<>();
+        String query = "SELECT p.*, l.TenLoaiSP as TenLoai FROM SanPham p " +
+                "LEFT JOIN LoaiSanPham l ON p.MaLoaiSP = l.MaLoaiSP " +
                 "WHERE p.MaLoaiSP = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -69,14 +70,14 @@ public class ProductDAO {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    Product product = new Product();
+                    ProductDTO product = new ProductDTO();
                     product.setProductId(rs.getString("MaSanPham"));
                     product.setProductName(rs.getString("TenSanPham"));
                     product.setCategoryId(rs.getString("MaLoaiSP"));
                     product.setDescription(rs.getString("MoTa"));
                     product.setImage(rs.getString("HinhAnh"));
-                    product.setPrice(rs.getDouble("GiaBan"));
-                    product.setCategoryName(rs.getString("TenLoaiSP"));
+                    product.setUnit(rs.getString("DonViTinh"));
+                    product.setCategoryName(rs.getString("TenLoai"));
                     products.add(product);
                 }
             }
@@ -87,9 +88,9 @@ public class ProductDAO {
         return products;
     }
 
-    public Product getProductById(String productId) {
-        String query = "SELECT p.*, lsp.TenLoaiSP FROM SanPham p " +
-                "JOIN LoaiSanPham lsp ON p.MaLoaiSP = lsp.MaLoaiSP " +
+    public ProductDTO getProductById(String productId) {
+        String query = "SELECT p.*, l.TenLoaiSP as TenLoai FROM SanPham p " +
+                "LEFT JOIN LoaiSanPham l ON p.MaLoaiSP = l.MaLoaiSP " +
                 "WHERE p.MaSanPham = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -97,14 +98,14 @@ public class ProductDAO {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 if (rs.next()) {
-                    Product product = new Product();
+                    ProductDTO product = new ProductDTO();
                     product.setProductId(rs.getString("MaSanPham"));
                     product.setProductName(rs.getString("TenSanPham"));
                     product.setCategoryId(rs.getString("MaLoaiSP"));
                     product.setDescription(rs.getString("MoTa"));
                     product.setImage(rs.getString("HinhAnh"));
-                    product.setPrice(rs.getDouble("GiaBan"));
-                    product.setCategoryName(rs.getString("TenLoaiSP"));
+                    product.setUnit(rs.getString("DonViTinh"));
+                    product.setCategoryName(rs.getString("TenLoai"));
                     return product;
                 }
             }
@@ -115,8 +116,8 @@ public class ProductDAO {
         return null;
     }
 
-    public boolean addProduct(Product product) {
-        String query = "INSERT INTO SanPham (MaSanPham, TenSanPham, MaLoaiSP, MoTa, HinhAnh, GiaBan) VALUES (?, ?, ?, ?, ?, ?)";
+    public boolean addProduct(ProductDTO product) {
+        String query = "INSERT INTO SanPham (MaSanPham, TenSanPham, MaLoaiSP, MoTa, HinhAnh, DonViTinh, GiaBan) VALUES (?, ?, ?, ?, ?, ?, 0)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setString(1, product.getProductId());
@@ -124,7 +125,7 @@ public class ProductDAO {
             pstmt.setString(3, product.getCategoryId());
             pstmt.setString(4, product.getDescription());
             pstmt.setString(5, product.getImage());
-            pstmt.setDouble(6, product.getPrice());
+            pstmt.setString(6, product.getUnit());
 
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
@@ -134,15 +135,15 @@ public class ProductDAO {
         }
     }
 
-    public boolean updateProduct(Product product) {
-        String query = "UPDATE SanPham SET TenSanPham = ?, MaLoaiSP = ?, MoTa = ?, HinhAnh = ?, GiaBan = ? WHERE MaSanPham = ?";
+    public boolean updateProduct(ProductDTO product) {
+        String query = "UPDATE SanPham SET TenSanPham = ?, MaLoaiSP = ?, MoTa = ?, HinhAnh = ?, DonViTinh = ? WHERE MaSanPham = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setString(1, product.getProductName());
             pstmt.setString(2, product.getCategoryId());
             pstmt.setString(3, product.getDescription());
             pstmt.setString(4, product.getImage());
-            pstmt.setDouble(5, product.getPrice());
+            pstmt.setString(5, product.getUnit());
             pstmt.setString(6, product.getProductId());
 
             int rowsAffected = pstmt.executeUpdate();
@@ -186,15 +187,14 @@ public class ProductDAO {
     }
 
     // Statistics methods
-    public List<Product> getBestSellingProducts(int limit) {
-        List<Product> products = new ArrayList<>();
-        String query = "SELECT p.MaSanPham, p.TenSanPham, p.MaLoaiSP, p.MoTa, p.HinhAnh, p.GiaBan, lsp.TenLoaiSP, " +
-                "SUM(ct.SoLuong) AS TongBan " +
+    public List<ProductDTO> getBestSellingProducts(int limit) {
+        List<ProductDTO> products = new ArrayList<>();
+        String query = "SELECT p.*, l.TenLoaiSP as TenLoai, COALESCE(SUM(ct.SoLuong), 0) AS SoLuongBan " +
                 "FROM SanPham p " +
-                "JOIN ChiTietHoaDon ct ON p.MaSanPham = ct.MaSanPham " +
-                "JOIN LoaiSanPham lsp ON p.MaLoaiSP = lsp.MaLoaiSP " +
+                "LEFT JOIN LoaiSanPham l ON p.MaLoaiSP = l.MaLoaiSP " +
+                "LEFT JOIN ChiTietHoaDon ct ON p.MaSanPham = ct.MaSanPham " +
                 "GROUP BY p.MaSanPham " +
-                "ORDER BY TongBan DESC " +
+                "ORDER BY SoLuongBan DESC " +
                 "LIMIT ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
@@ -202,24 +202,21 @@ public class ProductDAO {
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
-                    Product product = new Product();
+                    ProductDTO product = new ProductDTO();
                     product.setProductId(rs.getString("MaSanPham"));
                     product.setProductName(rs.getString("TenSanPham"));
                     product.setCategoryId(rs.getString("MaLoaiSP"));
                     product.setDescription(rs.getString("MoTa"));
                     product.setImage(rs.getString("HinhAnh"));
-                    product.setPrice(rs.getDouble("GiaBan"));
-                    product.setCategoryName(rs.getString("TenLoaiSP"));
-
-                    // Thêm thông tin tổng số lượng đã bán vào đối tượng Product
-                    // Sử dụng thuộc tính description tạm thời để lưu thông tin này
-                    product.setDescription(String.valueOf(rs.getInt("TongBan")));
-
+                    product.setUnit(rs.getString("DonViTinh"));
+                    product.setCategoryName(rs.getString("TenLoai"));
+                    product.setSoldQuantity(rs.getInt("SoLuongBan"));
                     products.add(product);
                 }
             }
         } catch (SQLException e) {
             System.err.println("Error getting best selling products: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return products;
@@ -227,12 +224,12 @@ public class ProductDAO {
 
     public List<Object[]> getInventoryStatistics(boolean lowStock, int limit) {
         List<Object[]> results = new ArrayList<>();
-        String query = "SELECT p.MaSanPham, p.TenSanPham, COALESCE(SUM(pd.SoLuong), 0) AS TonKho, " +
-                "lsp.TenLoaiSP " +
-                "FROM SanPham p " +
-                "LEFT JOIN ChiTietSanPham pd ON p.MaSanPham = pd.MaSanPham " +
-                "JOIN LoaiSanPham lsp ON p.MaLoaiSP = lsp.MaLoaiSP " +
-                "GROUP BY p.MaSanPham " +
+        String query = "SELECT sp.MaSanPham, sp.TenSanPham, " +
+                "COUNT(ctsp.MaChiTietSanPham) AS TonKho, l.TenLoaiSP as TenLoai " +
+                "FROM SanPham sp " +
+                "LEFT JOIN LoaiSanPham l ON sp.MaLoaiSP = l.MaLoaiSP " +
+                "LEFT JOIN ChiTietSanPham ctsp ON sp.MaSanPham = ctsp.MaSanPham " +
+                "GROUP BY sp.MaSanPham " +
                 "ORDER BY TonKho " + (lowStock ? "ASC" : "DESC") + " " +
                 "LIMIT ?";
 
@@ -245,7 +242,7 @@ public class ProductDAO {
                     row[0] = rs.getString("MaSanPham");
                     row[1] = rs.getString("TenSanPham");
                     row[2] = rs.getInt("TonKho");
-                    row[3] = rs.getString("TenLoaiSP");
+                    row[3] = rs.getString("TenLoai");
                     results.add(row);
                 }
             }
@@ -257,7 +254,7 @@ public class ProductDAO {
     }
 
     public List<Object[]> getInventoryStatistics(boolean lowStock) {
-        return getInventoryStatistics(lowStock, 100); // Mặc định lấy 100 bản ghi
+        return getInventoryStatistics(lowStock, 10); // Default limit to 10
     }
 
     public List<Object[]> getRevenueByProduct(java.util.Date startDate, java.util.Date endDate) {
@@ -284,36 +281,33 @@ public class ProductDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Error getting revenue by product with date range: " + e.getMessage());
+            System.err.println("Error getting revenue by product: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return results;
     }
 
     public List<Object[]> getRevenueByProduct() {
-        // Mặc định lấy dữ liệu của 5 năm gần nhất
-        Calendar calendar = Calendar.getInstance();
-        java.util.Date endDate = calendar.getTime();
-        calendar.add(Calendar.YEAR, -5);
-        java.util.Date startDate = calendar.getTime();
-
-        return getRevenueByProduct(startDate, endDate);
+        java.util.Date now = new java.util.Date();
+        java.util.Date startDate = new java.util.Date(now.getTime() - 30L * 24 * 60 * 60 * 1000); // 30 days ago
+        return getRevenueByProduct(startDate, now);
     }
 
     public List<Object[]> getRevenueByCategory(java.util.Date startDate, java.util.Date endDate) {
         List<Object[]> results = new ArrayList<>();
-        String query = "SELECT lsp.MaLoaiSP, lsp.TenLoaiSP, SUM(ct.SoLuong * ct.DonGia) AS DoanhThu " +
-                "FROM LoaiSanPham lsp " +
-                "JOIN SanPham p ON lsp.MaLoaiSP = p.MaLoaiSP " +
+        String query = "SELECT l.MaLoaiSP, l.TenLoaiSP, SUM(ct.SoLuong * ct.DonGia) AS DoanhThu " +
+                "FROM LoaiSanPham l " +
+                "JOIN SanPham p ON l.MaLoaiSP = p.MaLoaiSP " +
                 "JOIN ChiTietHoaDon ct ON p.MaSanPham = ct.MaSanPham " +
                 "JOIN HoaDon h ON ct.MaHoaDon = h.MaHoaDon " +
                 "WHERE h.NgayLap BETWEEN ? AND ? " +
-                "GROUP BY lsp.MaLoaiSP " +
+                "GROUP BY l.MaLoaiSP " +
                 "ORDER BY DoanhThu DESC";
 
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-            pstmt.setDate(1, new java.sql.Date(startDate.getTime()));
-            pstmt.setDate(2, new java.sql.Date(endDate.getTime()));
+            pstmt.setTimestamp(1, new java.sql.Timestamp(startDate.getTime()));
+            pstmt.setTimestamp(2, new java.sql.Timestamp(endDate.getTime()));
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
@@ -325,19 +319,15 @@ public class ProductDAO {
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Error getting revenue by category with date range: " + e.getMessage());
+            System.err.println("Error getting revenue by category: " + e.getMessage());
         }
 
         return results;
     }
 
     public List<Object[]> getRevenueByCategory() {
-        // Mặc định lấy dữ liệu của 5 năm gần nhất
-        Calendar calendar = Calendar.getInstance();
-        java.util.Date endDate = calendar.getTime();
-        calendar.add(Calendar.YEAR, -5);
-        java.util.Date startDate = calendar.getTime();
-
-        return getRevenueByCategory(startDate, endDate);
+        java.util.Date now = new java.util.Date();
+        java.util.Date startDate = new java.util.Date(now.getTime() - 30L * 24 * 60 * 60 * 1000); // 30 days ago
+        return getRevenueByCategory(startDate, now);
     }
 }

@@ -1,5 +1,6 @@
-import GUI.LoginView;
+import GUI.LoginGUI;
 import DAO.DBConnection;
+
 
 import javax.swing.*;
 
@@ -16,6 +17,6 @@ public class Main {
         DBConnection.setupDatabase();
 
         // Start the login view
-        SwingUtilities.invokeLater(() -> new LoginView().setVisible(true));
+        SwingUtilities.invokeLater(() -> new LoginGUI().setVisible(true));
     }
 }
