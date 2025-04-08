@@ -41,31 +41,24 @@ public class Customer {
 		public String getCustomerDate() {
 			return customerDate;
 		}
-		public void setCustomerDate(String customerDate) {
-			this.customerDate = customerDate;
-		}
 		public String getCustomerLastname() {
 			return customerLastname;
 		}
 		public void setCustomerLastname(String customerLastname) {
 			this.customerLastname = customerLastname;
 		}
-		public void setAll (String id , String first , String last , String ad , String phone ,String date) {
-			setCustomerAddress(ad);
-			setCustomerDate(date);
+		public void setAll (String id , String first , String last , String phone ) {
 			setCustomerFirstname(first);
 			setCustomerId(id);
 			setCustomerLastname(last);
 			setCustomerPhone(phone);
 		}
-		public Customer(String customerId, String customerFirstname , String customerLastname, String customerAddress, String customerPhone,
-				 String customerDate) {
+		public Customer(String customerId, String customerFirstname , String customerLastname, String cusPoint,String customerPhone) {
 			super();
 			this.customerId = customerId;
 			this.customerFirstname = customerFirstname;
-			this.customerAddress = customerAddress;
+			this.customerPoint = cusPoint;
 			this.customerPhone = customerPhone;
-			this.customerDate = customerDate;
 			this.customerLastname = customerLastname;
 		}
 		public Customer() {
