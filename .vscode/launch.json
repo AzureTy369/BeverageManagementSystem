@@ -6,18 +6,21 @@
       "name": "Main",
       "request": "launch",
       "mainClass": "Main",
-      "projectName": "DM_3faa9982"
+      "projectName": "DM1_b5a896ef"
+    },
+    {
+      "type": "java",
+      "name": "Launch Main",
+      "request": "launch",
+      "mainClass": "Main",
+      "projectName": "DM1"
     },
     {
       "type": "java",
       "name": "Main",
       "request": "launch",
       "mainClass": "Main",
-      "projectName": "BMS_b5a88f8f",
-      "classpath": [
-        "${workspaceFolder}/bin",
-        "${workspaceFolder}/lib/mysql-connector-j-9.1.0.jar"
-      ]
+      "projectName": "DM_3faa9982"
     },
     {
       "name": "C/C++ Runner: Debug Session",

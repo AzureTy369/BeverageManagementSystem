@@ -2,6 +2,7 @@ package GUI;
 
 import BUS.SupplierBUS;
 import DTO.SupplierDTO;
+import GUI.utils.ExcelUtils;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -88,17 +89,11 @@ public class SupplierGUI extends JPanel {
         deleteBtn.setFont(new Font("Arial", Font.PLAIN, 12));
         deleteBtn.addActionListener(e -> deleteSupplier());
 
-        // Gán deleteBtn vào biến thành viên để sử dụng ở nơi khác
-        this.deleteButton = deleteBtn;
-
         // Nút chỉnh sửa - giảm kích thước
         JButton editBtn = createOutlineButton("Chỉnh sửa", warningColor);
         editBtn.setMargin(new Insets(3, 8, 3, 8));
         editBtn.setFont(new Font("Arial", Font.PLAIN, 12));
         editBtn.addActionListener(e -> showEditSupplierDialog());
-
-        // Gán editBtn vào biến thành viên để sử dụng ở nơi khác
-        this.updateButton = editBtn;
 
         // Separator
         JSeparator separator = new JSeparator(SwingConstants.VERTICAL);
@@ -106,21 +101,24 @@ public class SupplierGUI extends JPanel {
         separator.setForeground(new Color(200, 200, 200));
 
         // Nút xuất Excel - giảm kích thước
-        JButton exportBtn = createOutlineButton("Xuất Excel", new Color(108, 117, 125));
-        exportBtn.setMargin(new Insets(3, 8, 3, 8));
-        exportBtn.setFont(new Font("Arial", Font.PLAIN, 12));
-        // Nút Nhập Excel - giảm kích thước
-        JButton importBtn = createOutlineButton("Nhập Excel", new Color(108, 117, 125));
-        importBtn.setMargin(new Insets(3, 8, 3, 8));
-        importBtn.setFont(new Font("Arial", Font.PLAIN, 12));
+        JButton exportExcelButton = createOutlineButton("Xuất Excel", primaryColor);
+        exportExcelButton.setMargin(new Insets(3, 8, 3, 8));
+        exportExcelButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        exportExcelButton.addActionListener(e -> exportToExcel());
+
+        // Thêm nút nhập Excel vào panel chứa các nút
+        JButton importExcelButton = createOutlineButton("Nhập Excel", successColor);
+        importExcelButton.setMargin(new Insets(3, 8, 3, 8));
+        importExcelButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        importExcelButton.addActionListener(e -> importFromExcel());
 
         // Thêm các nút vào panel bên trái
         leftFunctionPanel.add(addBtn);
         leftFunctionPanel.add(deleteBtn);
         leftFunctionPanel.add(editBtn);
         leftFunctionPanel.add(separator);
-        leftFunctionPanel.add(exportBtn);
-        leftFunctionPanel.add(importBtn);
+        leftFunctionPanel.add(exportExcelButton);
+        leftFunctionPanel.add(importExcelButton);
 
         // NHÓM 2: Panel tìm kiếm bên phải - căn giữa các phần tử
         JPanel rightSearchPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 3, 3));
@@ -842,5 +840,160 @@ public class SupplierGUI extends JPanel {
         }
 
         return true;
+    }
+
+    /**
+     * Xuất dữ liệu nhà cung cấp ra file Excel
+     */
+    private void exportToExcel() {
+        // Lấy dữ liệu từ bảng
+        List<Object[]> data = new ArrayList<>();
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            Object[] rowData = new Object[tableModel.getColumnCount()];
+            for (int j = 0; j < tableModel.getColumnCount(); j++) {
+                rowData[j] = tableModel.getValueAt(i, j);
+            }
+            data.add(rowData);
+        }
+
+        // Tạo tiêu đề các cột
+        String[] headers = new String[tableModel.getColumnCount()];
+        for (int i = 0; i < tableModel.getColumnCount(); i++) {
+            headers[i] = tableModel.getColumnName(i);
+        }
+
+        // Xuất ra file Excel
+        ExcelUtils.exportToExcel(headers, data, "Nhà cung cấp", "DANH SÁCH NHÀ CUNG CẤP");
+    }
+
+    /**
+     * Nhập dữ liệu nhà cung cấp từ file Excel
+     */
+    private void importFromExcel() {
+        try {
+            // Tạo tiêu đề các cột
+            String[] headers = new String[tableModel.getColumnCount()];
+            for (int i = 0; i < tableModel.getColumnCount(); i++) {
+                headers[i] = tableModel.getColumnName(i);
+            }
+
+            // Nhập dữ liệu từ file Excel
+            List<Object[]> data = ExcelUtils.importFromExcel(headers);
+            if (data == null || data.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "Không có dữ liệu nào được nhập từ file Excel.",
+                        "Thông báo",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Xác nhận nhập dữ liệu
+            int result = JOptionPane.showConfirmDialog(this,
+                    "Bạn có chắc chắn muốn nhập " + data.size() + " nhà cung cấp từ file Excel?",
+                    "Xác nhận nhập dữ liệu",
+                    JOptionPane.YES_NO_OPTION);
+
+            if (result != JOptionPane.YES_OPTION) {
+                return;
+            }
+
+            // Xử lý dữ liệu nhập vào
+            int successCount = 0;
+            int failCount = 0;
+            StringBuilder errorMessages = new StringBuilder();
+
+            for (int rowIndex = 0; rowIndex < data.size(); rowIndex++) {
+                Object[] rowData = data.get(rowIndex);
+                try {
+                    // Kiểm tra dữ liệu bắt buộc
+                    if (rowData.length < 3 || rowData[0] == null || rowData[1] == null || rowData[2] == null) {
+                        errorMessages.append("Dòng ").append(rowIndex + 1)
+                                .append(": Thiếu thông tin bắt buộc (Mã NCC, Tên NCC, Địa chỉ)\n");
+                        failCount++;
+                        continue;
+                    }
+
+                    // Tạo đối tượng SupplierDTO từ dữ liệu nhập vào
+                    SupplierDTO supplier = new SupplierDTO();
+
+                    // Mã nhà cung cấp
+                    String supplierId = rowData[0].toString().trim();
+                    if (supplierId.isEmpty()) {
+                        errorMessages.append("Dòng ").append(rowIndex + 1)
+                                .append(": Mã nhà cung cấp không được để trống\n");
+                        failCount++;
+                        continue;
+                    }
+                    supplier.setSupplierId(supplierId);
+
+                    // Tên nhà cung cấp
+                    String supplierName = rowData[1].toString().trim();
+                    if (supplierName.isEmpty()) {
+                        errorMessages.append("Dòng ").append(rowIndex + 1)
+                                .append(": Tên nhà cung cấp không được để trống\n");
+                        failCount++;
+                        continue;
+                    }
+                    supplier.setSupplierName(supplierName);
+
+                    // Địa chỉ
+                    String address = rowData[2].toString().trim();
+                    if (address.isEmpty()) {
+                        errorMessages.append("Dòng ").append(rowIndex + 1)
+                                .append(": Địa chỉ không được để trống\n");
+                        failCount++;
+                        continue;
+                    }
+                    supplier.setAddress(address);
+
+                    // Số điện thoại (nếu có)
+                    if (rowData.length > 3 && rowData[3] != null) {
+                        supplier.setPhone(rowData[3].toString().trim());
+                    }
+
+                    // Email (nếu có)
+                    if (rowData.length > 4 && rowData[4] != null) {
+                        supplier.setEmail(rowData[4].toString().trim());
+                    }
+
+                    // Thêm nhà cung cấp vào cơ sở dữ liệu
+                    if (supplierController.addSupplier(supplier.getSupplierId(), 
+                            supplier.getSupplierName(), supplier.getAddress())) {
+                        successCount++;
+                    } else {
+                        errorMessages.append("Dòng ").append(rowIndex + 1)
+                                .append(": Không thể thêm nhà cung cấp vào cơ sở dữ liệu\n");
+                        failCount++;
+                    }
+                } catch (Exception e) {
+                    errorMessages.append("Dòng ").append(rowIndex + 1).append(": Lỗi xử lý dữ liệu - ")
+                            .append(e.getMessage()).append("\n");
+                    failCount++;
+                }
+            }
+
+            // Hiển thị kết quả
+            String message = "Nhập dữ liệu hoàn tất!\n" +
+                    "Số nhà cung cấp nhập thành công: " + successCount + "\n" +
+                    "Số nhà cung cấp nhập thất bại: " + failCount;
+
+            if (failCount > 0 && errorMessages.length() > 0) {
+                message += "\n\nChi tiết lỗi:\n" + errorMessages.toString();
+            }
+
+            JOptionPane.showMessageDialog(this,
+                    message,
+                    "Kết quả nhập dữ liệu",
+                    failCount > 0 ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE);
+
+            // Cập nhật lại dữ liệu hiển thị
+            refreshSupplierData();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Lỗi khi nhập dữ liệu từ Excel: " + e.getMessage(),
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
     }
 }

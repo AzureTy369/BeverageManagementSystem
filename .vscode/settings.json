@@ -5,7 +5,17 @@
   "java.project.outputPath": "bin",
   "java.project.referencedLibraries": [
     "lib/**/*.jar",
-    "src/lib/**/*.jar"
+    "src/lib/**/*.jar",
+    "lib/commons-collections4-4.4.jar",
+    "lib/commons-compress-1.27.1.jar",
+    "lib/commons-io-2.18.0.jar",
+    "lib/log4j-api-2.24.3.jar",
+    "lib/log4j-core-2.24.3.jar",
+    "lib/mysql-connector-j-9.1.0.jar",
+    "lib/poi-5.4.1.jar",
+    "lib/poi-ooxml-5.4.1.jar",
+    "lib/poi-ooxml-lite-5.4.1.jar",
+    "lib/xmlbeans-5.2.0.jar"
   ],
   "C_Cpp_Runner.cCompilerPath": "gcc",
   "C_Cpp_Runner.cppCompilerPath": "g++",

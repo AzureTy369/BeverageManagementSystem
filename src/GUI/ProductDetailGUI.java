@@ -32,7 +32,6 @@ public class ProductDetailGUI extends JPanel {
     private JTextField detailSearchField;
 
     private JPanel advancedSearchPanel;
-    private boolean showAdvancedSearch = false;
 
     // Colors
     private final Color primaryColor = new Color(0, 123, 255);

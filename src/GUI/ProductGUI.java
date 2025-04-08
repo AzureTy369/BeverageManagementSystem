@@ -4,6 +4,7 @@ import BUS.ProductBUS;
 import BUS.ProductCategoryBUS;
 import DTO.ProductCategoryDTO;
 import DTO.ProductDTO;
+import GUI.utils.ExcelUtils;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -108,22 +109,22 @@ public class ProductGUI extends JPanel {
         separator.setForeground(new Color(200, 200, 200));
 
         // Nút xuất Excel - giảm kích thước
-        JButton exportBtn = createOutlineButton("Xuất Excel", new Color(108, 117, 125));
-        exportBtn.setMargin(new Insets(3, 8, 3, 8));
-        exportBtn.setFont(new Font("Arial", Font.PLAIN, 12));
+        JButton exportExcelButton = createOutlineButton("Xuất Excel", primaryColor);
+        exportExcelButton.setMargin(new Insets(3, 8, 3, 8));
+        exportExcelButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        exportExcelButton.addActionListener(e -> exportToExcel());
 
-        // Nut Nhap Excel
-        JButton importBtn = createOutlineButton("Nhập Excel", new Color(108, 117, 125));
-        importBtn.setMargin(new Insets(3, 8, 3, 8));
-        importBtn.setFont(new Font("Arial", Font.PLAIN, 12));
+        // Thêm nút nhập Excel vào panel chứa các nút
+        JButton importExcelButton = createOutlineButton("Nhập Excel", successColor);
+        importExcelButton.addActionListener(e -> importFromExcel());
 
         // Thêm các nút vào panel bên trái
         leftFunctionPanel.add(addBtn);
         leftFunctionPanel.add(deleteBtn);
         leftFunctionPanel.add(editBtn);
         leftFunctionPanel.add(separator);
-        leftFunctionPanel.add(exportBtn);
-        leftFunctionPanel.add(importBtn);
+        leftFunctionPanel.add(exportExcelButton);
+        leftFunctionPanel.add(importExcelButton);
         // NHÓM 2: Panel tìm kiếm bên phải - căn giữa các phần tử
         JPanel rightSearchPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 3, 3));
         rightSearchPanel.setBackground(new Color(240, 240, 240));
@@ -1021,6 +1022,179 @@ public class ProductGUI extends JPanel {
         });
 
         return button;
+    }
+
+    /**
+     * Xuất dữ liệu sản phẩm ra file Excel
+     */
+    private void exportToExcel() {
+        // Lấy dữ liệu từ bảng
+        List<Object[]> data = new ArrayList<>();
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            Object[] rowData = new Object[tableModel.getColumnCount()];
+            for (int j = 0; j < tableModel.getColumnCount(); j++) {
+                rowData[j] = tableModel.getValueAt(i, j);
+            }
+            data.add(rowData);
+        }
+
+        // Tạo tiêu đề các cột
+        String[] headers = new String[tableModel.getColumnCount()];
+        for (int i = 0; i < tableModel.getColumnCount(); i++) {
+            headers[i] = tableModel.getColumnName(i);
+        }
+
+        // Xuất ra file Excel
+        ExcelUtils.exportToExcel(headers, data, "Sản phẩm", "DANH SÁCH SẢN PHẨM");
+    }
+
+    /**
+     * Nhập dữ liệu sản phẩm từ file Excel
+     */
+    private void importFromExcel() {
+        try {
+            // Tạo tiêu đề các cột
+            String[] headers = new String[tableModel.getColumnCount()];
+            for (int i = 0; i < tableModel.getColumnCount(); i++) {
+                headers[i] = tableModel.getColumnName(i);
+            }
+
+            // Nhập dữ liệu từ file Excel
+            List<Object[]> data = ExcelUtils.importFromExcel(headers);
+            if (data == null || data.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "Không có dữ liệu nào được nhập từ file Excel.",
+                        "Thông báo",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Xác nhận nhập dữ liệu
+            int result = JOptionPane.showConfirmDialog(this,
+                    "Bạn có chắc chắn muốn nhập " + data.size() + " sản phẩm từ file Excel?",
+                    "Xác nhận nhập dữ liệu",
+                    JOptionPane.YES_NO_OPTION);
+
+            if (result != JOptionPane.YES_OPTION) {
+                return;
+            }
+
+            // Xử lý dữ liệu nhập vào
+            int successCount = 0;
+            int failCount = 0;
+            StringBuilder errorMessages = new StringBuilder();
+
+            for (int rowIndex = 0; rowIndex < data.size(); rowIndex++) {
+                Object[] rowData = data.get(rowIndex);
+                try {
+                    // Kiểm tra dữ liệu bắt buộc
+                    if (rowData.length < 3 || rowData[0] == null || rowData[1] == null || rowData[2] == null) {
+                        errorMessages.append("Dòng ").append(rowIndex + 1)
+                                .append(": Thiếu thông tin bắt buộc (Mã SP, Tên sản phẩm, Danh mục)\n");
+                        failCount++;
+                        continue;
+                    }
+
+                    // Tạo đối tượng ProductDTO từ dữ liệu nhập vào
+                    ProductDTO product = new ProductDTO();
+
+                    // Mã sản phẩm
+                    String productId = rowData[0].toString().trim();
+                    if (productId.isEmpty()) {
+                        errorMessages.append("Dòng ").append(rowIndex + 1)
+                                .append(": Mã sản phẩm không được để trống\n");
+                        failCount++;
+                        continue;
+                    }
+                    product.setProductId(productId);
+
+                    // Tên sản phẩm
+                    String productName = rowData[1].toString().trim();
+                    if (productName.isEmpty()) {
+                        errorMessages.append("Dòng ").append(rowIndex + 1)
+                                .append(": Tên sản phẩm không được để trống\n");
+                        failCount++;
+                        continue;
+                    }
+                    product.setProductName(productName);
+
+                    // Danh mục
+                    String categoryName = rowData[2].toString().trim();
+                    boolean categoryFound = false;
+                    for (ProductCategoryDTO category : categoryController.getAllCategories()) {
+                        if (category.getCategoryName().equals(categoryName)) {
+                            product.setCategoryId(category.getCategoryId());
+                            categoryFound = true;
+                            break;
+                        }
+                    }
+                    if (!categoryFound) {
+                        errorMessages.append("Dòng ").append(rowIndex + 1).append(": Danh mục '").append(categoryName)
+                                .append("' không tồn tại\n");
+                        failCount++;
+                        continue;
+                    }
+
+                    // Mô tả (nếu có)
+                    if (rowData.length > 3 && rowData[3] != null) {
+                        product.setDescription(rowData[3].toString().trim());
+                    }
+
+                    // Hình ảnh (nếu có)
+                    if (rowData.length > 4 && rowData[4] != null) {
+                        product.setImage(rowData[4].toString().trim());
+                    }
+
+                    // Đơn vị tính (nếu có)
+                    if (rowData.length > 5 && rowData[5] != null) {
+                        String unit = rowData[5].toString().trim();
+                        if (!unit.isEmpty()) {
+                            product.setUnit(unit);
+                        } else {
+                            product.setUnit("Cái"); // Giá trị mặc định
+                        }
+                    } else {
+                        product.setUnit("Cái"); // Giá trị mặc định
+                    }
+
+                    // Thêm sản phẩm vào cơ sở dữ liệu
+                    if (productController.addProduct(product)) {
+                        successCount++;
+                    } else {
+                        errorMessages.append("Dòng ").append(rowIndex + 1)
+                                .append(": Không thể thêm sản phẩm vào cơ sở dữ liệu\n");
+                        failCount++;
+                    }
+                } catch (Exception e) {
+                    errorMessages.append("Dòng ").append(rowIndex + 1).append(": Lỗi xử lý dữ liệu - ")
+                            .append(e.getMessage()).append("\n");
+                    failCount++;
+                }
+            }
+
+            // Hiển thị kết quả
+            String message = "Nhập dữ liệu hoàn tất!\n" +
+                    "Số sản phẩm nhập thành công: " + successCount + "\n" +
+                    "Số sản phẩm nhập thất bại: " + failCount;
+
+            if (failCount > 0 && errorMessages.length() > 0) {
+                message += "\n\nChi tiết lỗi:\n" + errorMessages.toString();
+            }
+
+            JOptionPane.showMessageDialog(this,
+                    message,
+                    "Kết quả nhập dữ liệu",
+                    failCount > 0 ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE);
+
+            // Cập nhật lại dữ liệu hiển thị
+            refreshProductData();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Lỗi khi nhập dữ liệu từ Excel: " + e.getMessage(),
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
     }
 
 }

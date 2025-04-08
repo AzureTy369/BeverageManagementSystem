@@ -12,6 +12,7 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 import java.util.ArrayList;
+import GUI.utils.ExcelUtils;
 
 public class EmployeeGUI extends JPanel {
     private EmployeeBUS employeeController;
@@ -81,7 +82,7 @@ public class EmployeeGUI extends JPanel {
                 BorderFactory.createEmptyBorder(5, 5, 5, 5)));
 
         // Nút thêm - giảm kích thước
-        JButton addBtn = createOutlineButton("Thêm mới", primaryColor);
+        JButton addBtn = createOutlineButton("Thêm", successColor);
         addBtn.setMargin(new Insets(3, 8, 3, 8));
         addBtn.setFont(new Font("Arial", Font.PLAIN, 12));
         addBtn.addActionListener(e -> showAddEmployeeDialog());
@@ -92,8 +93,8 @@ public class EmployeeGUI extends JPanel {
         deleteBtn.setFont(new Font("Arial", Font.PLAIN, 12));
         deleteBtn.addActionListener(e -> deleteEmployee());
 
-        // Nút sửa - giảm kích thước
-        JButton editBtn = createOutlineButton("Sửa", warningColor);
+        // Nút chỉnh sửa - giảm kích thước
+        JButton editBtn = createOutlineButton("Chỉnh sửa", warningColor);
         editBtn.setMargin(new Insets(3, 8, 3, 8));
         editBtn.setFont(new Font("Arial", Font.PLAIN, 12));
         editBtn.addActionListener(e -> showEditEmployeeDialog());
@@ -104,21 +105,24 @@ public class EmployeeGUI extends JPanel {
         separator.setForeground(new Color(200, 200, 200));
 
         // Nút xuất Excel - giảm kích thước
-        JButton exportBtn = createOutlineButton("Xuất Excel", new Color(108, 117, 125));
-        exportBtn.setMargin(new Insets(3, 8, 3, 8));
-        exportBtn.setFont(new Font("Arial", Font.PLAIN, 12));
-        // Nút Nhập Excel - giảm kích thước
-        JButton importBtn = createOutlineButton("Nhập Excel", new Color(108, 117, 125));
-        importBtn.setMargin(new Insets(3, 8, 3, 8));
-        importBtn.setFont(new Font("Arial", Font.PLAIN, 12));
+        JButton exportExcelButton = createOutlineButton("Xuất Excel", primaryColor);
+        exportExcelButton.setMargin(new Insets(3, 8, 3, 8));
+        exportExcelButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        exportExcelButton.addActionListener(e -> exportToExcel());
+
+        // Thêm nút nhập Excel vào panel chứa các nút
+        JButton importExcelButton = createOutlineButton("Nhập Excel", successColor);
+        importExcelButton.setMargin(new Insets(3, 8, 3, 8));
+        importExcelButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        importExcelButton.addActionListener(e -> importFromExcel());
 
         // Thêm các nút vào panel bên trái
         leftFunctionPanel.add(addBtn);
         leftFunctionPanel.add(deleteBtn);
         leftFunctionPanel.add(editBtn);
         leftFunctionPanel.add(separator);
-        leftFunctionPanel.add(exportBtn);
-        leftFunctionPanel.add(importBtn);
+        leftFunctionPanel.add(exportExcelButton);
+        leftFunctionPanel.add(importExcelButton);
 
         // NHÓM 2: Panel tìm kiếm bên phải - căn giữa các phần tử
         JPanel rightSearchPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 3, 3));
@@ -867,5 +871,189 @@ public class EmployeeGUI extends JPanel {
             positionComboBox.setSelectedIndex(0);
         }
         phoneField.setText("");
+    }
+
+    /**
+     * Xuất dữ liệu nhân viên ra file Excel
+     */
+    private void exportToExcel() {
+        // Lấy dữ liệu từ bảng
+        List<Object[]> data = new ArrayList<>();
+        for (int i = 0; i < tableModel.getRowCount(); i++) {
+            Object[] rowData = new Object[tableModel.getColumnCount()];
+            for (int j = 0; j < tableModel.getColumnCount(); j++) {
+                rowData[j] = tableModel.getValueAt(i, j);
+            }
+            data.add(rowData);
+        }
+
+        // Tạo tiêu đề các cột
+        String[] headers = new String[tableModel.getColumnCount()];
+        for (int i = 0; i < tableModel.getColumnCount(); i++) {
+            headers[i] = tableModel.getColumnName(i);
+        }
+
+        // Xuất ra file Excel
+        ExcelUtils.exportToExcel(headers, data, "Nhân viên", "DANH SÁCH NHÂN VIÊN");
+    }
+
+    /**
+     * Nhập dữ liệu nhân viên từ file Excel
+     */
+    private void importFromExcel() {
+        try {
+            // Tạo tiêu đề các cột
+            String[] headers = new String[tableModel.getColumnCount()];
+            for (int i = 0; i < tableModel.getColumnCount(); i++) {
+                headers[i] = tableModel.getColumnName(i);
+            }
+
+            // Nhập dữ liệu từ file Excel
+            List<Object[]> data = ExcelUtils.importFromExcel(headers);
+            if (data == null || data.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "Không có dữ liệu nào được nhập từ file Excel.",
+                        "Thông báo",
+                        JOptionPane.WARNING_MESSAGE);
+                return;
+            }
+
+            // Xác nhận nhập dữ liệu
+            int result = JOptionPane.showConfirmDialog(this,
+                    "Bạn có chắc chắn muốn nhập " + data.size() + " nhân viên từ file Excel?",
+                    "Xác nhận nhập dữ liệu",
+                    JOptionPane.YES_NO_OPTION);
+
+            if (result != JOptionPane.YES_OPTION) {
+                return;
+            }
+
+            // Xử lý dữ liệu nhập vào
+            int successCount = 0;
+            int failCount = 0;
+            StringBuilder errorMessages = new StringBuilder();
+
+            for (int rowIndex = 0; rowIndex < data.size(); rowIndex++) {
+                Object[] rowData = data.get(rowIndex);
+                try {
+                    // Kiểm tra dữ liệu bắt buộc
+                    if (rowData.length < 4 || rowData[0] == null || rowData[1] == null || 
+                        rowData[2] == null || rowData[3] == null) {
+                        errorMessages.append("Dòng ").append(rowIndex + 1)
+                                .append(": Thiếu thông tin bắt buộc (Mã NV, Tên đăng nhập, Họ, Tên)\n");
+                        failCount++;
+                        continue;
+                    }
+
+                    // Tạo đối tượng EmployeeDTO từ dữ liệu nhập vào
+                    EmployeeDTO employee = new EmployeeDTO();
+
+                    // Mã nhân viên
+                    String employeeId = rowData[0].toString().trim();
+                    if (employeeId.isEmpty()) {
+                        errorMessages.append("Dòng ").append(rowIndex + 1)
+                                .append(": Mã nhân viên không được để trống\n");
+                        failCount++;
+                        continue;
+                    }
+                    employee.setEmployeeId(employeeId);
+
+                    // Tên đăng nhập
+                    String username = rowData[1].toString().trim();
+                    if (username.isEmpty()) {
+                        errorMessages.append("Dòng ").append(rowIndex + 1)
+                                .append(": Tên đăng nhập không được để trống\n");
+                        failCount++;
+                        continue;
+                    }
+                    employee.setUsername(username);
+
+                    // Mật khẩu (mặc định là "123456")
+                    employee.setPassword("123456");
+
+                    // Họ
+                    String lastName = rowData[2].toString().trim();
+                    if (lastName.isEmpty()) {
+                        errorMessages.append("Dòng ").append(rowIndex + 1)
+                                .append(": Họ không được để trống\n");
+                        failCount++;
+                        continue;
+                    }
+                    employee.setLastName(lastName);
+
+                    // Tên
+                    String firstName = rowData[3].toString().trim();
+                    if (firstName.isEmpty()) {
+                        errorMessages.append("Dòng ").append(rowIndex + 1)
+                                .append(": Tên không được để trống\n");
+                        failCount++;
+                        continue;
+                    }
+                    employee.setFirstName(firstName);
+
+                    // Chức vụ
+                    String positionName = rowData.length > 4 && rowData[4] != null ? 
+                            rowData[4].toString().trim() : "";
+                    boolean positionFound = false;
+                    for (PositionDTO position : positionController.getAllPositions()) {
+                        if (position.getPositionName().equals(positionName)) {
+                            employee.setPositionId(position.getPositionId());
+                            positionFound = true;
+                            break;
+                        }
+                    }
+                    if (!positionFound && !positionName.isEmpty()) {
+                        errorMessages.append("Dòng ").append(rowIndex + 1).append(": Chức vụ '").append(positionName)
+                                .append("' không tồn tại\n");
+                        failCount++;
+                        continue;
+                    } else if (positionName.isEmpty()) {
+                        // Nếu không có chức vụ, gán chức vụ mặc định (giả sử có chức vụ với ID "CV001")
+                        employee.setPositionId("CV001");
+                    }
+
+                    // Số điện thoại
+                    if (rowData.length > 5 && rowData[5] != null) {
+                        employee.setPhone(rowData[5].toString().trim());
+                    }
+
+                    // Thêm nhân viên vào cơ sở dữ liệu
+                    if (employeeController.addEmployee(employee)) {
+                        successCount++;
+                    } else {
+                        errorMessages.append("Dòng ").append(rowIndex + 1)
+                                .append(": Không thể thêm nhân viên vào cơ sở dữ liệu\n");
+                        failCount++;
+                    }
+                } catch (Exception e) {
+                    errorMessages.append("Dòng ").append(rowIndex + 1).append(": Lỗi xử lý dữ liệu - ")
+                            .append(e.getMessage()).append("\n");
+                    failCount++;
+                }
+            }
+
+            // Hiển thị kết quả
+            String message = "Nhập dữ liệu hoàn tất!\n" +
+                    "Số nhân viên nhập thành công: " + successCount + "\n" +
+                    "Số nhân viên nhập thất bại: " + failCount;
+
+            if (failCount > 0 && errorMessages.length() > 0) {
+                message += "\n\nChi tiết lỗi:\n" + errorMessages.toString();
+            }
+
+            JOptionPane.showMessageDialog(this,
+                    message,
+                    "Kết quả nhập dữ liệu",
+                    failCount > 0 ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE);
+
+            // Cập nhật lại dữ liệu hiển thị
+            refreshEmployeeData();
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this,
+                    "Lỗi khi nhập dữ liệu từ Excel: " + e.getMessage(),
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+        }
     }
 }
