@@ -1,6 +1,6 @@
 -- --------------------------------------------------------
 -- Máy chủ:                      127.0.0.1
--- Phiên bản máy chủ:            10.4.32-MariaDB - mariadb.org binary distribution
+-- Phiên bản máy chủ:            10.4.32-MariaDB
 -- HĐH máy chủ:                  Win64
 -- HeidiSQL Phiên bản:           12.10.0.7000
 -- --------------------------------------------------------
@@ -14,40 +14,47 @@
 /*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
 /*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
 
-
 -- Dumping database structure for beveragemanagementsystem
 CREATE DATABASE IF NOT EXISTS `beveragemanagementsystem` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci */;
 USE `beveragemanagementsystem`;
 
--- Dumping structure for bảng beveragemanagementsystem.chitiethoadon
+-- Dumping structure for table beveragemanagementsystem.chitiethoadon
 CREATE TABLE IF NOT EXISTS `chitiethoadon` (
   `MaHoaDon` varchar(10) NOT NULL,
-  `MaChiTietSanPham` varchar(10) NOT NULL,
+  `MaSanPham` varchar(10) NOT NULL,
   `SoLuong` int(11) NOT NULL,
   `DonGia` decimal(10,2) NOT NULL,
   `ThanhTien` decimal(10,2) NOT NULL,
-  PRIMARY KEY (`MaHoaDon`,`MaChiTietSanPham`),
-  KEY `MaChiTietSanPham` (`MaChiTietSanPham`),
+  PRIMARY KEY (`MaHoaDon`,`MaSanPham`),
+  KEY `MaSanPham` (`MaSanPham`),
   CONSTRAINT `chitiethoadon_ibfk_1` FOREIGN KEY (`MaHoaDon`) REFERENCES `hoadon` (`MaHoaDon`),
-  CONSTRAINT `chitiethoadon_ibfk_2` FOREIGN KEY (`MaChiTietSanPham`) REFERENCES `chitietsanpham` (`MaChiTietSanPham`)
+  CONSTRAINT `chitiethoadon_ibfk_2` FOREIGN KEY (`MaSanPham`) REFERENCES `sanpham` (`MaSanPham`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Đang đổ dữ liệu cho bảng beveragemanagementsystem.chitiethoadon: ~0 rows (xấp xỉ)
-
--- Dumping structure for bảng beveragemanagementsystem.chitietkhuyenmai
+-- Dumping structure for table beveragemanagementsystem.chitietkhuyenmai
 CREATE TABLE IF NOT EXISTS `chitietkhuyenmai` (
   `MaKhuyenMai` varchar(10) NOT NULL,
-  `MaChiTietSanPham` varchar(10) NOT NULL,
+  `MaSanPham` varchar(10) NOT NULL,
   `PhanTramKhuyenMai` decimal(5,2) NOT NULL,
-  PRIMARY KEY (`MaKhuyenMai`,`MaChiTietSanPham`),
-  KEY `MaChiTietSanPham` (`MaChiTietSanPham`),
+  PRIMARY KEY (`MaKhuyenMai`,`MaSanPham`),
+  KEY `MaSanPham` (`MaSanPham`),
   CONSTRAINT `chitietkhuyenmai_ibfk_1` FOREIGN KEY (`MaKhuyenMai`) REFERENCES `khuyenmai` (`MaKhuyenMai`),
-  CONSTRAINT `chitietkhuyenmai_ibfk_2` FOREIGN KEY (`MaChiTietSanPham`) REFERENCES `chitietsanpham` (`MaChiTietSanPham`)
+  CONSTRAINT `chitietkhuyenmai_ibfk_2` FOREIGN KEY (`MaSanPham`) REFERENCES `sanpham` (`MaSanPham`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Đang đổ dữ liệu cho bảng beveragemanagementsystem.chitietkhuyenmai: ~0 rows (xấp xỉ)
+-- Dumping structure for table beveragemanagementsystem.chitietsanpham
+CREATE TABLE IF NOT EXISTS `chitietsanpham` (
+  `MaChiTietSanPham` varchar(10) NOT NULL,
+  `MaSanPham` varchar(10) NOT NULL,
+  `KichThuoc` varchar(20) DEFAULT NULL,
+  `Gia` decimal(10,2) NOT NULL,
+  `SoLuongTon` int(11) NOT NULL DEFAULT 0,
+  PRIMARY KEY (`MaChiTietSanPham`),
+  KEY `MaSanPham` (`MaSanPham`),
+  CONSTRAINT `chitietsanpham_ibfk_1` FOREIGN KEY (`MaSanPham`) REFERENCES `sanpham` (`MaSanPham`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Dumping structure for bảng beveragemanagementsystem.chitietphieunhap
+-- Dumping structure for table beveragemanagementsystem.chitietphieunhap
 CREATE TABLE IF NOT EXISTS `chitietphieunhap` (
   `MaPhieuNhap` varchar(10) NOT NULL,
   `MaChiTietSanPham` varchar(10) NOT NULL,
@@ -60,23 +67,7 @@ CREATE TABLE IF NOT EXISTS `chitietphieunhap` (
   CONSTRAINT `chitietphieunhap_ibfk_2` FOREIGN KEY (`MaChiTietSanPham`) REFERENCES `chitietsanpham` (`MaChiTietSanPham`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Đang đổ dữ liệu cho bảng beveragemanagementsystem.chitietphieunhap: ~0 rows (xấp xỉ)
-
--- Dumping structure for bảng beveragemanagementsystem.chitietsanpham
-CREATE TABLE IF NOT EXISTS `chitietsanpham` (
-  `MaChiTietSanPham` varchar(10) NOT NULL,
-  `MaSanPham` varchar(10) NOT NULL,
-  `KichThuoc` varchar(20) DEFAULT NULL,
-  `Gia` decimal(10,2) NOT NULL,
-  `SoLuongTon` int(11) NOT NULL DEFAULT 0,
-  PRIMARY KEY (`MaChiTietSanPham`),
-  KEY `MaSanPham` (`MaSanPham`),
-  CONSTRAINT `chitietsanpham_ibfk_1` FOREIGN KEY (`MaSanPham`) REFERENCES `sanpham` (`MaSanPham`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Đang đổ dữ liệu cho bảng beveragemanagementsystem.chitietsanpham: ~0 rows (xấp xỉ)
-
--- Dumping structure for bảng beveragemanagementsystem.chucvu
+-- Dumping structure for table beveragemanagementsystem.chucvu
 CREATE TABLE IF NOT EXISTS `chucvu` (
   `MaChucVu` varchar(10) NOT NULL,
   `TenChucVu` varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
@@ -84,13 +75,30 @@ CREATE TABLE IF NOT EXISTS `chucvu` (
   PRIMARY KEY (`MaChucVu`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Đang đổ dữ liệu cho bảng beveragemanagementsystem.chucvu: ~3 rows (xấp xỉ)
+-- Dumping data for table beveragemanagementsystem.chucvu
 REPLACE INTO `chucvu` (`MaChucVu`, `TenChucVu`, `Luong`) VALUES
-	('CV001', 'Quản trị viên', 20000000.00),
-	('CV002', 'Quản lý', 15000000.00),
-	('CV003', 'Nhân viên bán hàng', 8000000.00);
+  ('CV001', 'Quản trị viên', 20000000.00),
+  ('CV002', 'Quản lý', 15000000.00),
+  ('CV003', 'Nhân viên bán hàng', 8000000.00);
 
--- Dumping structure for bảng beveragemanagementsystem.hoadon
+-- Dumping structure for table beveragemanagementsystem.customer
+CREATE TABLE IF NOT EXISTS `customer` (
+  `customerID` varchar(10) NOT NULL,
+  `firstname` varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `lastname` varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
+  `address` varchar(255) CHARACTER SET utf8 COLLATE utf8_general_ci DEFAULT NULL,
+  `phone` varchar(15) DEFAULT NULL,
+  `customerDate` datetime DEFAULT NULL,
+  PRIMARY KEY (`customerID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Dumping data for table beveragemanagementsystem.customer
+INSERT INTO `customer` (`customerID`, `firstname`, `lastname`, `address`, `phone`, `customerDate`) VALUES
+  ('KH001', 'Van', 'Nguyen', '123 Đường Láng, Hà Nội', '0123456789', '2025-01-01 10:00:00'),
+  ('KH002', 'Thi', 'Tran', '456 Nguyễn Trãi, TP.HCM', '0987654321', '2025-02-01 12:00:00'),
+  ('KH003', 'Van', 'Le', '789 Lê Lợi, Đà Nẵng', '0912345678', '2025-03-01 15:00:00');
+
+-- Dumping structure for table beveragemanagementsystem.hoadon
 CREATE TABLE IF NOT EXISTS `hoadon` (
   `MaHoaDon` varchar(10) NOT NULL,
   `MaNhanVien` varchar(10) NOT NULL,
@@ -102,22 +110,16 @@ CREATE TABLE IF NOT EXISTS `hoadon` (
   KEY `MaNhanVien` (`MaNhanVien`),
   KEY `MaKhachHang` (`MaKhachHang`),
   CONSTRAINT `hoadon_ibfk_1` FOREIGN KEY (`MaNhanVien`) REFERENCES `nhanvien` (`MaNhanVien`),
-  CONSTRAINT `hoadon_ibfk_2` FOREIGN KEY (`MaKhachHang`) REFERENCES `khachhang` (`MaKhachHang`)
+  CONSTRAINT `hoadon_ibfk_2` FOREIGN KEY (`MaKhachHang`) REFERENCES `customer` (`customerID`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+ALTER TABLE `hoadon`
+  ADD `MaKhuyenMai` varchar(10) DEFAULT NULL,
+  ADD `TamTinh` decimal(10,2) DEFAULT NULL,
+  ADD `GiamGia` decimal(10,2) DEFAULT NULL,
+  ADD CONSTRAINT `hoadon_ibfk_3` FOREIGN KEY (`MaKhuyenMai`) REFERENCES `khuyenmai` (`MaKhuyenMai`),
+  DROP COLUMN `PhuongThucThanhToan`;
 
--- Đang đổ dữ liệu cho bảng beveragemanagementsystem.hoadon: ~0 rows (xấp xỉ)
-
--- Dumping structure for bảng beveragemanagementsystem.khachhang
-CREATE TABLE IF NOT EXISTS `khachhang` (
-  `MaKhachHang` varchar(10) NOT NULL,
-  `TenKhachHang` varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
-  `SoDienThoai` varchar(15) DEFAULT NULL,
-  PRIMARY KEY (`MaKhachHang`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Đang đổ dữ liệu cho bảng beveragemanagementsystem.khachhang: ~0 rows (xấp xỉ)
-
--- Dumping structure for bảng beveragemanagementsystem.khuyenmai
+-- Dumping structure for table beveragemanagementsystem.khuyenmai
 CREATE TABLE IF NOT EXISTS `khuyenmai` (
   `MaKhuyenMai` varchar(10) NOT NULL,
   `TenKhuyenMai` varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
@@ -126,18 +128,20 @@ CREATE TABLE IF NOT EXISTS `khuyenmai` (
   PRIMARY KEY (`MaKhuyenMai`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Đang đổ dữ liệu cho bảng beveragemanagementsystem.khuyenmai: ~0 rows (xấp xỉ)
-
--- Dumping structure for bảng beveragemanagementsystem.loai
+-- Dumping structure for table beveragemanagementsystem.loai
 CREATE TABLE IF NOT EXISTS `loai` (
   `MaLoai` varchar(10) NOT NULL,
   `TenLoai` varchar(50) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
   PRIMARY KEY (`MaLoai`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Đang đổ dữ liệu cho bảng beveragemanagementsystem.loai: ~0 rows (xấp xỉ)
+-- Dumping data for table beveragemanagementsystem.loai
+INSERT INTO `loai` (`MaLoai`, `TenLoai`) VALUES
+  ('L001', 'Đồ uống'),
+  ('L002', 'Thực phẩm'),
+  ('L003', 'Khác');
 
--- Dumping structure for bảng beveragemanagementsystem.loaisanpham
+-- Dumping structure for table beveragemanagementsystem.loaisanpham
 CREATE TABLE IF NOT EXISTS `loaisanpham` (
   `MaLoaiSP` varchar(10) NOT NULL,
   `TenLoaiSP` varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
@@ -145,14 +149,14 @@ CREATE TABLE IF NOT EXISTS `loaisanpham` (
   PRIMARY KEY (`MaLoaiSP`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Đang đổ dữ liệu cho bảng beveragemanagementsystem.loaisanpham: ~4 rows (xấp xỉ)
+-- Dumping data for table beveragemanagementsystem.loaisanpham
 REPLACE INTO `loaisanpham` (`MaLoaiSP`, `TenLoaiSP`, `MoTa`) VALUES
-	('LSP001', 'Nước giải khát', 'Các loại đồ uống giải khát'),
-	('LSP002', 'Bia', 'Các loại bia'),
-	('LSP003', 'Nước suối', 'Các loại nước suối đóng chai'),
-	('LSP004', 'Nước suối', 'Các loại nước suối đóng chai');
+  ('LSP001', 'Nước giải khát', 'Các loại đồ uống giải khát'),
+  ('LSP002', 'Bia', 'Các loại bia'),
+  ('LSP003', 'Nước suối', 'Các loại nước suối đóng chai'),
+  ('LSP004', 'Nước suối', 'Các loại nước suối đóng chai');
 
--- Dumping structure for bảng beveragemanagementsystem.nhacungcap
+-- Dumping structure for table beveragemanagementsystem.nhacungcap
 CREATE TABLE IF NOT EXISTS `nhacungcap` (
   `MaNhaCungCap` varchar(10) NOT NULL,
   `TenNhaCungCap` varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
@@ -162,11 +166,11 @@ CREATE TABLE IF NOT EXISTS `nhacungcap` (
   PRIMARY KEY (`MaNhaCungCap`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Đang đổ dữ liệu cho bảng beveragemanagementsystem.nhacungcap: ~1 rows (xấp xỉ)
+-- Dumping data for table beveragemanagementsystem.nhacungcap
 REPLACE INTO `nhacungcap` (`MaNhaCungCap`, `TenNhaCungCap`, `SoDienThoai`, `DiaChi`, `Email`) VALUES
-	('001', 'COCACOLA', '1231231231', '3123', '123@gmail.com');
+  ('001', 'COCACOLA', '1231231231', '3123', '123@gmail.com');
 
--- Dumping structure for bảng beveragemanagementsystem.nhanvien
+-- Dumping structure for table beveragemanagementsystem.nhanvien
 CREATE TABLE IF NOT EXISTS `nhanvien` (
   `MaNhanVien` varchar(10) NOT NULL,
   `TenTaiKhoan` varchar(50) NOT NULL,
@@ -181,13 +185,13 @@ CREATE TABLE IF NOT EXISTS `nhanvien` (
   CONSTRAINT `nhanvien_ibfk_1` FOREIGN KEY (`MaChucVu`) REFERENCES `chucvu` (`MaChucVu`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Đang đổ dữ liệu cho bảng beveragemanagementsystem.nhanvien: ~3 rows (xấp xỉ)
+-- Dumping data for table beveragemanagementsystem.nhanvien
 REPLACE INTO `nhanvien` (`MaNhanVien`, `TenTaiKhoan`, `MatKhau`, `Ho`, `Ten`, `MaChucVu`, `SoDienThoai`) VALUES
-	('NV001', 'admin', 'admin123', 'Admin', 'User', 'CV001', '0987654321'),
-	('NV002', 'Thaiduidz', '123123', 'Nguyen', 'Thai1', 'CV003', '123456'),
-	('NV003', 'Thaiduidz1', '123123', 'Nguyen', 'Thai', 'CV002', '123123123');
+  ('NV001', 'admin', 'admin123', 'Admin', 'User', 'CV001', '0987654321'),
+  ('NV002', 'Thaiduidz', '123123', 'Nguyen', 'Thai1', 'CV003', '123456'),
+  ('NV003', 'Thaiduidz1', '123123', 'Nguyen', 'Thai', 'CV002', '123123123');
 
--- Dumping structure for bảng beveragemanagementsystem.phieunhap
+-- Dumping structure for table beveragemanagementsystem.phieunhap
 CREATE TABLE IF NOT EXISTS `phieunhap` (
   `MaPhieuNhap` varchar(10) NOT NULL,
   `MaNhaCungCap` varchar(10) NOT NULL,
@@ -201,9 +205,7 @@ CREATE TABLE IF NOT EXISTS `phieunhap` (
   CONSTRAINT `phieunhap_ibfk_2` FOREIGN KEY (`MaNhanVien`) REFERENCES `nhanvien` (`MaNhanVien`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
--- Đang đổ dữ liệu cho bảng beveragemanagementsystem.phieunhap: ~0 rows (xấp xỉ)
-
--- Dumping structure for bảng beveragemanagementsystem.sanpham
+-- Dumping structure for table beveragemanagementsystem.sanpham
 CREATE TABLE IF NOT EXISTS `sanpham` (
   `MaSanPham` varchar(10) NOT NULL,
   `TenSanPham` varchar(100) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
@@ -214,8 +216,6 @@ CREATE TABLE IF NOT EXISTS `sanpham` (
   KEY `MaLoai` (`MaLoai`),
   CONSTRAINT `sanpham_ibfk_1` FOREIGN KEY (`MaLoai`) REFERENCES `loai` (`MaLoai`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-
--- Đang đổ dữ liệu cho bảng beveragemanagementsystem.sanpham: ~0 rows (xấp xỉ)
 
 /*!40103 SET TIME_ZONE=IFNULL(@OLD_TIME_ZONE, 'system') */;
 /*!40101 SET SQL_MODE=IFNULL(@OLD_SQL_MODE, '') */;
