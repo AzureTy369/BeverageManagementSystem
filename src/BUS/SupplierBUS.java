@@ -2,6 +2,7 @@ package BUS;
 
 import DAO.SupplierDAO;
 import DTO.SupplierDTO;
+import DTO.SupplierProductDTO;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -25,12 +26,20 @@ public class SupplierBUS {
         return supplierDAO.addSupplier(supplier);
     }
 
+    public boolean addSupplier(SupplierDTO supplier) {
+        return supplierDAO.addSupplier(supplier);
+    }
+
     public boolean addSupplier(String supplierId, String supplierName, String phone) {
         return addSupplier(supplierId, supplierName, "", phone, "");
     }
 
     public boolean updateSupplier(String supplierId, String supplierName, String address, String phone, String email) {
         SupplierDTO supplier = new SupplierDTO(supplierId, supplierName, address, phone, email);
+        return supplierDAO.updateSupplier(supplier);
+    }
+
+    public boolean updateSupplier(SupplierDTO supplier) {
         return supplierDAO.updateSupplier(supplier);
     }
 
@@ -85,5 +94,100 @@ public class SupplierBUS {
         }
 
         return results;
+    }
+
+    // Các phương thức quản lý sản phẩm của nhà cung cấp
+
+    /**
+     * Lấy danh sách sản phẩm của một nhà cung cấp
+     * 
+     * @param supplierId Mã nhà cung cấp
+     * @return Danh sách sản phẩm
+     */
+    public List<SupplierProductDTO> getSupplierProducts(String supplierId) {
+        return supplierDAO.getProductsBySupplier(supplierId);
+    }
+
+    /**
+     * Thêm sản phẩm mới cho nhà cung cấp
+     * 
+     * @param product Thông tin sản phẩm
+     * @return true nếu thêm thành công, false nếu thất bại
+     */
+    public boolean addSupplierProduct(SupplierProductDTO product) {
+        return supplierDAO.addSupplierProduct(product);
+    }
+
+    /**
+     * Thêm sản phẩm mới cho nhà cung cấp
+     * 
+     * @param supplierId  Mã nhà cung cấp
+     * @param productName Tên sản phẩm
+     * @param unit        Đơn vị tính
+     * @param description Mô tả
+     * @param price       Giá
+     * @return true nếu thêm thành công, false nếu thất bại
+     */
+    public boolean addSupplierProduct(String supplierId, String productName, String unit, String description,
+            double price) {
+        // Tạo mã sản phẩm mới
+        String productId = supplierDAO.generateNewSupplierProductId(supplierId);
+
+        SupplierProductDTO product = new SupplierProductDTO(
+                productId, supplierId, productName, unit, description, price);
+
+        return supplierDAO.addSupplierProduct(product);
+    }
+
+    /**
+     * Cập nhật thông tin sản phẩm của nhà cung cấp
+     * 
+     * @param product Thông tin sản phẩm mới
+     * @return true nếu cập nhật thành công, false nếu thất bại
+     */
+    public boolean updateSupplierProduct(SupplierProductDTO product) {
+        return supplierDAO.updateSupplierProduct(product);
+    }
+
+    /**
+     * Xóa một sản phẩm của nhà cung cấp
+     * 
+     * @param productId  Mã sản phẩm
+     * @param supplierId Mã nhà cung cấp
+     * @return true nếu xóa thành công, false nếu thất bại
+     */
+    public boolean deleteSupplierProduct(String productId, String supplierId) {
+        return supplierDAO.deleteSupplierProduct(productId, supplierId);
+    }
+
+    /**
+     * Xóa tất cả sản phẩm của một nhà cung cấp
+     * 
+     * @param supplierId Mã nhà cung cấp
+     * @return true nếu xóa thành công, false nếu thất bại
+     */
+    public boolean deleteAllSupplierProducts(String supplierId) {
+        return supplierDAO.deleteAllSupplierProducts(supplierId);
+    }
+
+    /**
+     * Kiểm tra xem sản phẩm của nhà cung cấp đã tồn tại chưa
+     * 
+     * @param productId  Mã sản phẩm
+     * @param supplierId Mã nhà cung cấp
+     * @return true nếu đã tồn tại, false nếu chưa
+     */
+    public boolean supplierProductExists(String productId, String supplierId) {
+        return supplierDAO.supplierProductExists(productId, supplierId);
+    }
+
+    /**
+     * Tạo mã sản phẩm mới cho nhà cung cấp
+     * 
+     * @param supplierId Mã nhà cung cấp
+     * @return Mã sản phẩm mới
+     */
+    public String generateNewSupplierProductId(String supplierId) {
+        return supplierDAO.generateNewSupplierProductId(supplierId);
     }
 }

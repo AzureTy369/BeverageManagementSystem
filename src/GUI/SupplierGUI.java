@@ -2,6 +2,9 @@ package GUI;
 
 import BUS.SupplierBUS;
 import DTO.SupplierDTO;
+import BUS.ProductBUS;
+import GUI.components.SupplierDetailPanel;
+import DTO.SupplierProductDTO;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -29,6 +32,11 @@ public class SupplierGUI extends JPanel {
     private JButton updateButton;
     private JButton deleteButton;
 
+    // Thêm các thành phần cho quản lý sản phẩm
+    private JTable productTable;
+    private DefaultTableModel productTableModel;
+    private List<SupplierProductDTO> selectedProducts;
+
     // Colors
     private final Color primaryColor = new Color(0, 123, 255);
     private final Color successColor = new Color(40, 167, 69);
@@ -41,6 +49,7 @@ public class SupplierGUI extends JPanel {
 
     public SupplierGUI(SupplierBUS supplierController) {
         this.supplierController = supplierController;
+        this.selectedProducts = new ArrayList<>();
 
         setLayout(new BorderLayout());
         setOpaque(false);
@@ -346,11 +355,11 @@ public class SupplierGUI extends JPanel {
     }
 
     private void createSupplierTable() {
-        String[] columnNames = { "Mã NCC", "Tên nhà cung cấp", "Địa chỉ", "Điện thoại", "Email" };
-        tableModel = new DefaultTableModel(columnNames, 0) {
+        String[] columns = { "Mã nhà cung cấp", "Tên nhà cung cấp", "Địa chỉ", "Số điện thoại", "Email" };
+        tableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false;
+                return false; // Không cho phép chỉnh sửa trực tiếp trong bảng
             }
         };
 
@@ -390,6 +399,26 @@ public class SupplierGUI extends JPanel {
         statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 0));
 
         statusPanel.add(statusLabel, BorderLayout.WEST);
+
+        // Thêm nút xem chi tiết ở góc phải
+        JPanel rightPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        rightPanel.setOpaque(false);
+
+        JButton viewDetailButton = createOutlineButton("Xem chi tiết nhà cung cấp", primaryColor);
+        viewDetailButton.addActionListener(e -> {
+            int selectedRow = supplierTable.getSelectedRow();
+            if (selectedRow == -1) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn nhà cung cấp để xem chi tiết", "Thông báo",
+                        JOptionPane.INFORMATION_MESSAGE);
+                return;
+            }
+
+            String supplierId = supplierTable.getValueAt(selectedRow, 0).toString();
+            showSupplierDetail(supplierId);
+        });
+
+        rightPanel.add(viewDetailButton);
+        statusPanel.add(rightPanel, BorderLayout.EAST);
 
         return statusPanel;
     }
@@ -484,12 +513,13 @@ public class SupplierGUI extends JPanel {
         tableModel.setRowCount(0);
 
         for (SupplierDTO supplier : suppliers) {
-            Object[] row = new Object[5];
-            row[0] = supplier.getSupplierId();
-            row[1] = supplier.getSupplierName();
-            row[2] = supplier.getAddress();
-            row[3] = supplier.getPhone();
-            row[4] = supplier.getEmail();
+            Object[] row = {
+                    supplier.getSupplierId(),
+                    supplier.getSupplierName(),
+                    supplier.getAddress(),
+                    supplier.getPhone(),
+                    supplier.getEmail()
+            };
             tableModel.addRow(row);
         }
     }
@@ -498,7 +528,7 @@ public class SupplierGUI extends JPanel {
         // Tạo dialog
         supplierFormDialog = new JDialog();
         supplierFormDialog.setTitle("Thông tin nhà cung cấp");
-        supplierFormDialog.setSize(500, 350);
+        supplierFormDialog.setSize(700, 600);
         supplierFormDialog.setLocationRelativeTo(this);
         supplierFormDialog.setModal(true);
         supplierFormDialog.setResizable(false);
@@ -575,6 +605,49 @@ public class SupplierGUI extends JPanel {
         emailField.setFont(new Font("Arial", Font.PLAIN, 14));
         formPanel.add(emailField, gbc);
 
+        // Danh sách sản phẩm của nhà cung cấp
+        JPanel productListPanel = new JPanel(new BorderLayout(5, 5));
+        productListPanel.setBorder(BorderFactory.createTitledBorder("Danh sách sản phẩm của nhà cung cấp"));
+        productListPanel.setBackground(lightColor);
+
+        // Tạo bảng sản phẩm
+        String[] productColumns = { "Tên sản phẩm", "Đơn vị tính", "Giá", "Mô tả" };
+        productTableModel = new DefaultTableModel(productColumns, 0) {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return false;
+            }
+        };
+
+        productTable = new JTable(productTableModel);
+        productTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        productTable.getTableHeader().setReorderingAllowed(false);
+        productTable.setFont(new Font("Arial", Font.PLAIN, 12));
+        productTable.setRowHeight(25);
+
+        JScrollPane scrollPane = new JScrollPane(productTable);
+        scrollPane.setPreferredSize(new Dimension(400, 150));
+
+        // Panel nút thêm/xóa sản phẩm
+        JPanel productButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        productButtonPanel.setBackground(lightColor);
+
+        JButton addProductButton = createOutlineButton("Thêm sản phẩm", primaryColor);
+        addProductButton.setPreferredSize(new Dimension(120, 30));
+        addProductButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        addProductButton.addActionListener(e -> addProductToSupplier());
+
+        JButton removeProductButton = createOutlineButton("Xóa sản phẩm", dangerColor);
+        removeProductButton.setPreferredSize(new Dimension(120, 30));
+        removeProductButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        removeProductButton.addActionListener(e -> removeProductFromSupplier());
+
+        productButtonPanel.add(addProductButton);
+        productButtonPanel.add(removeProductButton);
+
+        productListPanel.add(scrollPane, BorderLayout.CENTER);
+        productListPanel.add(productButtonPanel, BorderLayout.SOUTH);
+
         // Button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 10, 10));
         buttonPanel.setOpaque(false);
@@ -595,16 +668,175 @@ public class SupplierGUI extends JPanel {
         buttonPanel.add(cancelButton);
 
         // Add components to main panel
-        dialogPanel.add(formPanel, BorderLayout.CENTER);
+        JPanel contentPanel = new JPanel(new BorderLayout());
+        contentPanel.setOpaque(false);
+        contentPanel.add(formPanel, BorderLayout.NORTH);
+        contentPanel.add(productListPanel, BorderLayout.CENTER);
+
+        dialogPanel.add(contentPanel, BorderLayout.CENTER);
         dialogPanel.add(buttonPanel, BorderLayout.SOUTH);
 
         supplierFormDialog.add(dialogPanel);
-        supplierFormDialog.pack();
+    }
+
+    // Thêm sản phẩm vào danh sách
+    private void addProductToSupplier() {
+        JDialog dialog = new JDialog(supplierFormDialog, "Thêm sản phẩm của nhà cung cấp", true);
+        dialog.setSize(400, 300);
+        dialog.setLocationRelativeTo(supplierFormDialog);
+
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(5, 5, 5, 5);
+
+        JTextField nameField = new JTextField(20);
+        JTextField unitField = new JTextField(20);
+        JTextField priceField = new JTextField(20);
+        JTextArea descriptionArea = new JTextArea(3, 20);
+        JScrollPane descScrollPane = new JScrollPane(descriptionArea);
+
+        gbc.gridx = 0;
+        gbc.gridy = 0;
+        panel.add(new JLabel("Tên sản phẩm:"), gbc);
+
+        gbc.gridx = 1;
+        panel.add(nameField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 1;
+        panel.add(new JLabel("Đơn vị tính:"), gbc);
+
+        gbc.gridx = 1;
+        panel.add(unitField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 2;
+        panel.add(new JLabel("Giá:"), gbc);
+
+        gbc.gridx = 1;
+        panel.add(priceField, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
+        panel.add(new JLabel("Mô tả:"), gbc);
+
+        gbc.gridx = 1;
+        panel.add(descScrollPane, gbc);
+
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        JButton saveButton = new JButton("Lưu");
+        JButton cancelButton = new JButton("Hủy");
+
+        buttonPanel.add(saveButton);
+        buttonPanel.add(cancelButton);
+
+        saveButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Validate input
+                if (nameField.getText().trim().isEmpty()) {
+                    JOptionPane.showMessageDialog(dialog, "Vui lòng nhập tên sản phẩm!", "Lỗi",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                double price = 0;
+                try {
+                    if (!priceField.getText().trim().isEmpty()) {
+                        price = Double.parseDouble(priceField.getText().trim());
+                    }
+                } catch (NumberFormatException ex) {
+                    JOptionPane.showMessageDialog(dialog, "Giá không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                // Tạo sản phẩm mới
+                String idPrefix = "TEMP"; // ID tạm thời, sẽ được thay thế khi lưu vào DB
+                if (!idField.getText().trim().isEmpty()) {
+                    idPrefix = idField.getText().trim();
+                }
+
+                SupplierProductDTO product = new SupplierProductDTO();
+                product.setProductId("TEMP" + System.currentTimeMillis()); // ID tạm thời
+                product.setSupplierId(idPrefix);
+                product.setProductName(nameField.getText().trim());
+                product.setUnit(unitField.getText().trim());
+                product.setDescription(descriptionArea.getText().trim());
+                product.setPrice(price);
+
+                // Thêm vào danh sách sản phẩm tạm thời
+                selectedProducts.add(product);
+                updateProductTable();
+
+                dialog.dispose();
+            }
+        });
+
+        cancelButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                dialog.dispose();
+            }
+        });
+
+        JPanel mainPanel = new JPanel(new BorderLayout());
+        mainPanel.add(panel, BorderLayout.CENTER);
+        mainPanel.add(buttonPanel, BorderLayout.SOUTH);
+
+        dialog.add(mainPanel);
+        dialog.setVisible(true);
+    }
+
+    // Xóa sản phẩm khỏi danh sách
+    private void removeProductFromSupplier() {
+        int selectedRow = productTable.getSelectedRow();
+        if (selectedRow < 0) {
+            JOptionPane.showMessageDialog(supplierFormDialog,
+                    "Vui lòng chọn sản phẩm cần xóa!",
+                    "Thông báo",
+                    JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        String productName = (String) productTableModel.getValueAt(selectedRow, 0);
+
+        int confirm = JOptionPane.showConfirmDialog(supplierFormDialog,
+                "Xác nhận xóa sản phẩm " + productName + " khỏi danh sách?",
+                "Xác nhận xóa",
+                JOptionPane.YES_NO_OPTION);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            // Xóa sản phẩm khỏi danh sách
+            selectedProducts.remove(selectedRow);
+            updateProductTable();
+        }
+    }
+
+    // Cập nhật bảng sản phẩm
+    private void updateProductTable() {
+        productTableModel.setRowCount(0);
+
+        for (SupplierProductDTO product : selectedProducts) {
+            Object[] rowData = {
+                    product.getProductName(),
+                    product.getUnit(),
+                    product.getPrice(),
+                    product.getDescription()
+            };
+            productTableModel.addRow(rowData);
+        }
     }
 
     private void showAddSupplierDialog() {
         // Clear form
         clearForm();
+
+        // Clear product list
+        selectedProducts.clear();
+        updateProductTable();
 
         // Generate new ID
         String newId = generateNewSupplierId();
@@ -631,10 +863,16 @@ public class SupplierGUI extends JPanel {
         if (supplier != null) {
             // Set form fields
             idField.setText(supplier.getSupplierId());
+            idField.setEditable(false);
             nameField.setText(supplier.getSupplierName());
             addressField.setText(supplier.getAddress());
             phoneField.setText(supplier.getPhone());
             emailField.setText(supplier.getEmail());
+
+            // Set product list
+            selectedProducts.clear();
+            selectedProducts.addAll(supplier.getProducts());
+            updateProductTable();
 
             // Set title and show dialog
             supplierFormDialog.setTitle("Cập nhật thông tin nhà cung cấp");
@@ -701,6 +939,10 @@ public class SupplierGUI extends JPanel {
         deleteButton.setEnabled(false);
 
         supplierTable.clearSelection();
+
+        // Clear selected products
+        selectedProducts.clear();
+        updateProductTable();
     }
 
     private void addSupplier() {
@@ -716,8 +958,23 @@ public class SupplierGUI extends JPanel {
         String phone = phoneField.getText().trim();
         String email = emailField.getText().trim();
 
-        // Add supplier
-        boolean success = supplierController.addSupplier(id, name, address, phone, email);
+        SupplierDTO supplier = new SupplierDTO(id, name, address, phone, email);
+
+        // Add supplier without products first to get the supplier ID
+        boolean success = supplierController.addSupplier(supplier);
+
+        if (success && !selectedProducts.isEmpty()) {
+            // Add products to supplier
+            for (SupplierProductDTO product : selectedProducts) {
+                product.setSupplierId(id);
+                // Assign proper product ID
+                String productId = supplierController.generateNewSupplierProductId(id);
+                product.setProductId(productId);
+
+                supplierController.addSupplierProduct(product);
+            }
+        }
+
         if (success) {
             JOptionPane.showMessageDialog(this, "Thêm nhà cung cấp thành công!");
             supplierFormDialog.dispose();
@@ -740,9 +997,27 @@ public class SupplierGUI extends JPanel {
         String phone = phoneField.getText().trim();
         String email = emailField.getText().trim();
 
-        // Update supplier
-        boolean success = supplierController.updateSupplier(id, name, address, phone, email);
+        SupplierDTO supplier = new SupplierDTO(id, name, address, phone, email);
+
+        // Update supplier with products
+        boolean success = supplierController.updateSupplier(supplier);
+
         if (success) {
+            // Update products
+            supplierController.deleteAllSupplierProducts(id);
+
+            for (SupplierProductDTO product : selectedProducts) {
+                product.setSupplierId(id);
+
+                // If it's a temp ID, generate a new one
+                if (product.getProductId().startsWith("TEMP")) {
+                    String productId = supplierController.generateNewSupplierProductId(id);
+                    product.setProductId(productId);
+                }
+
+                supplierController.addSupplierProduct(product);
+            }
+
             JOptionPane.showMessageDialog(this, "Cập nhật nhà cung cấp thành công!");
             supplierFormDialog.dispose();
             refreshSupplierData();
@@ -842,5 +1117,23 @@ public class SupplierGUI extends JPanel {
         }
 
         return true;
+    }
+
+    // Phương thức hiển thị chi tiết nhà cung cấp
+    private void showSupplierDetail(String supplierId) {
+        SupplierDTO supplier = supplierController.getSupplierById(supplierId);
+        if (supplier != null) {
+            JDialog detailDialog = new JDialog();
+            detailDialog.setTitle("Chi tiết nhà cung cấp");
+            detailDialog.setSize(800, 600);
+            detailDialog.setLocationRelativeTo(this);
+            detailDialog.setModal(true);
+
+            // Tạo supplier detail panel
+            SupplierDetailPanel detailPanel = new SupplierDetailPanel(supplier, supplierController);
+
+            detailDialog.add(detailPanel);
+            detailDialog.setVisible(true);
+        }
     }
 }

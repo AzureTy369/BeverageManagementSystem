@@ -51,6 +51,7 @@ public class MainGUI extends JFrame {
     private void initializeUI() {
         setTitle("Hệ Thống Quản Lý Nước Giải Khát");
         setSize(1920, 1080);
+        setExtendedState(JFrame.MAXIMIZED_BOTH);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLocationRelativeTo(null);
 

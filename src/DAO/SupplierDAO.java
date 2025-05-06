@@ -1,6 +1,7 @@
 package DAO;
 
 import DTO.SupplierDTO;
+import DTO.SupplierProductDTO;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -56,6 +57,28 @@ public class SupplierDAO {
             } else {
                 System.out.println("NhaCungCap table structure is up-to-date, all required columns exist.");
             }
+
+            // Kiểm tra bảng sản phẩm của nhà cung cấp
+            ResultSet tables = metaData.getTables(null, null, "SanPhamNCC", null);
+            if (!tables.next()) {
+                System.out.println("Creating SanPhamNCC table...");
+                try (Statement stmt = connection.createStatement()) {
+                    String createTableSQL = "CREATE TABLE SanPhamNCC (" +
+                            "MaSanPhamNCC VARCHAR(10) NOT NULL, " +
+                            "MaNhaCungCap VARCHAR(10) NOT NULL, " +
+                            "TenSanPham NVARCHAR(255) NOT NULL, " +
+                            "DonViTinh NVARCHAR(50), " +
+                            "MoTa NVARCHAR(500), " +
+                            "Gia DOUBLE, " +
+                            "PRIMARY KEY (MaSanPhamNCC), " +
+                            "FOREIGN KEY (MaNhaCungCap) REFERENCES NhaCungCap(MaNhaCungCap)" +
+                            ")";
+                    stmt.executeUpdate(createTableSQL);
+                    System.out.println("SanPhamNCC table created successfully.");
+                }
+            }
+            tables.close();
+
         } catch (SQLException e) {
             System.err.println("Error ensuring table structure: " + e.getMessage());
             e.printStackTrace();
@@ -90,6 +113,10 @@ public class SupplierDAO {
                 } catch (SQLException e) {
                     supplier.setEmail("");
                 }
+
+                // Lấy danh sách sản phẩm của nhà cung cấp
+                List<SupplierProductDTO> products = getProductsBySupplier(supplier.getSupplierId());
+                supplier.setProducts(products);
 
                 suppliers.add(supplier);
             }
@@ -126,6 +153,10 @@ public class SupplierDAO {
                         supplier.setEmail("");
                     }
 
+                    // Lấy danh sách sản phẩm của nhà cung cấp
+                    List<SupplierProductDTO> products = getProductsBySupplier(supplier.getSupplierId());
+                    supplier.setProducts(products);
+
                     return supplier;
                 }
             }
@@ -154,6 +185,14 @@ public class SupplierDAO {
             System.out.println("Email: " + supplier.getEmail());
 
             int rowsAffected = pstmt.executeUpdate();
+
+            // Nếu thêm thành công và có sản phẩm, thêm các sản phẩm
+            if (rowsAffected > 0 && supplier.getProducts() != null && !supplier.getProducts().isEmpty()) {
+                for (SupplierProductDTO product : supplier.getProducts()) {
+                    addSupplierProduct(product);
+                }
+            }
+
             System.out.println("Rows affected: " + rowsAffected);
             return rowsAffected > 0;
         } catch (SQLException e) {
@@ -190,6 +229,18 @@ public class SupplierDAO {
             System.out.println("Email: " + supplier.getEmail());
 
             int rowsAffected = pstmt.executeUpdate();
+
+            // Nếu cập nhật thành công và có sản phẩm, cập nhật các sản phẩm
+            if (rowsAffected > 0 && supplier.getProducts() != null) {
+                // Xóa tất cả các sản phẩm cũ
+                deleteAllSupplierProducts(supplier.getSupplierId());
+
+                // Thêm lại các sản phẩm mới
+                for (SupplierProductDTO product : supplier.getProducts()) {
+                    addSupplierProduct(product);
+                }
+            }
+
             System.out.println("Rows affected: " + rowsAffected);
             return rowsAffected > 0;
         } catch (SQLException e) {
@@ -207,6 +258,9 @@ public class SupplierDAO {
             System.err.println("Cannot delete supplier: Supplier is in use by purchase orders");
             return false;
         }
+
+        // Xóa tất cả sản phẩm của nhà cung cấp
+        deleteAllSupplierProducts(supplierId);
 
         String query = "DELETE FROM NhaCungCap WHERE MaNhaCungCap = ?";
 
@@ -304,5 +358,204 @@ public class SupplierDAO {
         } catch (SQLException e) {
             System.err.println("Error standardizing supplier IDs: " + e.getMessage());
         }
+    }
+
+    // Các phương thức quản lý sản phẩm của nhà cung cấp
+
+    /**
+     * Lấy danh sách sản phẩm của một nhà cung cấp
+     * 
+     * @param supplierId Mã nhà cung cấp
+     * @return Danh sách sản phẩm
+     */
+    public List<SupplierProductDTO> getProductsBySupplier(String supplierId) {
+        List<SupplierProductDTO> products = new ArrayList<>();
+        String query = "SELECT * FROM SanPhamNCC WHERE MaNhaCungCap = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, supplierId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    SupplierProductDTO product = new SupplierProductDTO();
+                    product.setProductId(rs.getString("MaSanPhamNCC"));
+                    product.setSupplierId(rs.getString("MaNhaCungCap"));
+                    product.setProductName(rs.getString("TenSanPham"));
+                    product.setUnit(rs.getString("DonViTinh"));
+                    product.setDescription(rs.getString("MoTa"));
+                    product.setPrice(rs.getDouble("Gia"));
+                    products.add(product);
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error getting products by supplier: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return products;
+    }
+
+    /**
+     * Thêm sản phẩm mới cho nhà cung cấp
+     * 
+     * @param product Thông tin sản phẩm
+     * @return true nếu thêm thành công, false nếu thất bại
+     */
+    public boolean addSupplierProduct(SupplierProductDTO product) {
+        String query = "INSERT INTO SanPhamNCC (MaSanPhamNCC, MaNhaCungCap, TenSanPham, DonViTinh, MoTa, Gia) VALUES (?, ?, ?, ?, ?, ?)";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, product.getProductId());
+            pstmt.setString(2, product.getSupplierId());
+            pstmt.setString(3, product.getProductName());
+            pstmt.setString(4, product.getUnit());
+            pstmt.setString(5, product.getDescription());
+            pstmt.setDouble(6, product.getPrice());
+
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            System.err.println("Error adding supplier product: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Cập nhật thông tin sản phẩm của nhà cung cấp
+     * 
+     * @param product Thông tin sản phẩm mới
+     * @return true nếu cập nhật thành công, false nếu thất bại
+     */
+    public boolean updateSupplierProduct(SupplierProductDTO product) {
+        String query = "UPDATE SanPhamNCC SET TenSanPham = ?, DonViTinh = ?, MoTa = ?, Gia = ? WHERE MaSanPhamNCC = ? AND MaNhaCungCap = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, product.getProductName());
+            pstmt.setString(2, product.getUnit());
+            pstmt.setString(3, product.getDescription());
+            pstmt.setDouble(4, product.getPrice());
+            pstmt.setString(5, product.getProductId());
+            pstmt.setString(6, product.getSupplierId());
+
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            System.err.println("Error updating supplier product: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Xóa một sản phẩm của nhà cung cấp
+     * 
+     * @param productId  Mã sản phẩm
+     * @param supplierId Mã nhà cung cấp
+     * @return true nếu xóa thành công, false nếu thất bại
+     */
+    public boolean deleteSupplierProduct(String productId, String supplierId) {
+        String query = "DELETE FROM SanPhamNCC WHERE MaSanPhamNCC = ? AND MaNhaCungCap = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, productId);
+            pstmt.setString(2, supplierId);
+
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected > 0;
+        } catch (SQLException e) {
+            System.err.println("Error deleting supplier product: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Xóa tất cả sản phẩm của một nhà cung cấp
+     * 
+     * @param supplierId Mã nhà cung cấp
+     * @return true nếu xóa thành công, false nếu thất bại
+     */
+    public boolean deleteAllSupplierProducts(String supplierId) {
+        String query = "DELETE FROM SanPhamNCC WHERE MaNhaCungCap = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, supplierId);
+
+            int rowsAffected = pstmt.executeUpdate();
+            return rowsAffected >= 0; // Có thể không có sản phẩm nào để xóa
+        } catch (SQLException e) {
+            System.err.println("Error deleting all supplier products: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Kiểm tra xem sản phẩm của nhà cung cấp đã tồn tại chưa
+     * 
+     * @param productId  Mã sản phẩm
+     * @param supplierId Mã nhà cung cấp
+     * @return true nếu đã tồn tại, false nếu chưa
+     */
+    public boolean supplierProductExists(String productId, String supplierId) {
+        String query = "SELECT COUNT(*) FROM SanPhamNCC WHERE MaSanPhamNCC = ? AND MaNhaCungCap = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, productId);
+            pstmt.setString(2, supplierId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    return rs.getInt(1) > 0;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error checking if supplier product exists: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    /**
+     * Tạo mã sản phẩm mới cho nhà cung cấp
+     * 
+     * @param supplierId Mã nhà cung cấp
+     * @return Mã sản phẩm mới
+     */
+    public String generateNewSupplierProductId(String supplierId) {
+        int maxId = 0;
+        String query = "SELECT MaSanPhamNCC FROM SanPhamNCC WHERE MaNhaCungCap = ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, supplierId);
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                while (rs.next()) {
+                    String idStr = rs.getString("MaSanPhamNCC");
+                    // Tạo prefix: SP + mã nhà cung cấp (3 chữ số cuối)
+                    String prefix = "SP" + supplierId.substring(3);
+
+                    if (idStr.startsWith(prefix)) {
+                        try {
+                            int id = Integer.parseInt(idStr.substring(5)); // "SP" + supplierId.substring(3) = 5 ký tự
+                            if (id > maxId) {
+                                maxId = id;
+                            }
+                        } catch (NumberFormatException e) {
+                            // Bỏ qua nếu không phải số
+                        }
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Error generating new supplier product ID: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        // Tạo ID mới: SP + mã nhà cung cấp (3 chữ số) + số thứ tự (2 chữ số)
+        // Tối đa: SP + 3 + 2 = 7 ký tự
+        return "SP" + supplierId.substring(3) + String.format("%02d", maxId + 1);
     }
 }
