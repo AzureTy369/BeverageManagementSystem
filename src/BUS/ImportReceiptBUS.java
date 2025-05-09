@@ -143,7 +143,9 @@ public class ImportReceiptBUS {
 
             System.out.println("Cập nhật tồn kho cho sản phẩm " + productId + " với số lượng " + quantity);
 
-            boolean result = inventoryBUS.updateInventoryQuantity(productId, quantity);
+            // Đã chuyển sang trạng thái "Đã hoàn thành", cập nhật tồn kho với tham số
+            // fromImportReceipt=false
+            boolean result = inventoryBUS.updateInventoryQuantity(productId, quantity, false);
             if (result) {
                 updatedCount++;
             } else {

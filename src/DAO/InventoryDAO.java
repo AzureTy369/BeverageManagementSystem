@@ -188,8 +188,22 @@ public class InventoryDAO {
 
     /**
      * Cập nhật số lượng tồn kho
+     * 
+     * @param productId         - Mã sản phẩm cần cập nhật
+     * @param addQuantity       - Số lượng thêm vào (có thể âm nếu giảm)
+     * @param fromImportReceipt - true nếu gọi từ ImportReceiptBUS khi tạo phiếu
+     *                          nhập, false trong các trường hợp khác
+     * @return true nếu thành công, false nếu thất bại
      */
-    public boolean updateInventoryQuantity(String productId, int addQuantity) {
+    public boolean updateInventoryQuantity(String productId, int addQuantity, boolean fromImportReceipt) {
+        // Nếu gọi từ quá trình tạo phiếu nhập mới (chưa duyệt),
+        // thì không thực hiện thao tác nào với tồn kho
+        if (fromImportReceipt) {
+            System.out.println("Bỏ qua thao tác với tồn kho cho sản phẩm " + productId +
+                    " vì phiếu nhập chưa được duyệt");
+            return true;
+        }
+
         try {
             // Lấy thông tin tồn kho hiện tại
             InventoryDTO inventory = getInventoryByProductId(productId);
@@ -212,6 +226,19 @@ public class InventoryDAO {
             System.out.println("Lỗi truy vấn updateInventoryQuantity: " + e.getMessage());
             return false;
         }
+    }
+
+    /**
+     * Cập nhật số lượng tồn kho (phương thức cũ để tương thích)
+     * 
+     * @param productId   - Mã sản phẩm cần cập nhật
+     * @param addQuantity - Số lượng thêm vào (có thể âm nếu giảm)
+     * @return true nếu thành công, false nếu thất bại
+     */
+    public boolean updateInventoryQuantity(String productId, int addQuantity) {
+        // Mặc định, giả sử đây không phải là phương thức từ ImportReceiptBUS khi tạo
+        // phiếu nhập mới
+        return updateInventoryQuantity(productId, addQuantity, false);
     }
 
     /**

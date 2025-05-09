@@ -5,6 +5,8 @@ import BUS.ProductDetailBUS;
 import DTO.ProductDTO;
 import DTO.ProductDetailDTO;
 import BUS.InventoryBUS;
+import BUS.ImportReceiptDetailBUS;
+import DTO.ImportReceiptDetail;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -326,7 +328,7 @@ public class InventoryGUI extends JPanel {
     }
 
     private void createInventoryTable() {
-        String[] columnNames = { "Mã SP", "Tên SP", "Danh mục", "Đơn vị", "Giá bán", "Tồn kho", "Trạng thái" };
+        String[] columnNames = { "Mã SP", "Tên SP", "Danh mục", "Đơn vị", "Giá nhập", "Tồn kho", "Trạng thái" };
         tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -546,6 +548,7 @@ public class InventoryGUI extends JPanel {
 
         // Khởi tạo InventoryBUS để lấy thông tin tồn kho
         InventoryBUS inventoryBUS = new InventoryBUS();
+        ImportReceiptDetailBUS importReceiptDetailBUS = new ImportReceiptDetailBUS();
 
         // Xóa dữ liệu cũ
         tableModel.setRowCount(0);
@@ -556,12 +559,16 @@ public class InventoryGUI extends JPanel {
             int quantity = inventoryBUS.getCurrentQuantity(product.getProductId());
             String status = (quantity > 0) ? "Còn hàng" : "Hết hàng";
 
+            // Lấy giá nhập từ phiếu nhập chi tiết
+            double importPrice = getImportPrice(product.getProductId(), importReceiptDetailBUS);
+            String formattedPrice = String.format("%,.0f", importPrice);
+
             Object[] row = {
                     product.getProductId(),
                     product.getProductName(),
                     product.getCategoryName(),
                     product.getUnit(),
-                    product.getPrice(),
+                    formattedPrice,
                     quantity,
                     status
             };
@@ -576,6 +583,7 @@ public class InventoryGUI extends JPanel {
 
         // Khởi tạo InventoryBUS để lấy thông tin tồn kho
         InventoryBUS inventoryBUS = new InventoryBUS();
+        ImportReceiptDetailBUS importReceiptDetailBUS = new ImportReceiptDetailBUS();
 
         // Danh sách kết quả
         List<ProductDTO> results = new ArrayList<>();
@@ -635,12 +643,16 @@ public class InventoryGUI extends JPanel {
             int stockQuantity = inventoryBUS.getCurrentQuantity(product.getProductId());
             String status = (stockQuantity > 0) ? "Còn hàng" : "Hết hàng";
 
+            // Lấy giá nhập từ phiếu nhập chi tiết
+            double importPrice = getImportPrice(product.getProductId(), importReceiptDetailBUS);
+            String formattedPrice = String.format("%,.0f", importPrice);
+
             Object[] row = {
                     product.getProductId(),
                     product.getProductName(),
                     product.getCategoryName(),
                     product.getUnit(),
-                    product.getPrice(),
+                    formattedPrice,
                     stockQuantity,
                     status
             };
@@ -654,6 +666,7 @@ public class InventoryGUI extends JPanel {
 
         // Khởi tạo InventoryBUS để lấy thông tin tồn kho
         InventoryBUS inventoryBUS = new InventoryBUS();
+        ImportReceiptDetailBUS importReceiptDetailBUS = new ImportReceiptDetailBUS();
 
         // Xóa dữ liệu cũ
         tableModel.setRowCount(0);
@@ -664,17 +677,58 @@ public class InventoryGUI extends JPanel {
             int quantity = inventoryBUS.getCurrentQuantity(product.getProductId());
             String status = (quantity > 0) ? "Còn hàng" : "Hết hàng";
 
+            // Lấy giá nhập từ phiếu nhập chi tiết
+            double importPrice = getImportPrice(product.getProductId(), importReceiptDetailBUS);
+            String formattedPrice = String.format("%,.0f", importPrice);
+
             Object[] row = {
                     product.getProductId(),
                     product.getProductName(),
                     product.getCategoryName(),
                     product.getUnit(),
-                    product.getPrice(),
+                    formattedPrice,
                     quantity,
                     status
             };
             tableModel.addRow(row);
         }
+    }
+
+    /**
+     * Lấy giá nhập hàng từ phiếu nhập chi tiết
+     * 
+     * @param productId              Mã sản phẩm cần lấy giá
+     * @param importReceiptDetailBUS ĐỐi tượng ImportReceiptDetailBUS
+     * @return Giá nhập, nếu không có thì trả về 0
+     */
+    private double getImportPrice(String productId, ImportReceiptDetailBUS importReceiptDetailBUS) {
+        // Lấy tất cả chi tiết phiếu nhập
+        List<ImportReceiptDetail> allDetails = importReceiptDetailBUS.getAllImportReceiptDetails();
+
+        // Lọc các chi tiết phiếu nhập của sản phẩm này
+        List<ImportReceiptDetail> productDetails = new ArrayList<>();
+        for (ImportReceiptDetail detail : allDetails) {
+            if (detail.getProductId().equals(productId)) {
+                productDetails.add(detail);
+            }
+        }
+
+        // Nếu không có chi tiết phiếu nhập nào, trả về 0
+        if (productDetails.isEmpty()) {
+            return 0;
+        }
+
+        // Tính tổng thành tiền và tổng số lượng để tính giá nhập trung bình
+        double totalAmount = 0;
+        int totalQuantity = 0;
+
+        for (ImportReceiptDetail detail : productDetails) {
+            totalAmount += detail.getTotal();
+            totalQuantity += detail.getQuantity();
+        }
+
+        // Tính giá nhập trung bình
+        return totalQuantity > 0 ? (totalAmount / totalQuantity) : 0;
     }
 
     private void exportToExcel() {

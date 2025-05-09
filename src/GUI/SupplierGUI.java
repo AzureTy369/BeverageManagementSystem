@@ -575,7 +575,7 @@ public class SupplierGUI extends JPanel {
         formPanel.add(phoneField);
         formPanel.add(emailLabel);
         formPanel.add(emailField);
-
+        
         // Bảng sản phẩm
         JPanel productPanel = new JPanel(new BorderLayout());
         productPanel.setBorder(BorderFactory.createTitledBorder("Danh sách sản phẩm của nhà cung cấp"));
@@ -827,9 +827,9 @@ public class SupplierGUI extends JPanel {
         // Clear form
         clearForm();
 
-        // Clear product list
-        selectedProducts.clear();
-        updateProductTable();
+        // // Clear product list
+        // selectedProducts.clear();
+        // updateProductTable();
 
         // Generate new ID
         String newId = generateNewSupplierId();

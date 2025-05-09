@@ -41,7 +41,21 @@ public class InventoryBUS {
 
     /**
      * Cập nhật số lượng tồn kho
-     * @param productId - Mã sản phẩm cần cập nhật
+     * 
+     * @param productId         - Mã sản phẩm cần cập nhật
+     * @param addQuantity       - Số lượng thêm vào (có thể âm nếu giảm)
+     * @param fromImportReceipt - true nếu gọi từ quá trình tạo phiếu nhập mới,
+     *                          false trong các trường hợp khác
+     * @return true nếu thành công, false nếu thất bại
+     */
+    public boolean updateInventoryQuantity(String productId, int addQuantity, boolean fromImportReceipt) {
+        return inventoryDAO.updateInventoryQuantity(productId, addQuantity, fromImportReceipt);
+    }
+
+    /**
+     * Cập nhật số lượng tồn kho (phương thức cũ để tương thích)
+     * 
+     * @param productId   - Mã sản phẩm cần cập nhật
      * @param addQuantity - Số lượng thêm vào (có thể âm nếu giảm)
      * @return true nếu thành công, false nếu thất bại
      */
@@ -55,9 +69,10 @@ public class InventoryBUS {
     public boolean deleteInventory(String productId) {
         return inventoryDAO.deleteInventory(productId);
     }
-    
+
     /**
      * Lấy số lượng tồn kho hiện tại của sản phẩm
+     * 
      * @param productId - Mã sản phẩm cần kiểm tra
      * @return Số lượng tồn kho hiện tại, hoặc 0 nếu sản phẩm không tồn tại
      */
@@ -65,4 +80,4 @@ public class InventoryBUS {
         InventoryDTO inventory = getInventoryByProductId(productId);
         return inventory != null ? inventory.getQuantity() : 0;
     }
-} 
+}

@@ -688,9 +688,10 @@ public class ImportGoodsGUI extends JPanel {
         SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
         String importDate = sdf.format(new Date());
 
-        // Tạo đối tượng phiếu nhập
+        // Tạo đối tượng phiếu nhập với trạng thái mặc định "Đang xử lý"
         ImportReceipt receipt = new ImportReceipt(
-                importId, supplierId, employeeId, importDate, totalAmount, "Nhập hàng từ nhà cung cấp " + supplierId);
+                importId, supplierId, employeeId, importDate, totalAmount, "Đang xử lý");
+        receipt.setStatus("Đang xử lý"); // Đảm bảo cả trường status cũng được thiết lập
 
         // Lưu phiếu nhập vào cơ sở dữ liệu
         boolean success = importReceiptController.insertImportReceipt(receipt);
@@ -756,10 +757,8 @@ public class ImportGoodsGUI extends JPanel {
                     "Phiếu nhập đã được tạo nhưng có lỗi khi thêm chi tiết phiếu.\n" +
                             "Vui lòng kiểm tra lại trong danh sách phiếu nhập.");
         } else {
-            JOptionPane.showMessageDialog(this, "Tạo phiếu nhập thành công");
-
-            // Cập nhật tồn kho
-            updateInventory(details);
+            JOptionPane.showMessageDialog(this,
+                    "Tạo phiếu nhập thành công.\nPhiếu nhập đang ở trạng thái 'Đang xử lý'. Sản phẩm sẽ được cập nhật vào tồn kho khi phiếu nhập được chuyển sang trạng thái 'Đã hoàn thành'.");
 
             // Reset form
             resetForm();
@@ -815,25 +814,6 @@ public class ImportGoodsGUI extends JPanel {
                         throw new RuntimeException("Đã hủy nhập hàng do sản phẩm không tồn tại.");
                     }
                 }
-            }
-        }
-    }
-
-    /**
-     * Cập nhật tồn kho cho các sản phẩm đã nhập
-     */
-    private void updateInventory(List<ImportReceiptDetail> details) {
-        InventoryBUS inventoryBUS = new InventoryBUS();
-
-        for (ImportReceiptDetail detail : details) {
-            String productId = detail.getProductId();
-            int quantity = detail.getQuantity();
-
-            System.out.println("Cập nhật tồn kho: Mã SP=" + productId + ", SL=" + quantity);
-
-            boolean success = inventoryBUS.updateInventoryQuantity(productId, quantity);
-            if (!success) {
-                System.out.println("Lỗi khi cập nhật tồn kho cho sản phẩm: " + productId);
             }
         }
     }

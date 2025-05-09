@@ -359,8 +359,8 @@ public class ImportReceiptsGUI extends JPanel {
     }
 
     private void createReceiptTable() {
-        String[] columnNames = { "Mã phiếu", "Nhà cung cấp", "Người tạo", "Ngày nhập", "Tổng tiền", "Ghi chú",
-                "Trạng thái" };
+        String[] columnNames = { "Mã phiếu", "Nhà cung cấp", "Người tạo", "Ngày nhập", "Tổng tiền", "Trạng thái",
+                "Ghi chú" };
         tableModel = new DefaultTableModel(columnNames, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -388,7 +388,7 @@ public class ImportReceiptsGUI extends JPanel {
         });
 
         // Thêm renderer để hiển thị trạng thái với màu sắc
-        receiptTable.getColumnModel().getColumn(6).setCellRenderer(new DefaultTableCellRenderer() {
+        receiptTable.getColumnModel().getColumn(5).setCellRenderer(new DefaultTableCellRenderer() {
             @Override
             public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected,
                     boolean hasFocus, int row, int column) {
@@ -406,6 +406,46 @@ public class ImportReceiptsGUI extends JPanel {
                 return c;
             }
         });
+    }
+
+    private void displayReceipts(List<ImportReceipt> receipts) {
+        tableModel.setRowCount(0);
+
+        SupplierBUS supplierBUS = new SupplierBUS();
+        EmployeeBUS employeeBUS = new EmployeeBUS();
+
+        for (ImportReceipt receipt : receipts) {
+            String supplierId = receipt.getSupplierId();
+            String supplierName = supplierId;
+            SupplierDTO supplier = supplierBUS.getSupplierById(supplierId);
+            if (supplier != null) {
+                supplierName = supplier.getSupplierName();
+            }
+
+            String employeeId = receipt.getEmployeeId();
+            String employeeName = employeeId;
+            EmployeeDTO employee = employeeBUS.getEmployeeById(employeeId);
+            if (employee != null) {
+                employeeName = employee.getFirstName() + " " + employee.getLastName();
+            }
+
+            // Lấy trạng thái từ trường status, nếu không có thì dùng "Đang xử lý"
+            String status = receipt.getStatus();
+            if (status == null || status.isEmpty()) {
+                status = "Đang xử lý";
+            }
+
+            Object[] rowData = {
+                    receipt.getImportId(),
+                    supplierName,
+                    employeeName,
+                    receipt.getImportDate(),
+                    receipt.getTotalAmount(),
+                    status,
+                    receipt.getNote()
+            };
+            tableModel.addRow(rowData);
+        }
     }
 
     private JPanel createStatusPanel() {
@@ -503,40 +543,6 @@ public class ImportReceiptsGUI extends JPanel {
         }
 
         displayReceipts(results);
-    }
-
-    private void displayReceipts(List<ImportReceipt> receipts) {
-        tableModel.setRowCount(0);
-
-        SupplierBUS supplierBUS = new SupplierBUS();
-        EmployeeBUS employeeBUS = new EmployeeBUS();
-
-        for (ImportReceipt receipt : receipts) {
-            String supplierId = receipt.getSupplierId();
-            String supplierName = supplierId;
-            SupplierDTO supplier = supplierBUS.getSupplierById(supplierId);
-            if (supplier != null) {
-                supplierName = supplier.getSupplierName();
-            }
-
-            String employeeId = receipt.getEmployeeId();
-            String employeeName = employeeId;
-            EmployeeDTO employee = employeeBUS.getEmployeeById(employeeId);
-            if (employee != null) {
-                employeeName = employee.getFirstName() + " " + employee.getLastName();
-            }
-
-            Object[] rowData = {
-                    receipt.getImportId(),
-                    supplierName,
-                    employeeName,
-                    receipt.getImportDate(),
-                    receipt.getTotalAmount(),
-                    receipt.getNote(),
-                    receipt.getStatus() != null ? receipt.getStatus() : "Đang xử lý"
-            };
-            tableModel.addRow(rowData);
-        }
     }
 
     private void refreshReceiptData() {
@@ -833,7 +839,14 @@ public class ImportReceiptsGUI extends JPanel {
             return;
         }
 
-        String currentStatus = receipt.getNote();
+        String currentStatus = receipt.getStatus();
+
+        // Kiểm tra nếu phiếu đã ở trạng thái "Đã hủy" thì không cho phép thay đổi
+        if ("Đã hủy".equals(currentStatus)) {
+            JOptionPane.showMessageDialog(this, "Không thể cập nhật trạng thái của phiếu nhập đã hủy.",
+                    "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
 
         // Tạo hộp thoại để chọn trạng thái
         String[] statuses = { "Đang xử lý", "Đã hoàn thành", "Đã hủy" };
@@ -859,123 +872,28 @@ public class ImportReceiptsGUI extends JPanel {
                 updateInventory = (confirm == JOptionPane.YES_OPTION);
             }
 
+            // Cập nhật cả status và note trong đối tượng receipt
+            receipt.setStatus(newStatus);
             receipt.setNote(newStatus);
             boolean success = importReceiptController.updateImportReceipt(receipt);
 
             if (success) {
+                // Cập nhật trạng thái trực tiếp trong bảng
+                tableModel.setValueAt(newStatus, selectedRow, 5); // Cột trạng thái
+                tableModel.setValueAt(newStatus, selectedRow, 6); // Cột ghi chú
+
                 if (updateInventory) {
-                    // Cập nhật tồn kho nếu người dùng đồng ý
-                    ImportReceiptDetailBUS importReceiptDetailBUS = new ImportReceiptDetailBUS();
-                    InventoryBUS inventoryBUS = new InventoryBUS();
-
-                    List<ImportReceiptDetail> receiptDetails = importReceiptDetailBUS
-                            .getImportReceiptDetailsByReceiptId(receiptId);
-                    StringBuilder resultMessage = new StringBuilder(
-                            "Cập nhật trạng thái phiếu nhập thành công!\n\nKết quả cập nhật tồn kho:\n");
-                    boolean allSuccess = true;
-
-                    for (ImportReceiptDetail detail : receiptDetails) {
-                        String productId = detail.getProductId();
-                        int quantity = detail.getQuantity();
-
-                        boolean updateResult = inventoryBUS.updateInventoryQuantity(productId, quantity);
-                        if (updateResult) {
-                            resultMessage.append("- ").append(productId).append(": +").append(quantity)
-                                    .append(" đơn vị\n");
-                        } else {
-                            resultMessage.append("- ").append(productId).append(": Lỗi cập nhật\n");
-                            allSuccess = false;
-                        }
-                    }
-
-                    if (allSuccess) {
-                        resultMessage.append("\nTất cả sản phẩm đã được cập nhật thành công!");
-                    } else {
-                        resultMessage.append("\nMột số sản phẩm không thể cập nhật. Vui lòng kiểm tra lại.");
-                    }
-
-                    JOptionPane.showMessageDialog(this, resultMessage.toString(), "Thông báo",
-                            JOptionPane.INFORMATION_MESSAGE);
+                    // Cập nhật tồn kho chỉ cho phiếu hiện tại nếu người dùng đồng ý
+                    updateInventoryForReceipt(receiptId);
                 } else {
                     JOptionPane.showMessageDialog(this, "Cập nhật trạng thái thành công!", "Thông báo",
                             JOptionPane.INFORMATION_MESSAGE);
                 }
+
+                // Làm mới dữ liệu bảng
                 refreshReceiptData();
             } else {
                 JOptionPane.showMessageDialog(this, "Cập nhật trạng thái thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-
-    /**
-     * Tải dữ liệu phiếu nhập từ CSDL
-     */
-    private void loadData() {
-        // Xóa dữ liệu cũ
-        tableModel.setRowCount(0);
-
-        System.out.println("Đang tải dữ liệu phiếu nhập...");
-
-        // Lấy danh sách phiếu nhập
-        List<ImportReceipt> receipts = importReceiptController.getAllImportReceipts();
-        System.out.println("Tìm thấy " + receipts.size() + " phiếu nhập trong CSDL");
-
-        // Lấy thông tin nhà cung cấp
-        SupplierBUS supplierBUS = new SupplierBUS();
-        List<SupplierDTO> suppliers = supplierBUS.getAllSuppliers();
-
-        // Map nhà cung cấp
-        Map<String, String> supplierMap = new HashMap<>();
-        for (SupplierDTO supplier : suppliers) {
-            supplierMap.put(supplier.getSupplierId(), supplier.getSupplierName());
-        }
-
-        // Khởi tạo ImportReceiptDetailBUS
-        ImportReceiptDetailBUS detailBUS = new ImportReceiptDetailBUS();
-
-        // Hiển thị dữ liệu
-        for (ImportReceipt receipt : receipts) {
-            // Lấy tên nhà cung cấp
-            String supplierName = supplierMap.getOrDefault(receipt.getSupplierId(), "Không xác định");
-
-            // Kiểm tra số lượng chi tiết phiếu
-            List<ImportReceiptDetail> details = detailBUS.getImportReceiptDetailsByReceiptId(receipt.getImportId());
-            int detailCount = details.size();
-
-            // Tính tổng tiền thực tế
-            double actualTotal = 0;
-            for (ImportReceiptDetail detail : details) {
-                actualTotal += detail.getTotal();
-            }
-
-            // So sánh với tổng tiền trong phiếu
-            double receiptTotal = Double.parseDouble(receipt.getTotalAmount());
-            boolean totalMismatch = Math.abs(actualTotal - receiptTotal) > 0.01;
-
-            // Thêm vào bảng
-            Object[] row = {
-                    receipt.getImportId(),
-                    supplierName,
-                    receipt.getEmployeeId(),
-                    receipt.getImportDate(),
-                    String.format("%,.0f", Double.parseDouble(receipt.getTotalAmount())),
-                    receipt.getNote(), // Trạng thái được lưu trong note
-                    detailCount + " mục"
-            };
-
-            tableModel.addRow(row);
-
-            // Gỡ lỗi
-            System.out.println("Phiếu nhập: " + receipt.getImportId() +
-                    ", NCC: " + supplierName +
-                    ", Ngày: " + receipt.getImportDate() +
-                    ", Tổng tiền: " + receipt.getTotalAmount() +
-                    ", Trạng thái: " + receipt.getNote() +
-                    ", Chi tiết: " + detailCount);
-
-            if (totalMismatch) {
-                System.out.println("  CẢNH BÁO: Tổng tiền không khớp - Phiếu: " +
-                        receiptTotal + ", Thực tế: " + actualTotal);
             }
         }
     }
@@ -996,14 +914,14 @@ public class ImportReceiptsGUI extends JPanel {
         }
 
         String currentStatus = receipt.getStatus();
-        if ("Đã hủy".equals(currentStatus)) {
+        if ("Đã hủy".equals(currentStatus) || "Đã hủy".equals(receipt.getNote())) {
             JOptionPane.showMessageDialog(this, "Không thể thay đổi trạng thái của phiếu nhập đã hủy");
             return;
         }
 
         // Tạo JComboBox cho trạng thái
         JComboBox<String> statusComboBox = new JComboBox<>(new String[] { "Đang xử lý", "Đã hoàn thành", "Đã hủy" });
-        statusComboBox.setSelectedItem(currentStatus);
+        statusComboBox.setSelectedItem(currentStatus != null ? currentStatus : "Đang xử lý");
 
         // Hiển thị dialog
         int result = JOptionPane.showConfirmDialog(
@@ -1037,27 +955,35 @@ public class ImportReceiptsGUI extends JPanel {
                 }
             }
 
-            // Nếu chuyển sang "Đã hoàn thành", hiện xác nhận
-            if ("Đã hoàn thành".equals(newStatus)) {
+            // Nếu chuyển sang "Đã hoàn thành", hiện xác nhận cập nhật tồn kho
+            boolean updateInventory = false;
+            if ("Đã hoàn thành".equals(newStatus) && !"Đã hoàn thành".equals(currentStatus)) {
                 int confirmResult = JOptionPane.showConfirmDialog(
                         this,
-                        "Khi chuyển trạng thái sang 'Đã hoàn thành', hệ thống sẽ cập nhật tồn kho.\n" +
-                                "Bạn có chắc chắn muốn thay đổi trạng thái không?",
-                        "Xác nhận thay đổi trạng thái",
+                        "Khi chuyển trạng thái sang 'Đã hoàn thành', bạn có muốn cập nhật tồn kho không?",
+                        "Xác nhận cập nhật tồn kho",
                         JOptionPane.YES_NO_OPTION,
-                        JOptionPane.INFORMATION_MESSAGE);
+                        JOptionPane.QUESTION_MESSAGE);
 
-                if (confirmResult != JOptionPane.YES_OPTION) {
-                    return;
-                }
+                updateInventory = (confirmResult == JOptionPane.YES_OPTION);
             }
 
             // Cập nhật trạng thái
-            boolean success = importReceiptController.updateImportReceiptStatus(importId, newStatus);
+            receipt.setStatus(newStatus);
+            receipt.setNote(newStatus); // Đồng bộ cả status và note
+            boolean success = importReceiptController.updateImportReceipt(receipt);
 
             if (success) {
-                JOptionPane.showMessageDialog(
-                        this,
+                // Cập nhật tồn kho nếu chuyển sang "Đã hoàn thành" và người dùng đồng ý
+                if (updateInventory) {
+                    updateInventoryForReceipt(importId);
+                }
+
+                // Cập nhật hiển thị trong bảng
+                tableModel.setValueAt(newStatus, selectedRow, 5); // Cột trạng thái
+                tableModel.setValueAt(newStatus, selectedRow, 6); // Cột ghi chú
+
+                JOptionPane.showMessageDialog(this,
                         "Đã cập nhật trạng thái phiếu nhập từ [" + currentStatus + "] thành [" + newStatus + "]",
                         "Thành công",
                         JOptionPane.INFORMATION_MESSAGE);
@@ -1065,12 +991,52 @@ public class ImportReceiptsGUI extends JPanel {
                 // Làm mới dữ liệu
                 refreshReceiptData();
             } else {
-                JOptionPane.showMessageDialog(
-                        this,
+                JOptionPane.showMessageDialog(this,
                         "Lỗi khi cập nhật trạng thái phiếu nhập",
                         "Lỗi",
                         JOptionPane.ERROR_MESSAGE);
             }
         }
+    }
+
+    /**
+     * Cập nhật tồn kho cho các sản phẩm trong một phiếu nhập cụ thể
+     * 
+     * @param receiptId Mã phiếu nhập cần cập nhật tồn kho
+     */
+    private void updateInventoryForReceipt(String receiptId) {
+        ImportReceiptDetailBUS importReceiptDetailBUS = new ImportReceiptDetailBUS();
+        InventoryBUS inventoryBUS = new InventoryBUS();
+
+        List<ImportReceiptDetail> receiptDetails = importReceiptDetailBUS
+                .getImportReceiptDetailsByReceiptId(receiptId);
+
+        StringBuilder resultMessage = new StringBuilder(
+                "Kết quả cập nhật tồn kho:\n");
+        boolean allSuccess = true;
+
+        for (ImportReceiptDetail detail : receiptDetails) {
+            String productId = detail.getProductId();
+            int quantity = detail.getQuantity();
+
+            // Sử dụng tham số fromImportReceipt=false để thực sự cập nhật tồn kho
+            boolean updateResult = inventoryBUS.updateInventoryQuantity(productId, quantity, false);
+            if (updateResult) {
+                resultMessage.append("- ").append(productId).append(": +").append(quantity)
+                        .append(" đơn vị\n");
+            } else {
+                resultMessage.append("- ").append(productId).append(": Lỗi cập nhật\n");
+                allSuccess = false;
+            }
+        }
+
+        if (allSuccess) {
+            resultMessage.append("\nTất cả sản phẩm đã được cập nhật thành công!");
+        } else {
+            resultMessage.append("\nMột số sản phẩm không thể cập nhật. Vui lòng kiểm tra lại.");
+        }
+
+        JOptionPane.showMessageDialog(this, resultMessage.toString(), "Kết quả cập nhật tồn kho",
+                JOptionPane.INFORMATION_MESSAGE);
     }
 }
