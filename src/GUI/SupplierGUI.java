@@ -244,6 +244,19 @@ public class SupplierGUI extends JPanel {
         // Thêm vào layout chính
         add(headerPanel, BorderLayout.NORTH);
         add(contentPanel, BorderLayout.CENTER);
+
+        // Thêm nút "Xóa tất cả dữ liệu"
+        JButton btnDeleteAll = new JButton("Xóa tất cả dữ liệu");
+        btnDeleteAll.setBackground(new Color(255, 99, 71)); // Màu đỏ cam
+        btnDeleteAll.setForeground(Color.WHITE);
+        btnDeleteAll.addActionListener(e -> deleteAllData());
+
+        // Thêm nút vào panel chức năng
+        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        buttonPanel.add(btnDeleteAll);
+
+        // Thêm panel chức năng vào giao diện
+        add(buttonPanel, BorderLayout.SOUTH);
     }
 
     private void createAdvancedSearchPanel() {
@@ -1135,5 +1148,80 @@ public class SupplierGUI extends JPanel {
             detailDialog.add(detailPanel);
             detailDialog.setVisible(true);
         }
+    }
+
+    /**
+     * Xóa tất cả dữ liệu nhà cung cấp và sản phẩm nhà cung cấp
+     */
+    private void deleteAllData() {
+        int confirm = JOptionPane.showConfirmDialog(
+                this,
+                "Bạn có chắc chắn muốn xóa TẤT CẢ dữ liệu nhà cung cấp và sản phẩm nhà cung cấp?\n" +
+                        "Thao tác này không thể hoàn tác!",
+                "Xác nhận xóa dữ liệu",
+                JOptionPane.YES_NO_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+
+        if (confirm == JOptionPane.YES_OPTION) {
+            try {
+                // Xóa tất cả sản phẩm nhà cung cấp trước
+                boolean productsDeleted = supplierController.deleteAllSupplierProducts();
+
+                // Sau đó xóa tất cả nhà cung cấp
+                boolean suppliersDeleted = supplierController.deleteAllSuppliers();
+
+                if (productsDeleted && suppliersDeleted) {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Đã xóa thành công tất cả dữ liệu nhà cung cấp và sản phẩm nhà cung cấp!",
+                            "Thành công",
+                            JOptionPane.INFORMATION_MESSAGE);
+
+                    // Làm mới danh sách
+                    loadSuppliers();
+                } else {
+                    JOptionPane.showMessageDialog(
+                            this,
+                            "Có lỗi xảy ra khi xóa dữ liệu. Một số dữ liệu có thể vẫn còn tồn tại.",
+                            "Lỗi",
+                            JOptionPane.ERROR_MESSAGE);
+                }
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(
+                        this,
+                        "Lỗi khi xóa dữ liệu: " + e.getMessage(),
+                        "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
+                e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * Làm mới danh sách nhà cung cấp
+     */
+    private void loadSuppliers() {
+        // Xóa dữ liệu cũ
+        tableModel.setRowCount(0);
+        List<SupplierDTO> suppliers = supplierController.getAllSuppliers();
+        suppliers.clear();
+
+        // Lấy danh sách nhà cung cấp mới
+        suppliers = supplierController.getAllSuppliers();
+
+        // Thêm nhà cung cấp vào bảng
+        for (SupplierDTO supplier : suppliers) {
+            tableModel.addRow(new Object[] {
+                    supplier.getSupplierId(),
+                    supplier.getSupplierName(),
+                    supplier.getPhone(),
+                    supplier.getAddress(),
+                    supplier.getEmail(),
+                    supplier.getProducts().size()
+            });
+        }
+
+        // Thông báo đã tải xong
+        System.out.println("Đã tải " + suppliers.size() + " nhà cung cấp");
     }
 }

@@ -1,10 +1,10 @@
 package DAO;
 
 import DTO.ProductDTO;
+import DTO.ProductCategoryDTO;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
-
 
 public class ProductDAO {
     private Connection connection;
@@ -329,5 +329,93 @@ public class ProductDAO {
         java.util.Date now = new java.util.Date();
         java.util.Date startDate = new java.util.Date(now.getTime() - 30L * 24 * 60 * 60 * 1000); // 30 days ago
         return getRevenueByCategory(startDate, now);
+    }
+
+    /**
+     * Lấy thông tin loại sản phẩm theo ID
+     * 
+     * @param categoryId ID loại sản phẩm cần lấy
+     * @return Đối tượng loại sản phẩm nếu tìm thấy, null nếu không tìm thấy
+     */
+    public ProductCategoryDTO getCategoryById(String categoryId) {
+        ProductCategoryDTO category = null;
+        try {
+            if (connection == null || connection.isClosed()) {
+                connection = DBConnection.getConnection();
+            }
+
+            String query = "SELECT * FROM loaisanpham WHERE MaLoaiSanPham = ?";
+            PreparedStatement ps = connection.prepareStatement(query);
+            ps.setString(1, categoryId);
+            ResultSet rs = ps.executeQuery();
+
+            if (rs.next()) {
+                category = new ProductCategoryDTO();
+                category.setCategoryId(rs.getString("MaLoaiSanPham"));
+                category.setCategoryName(rs.getString("TenLoaiSanPham"));
+                category.setDescription(rs.getString("MoTa"));
+            }
+
+            rs.close();
+            ps.close();
+        } catch (SQLException e) {
+            System.err.println("Lỗi khi lấy thông tin loại sản phẩm: " + e.getMessage());
+            e.printStackTrace();
+        }
+        return category;
+    }
+
+    /**
+     * Thêm loại sản phẩm mới vào CSDL
+     * 
+     * @param category Đối tượng loại sản phẩm cần thêm
+     * @return true nếu thêm thành công, false nếu thất bại
+     */
+    public boolean addCategory(ProductCategoryDTO category) {
+        try {
+            if (connection == null || connection.isClosed()) {
+                connection = DBConnection.getConnection();
+            }
+
+            // Kiểm tra xem loại sản phẩm đã tồn tại chưa
+            String checkQuery = "SELECT COUNT(*) FROM loaisanpham WHERE MaLoaiSanPham = ?";
+            PreparedStatement ps = connection.prepareStatement(checkQuery);
+            ps.setString(1, category.getCategoryId());
+            ResultSet rs = ps.executeQuery();
+
+            boolean exists = false;
+            if (rs.next() && rs.getInt(1) > 0) {
+                exists = true;
+            }
+
+            rs.close();
+            ps.close();
+
+            if (exists) {
+                // Loại sản phẩm đã tồn tại, thực hiện cập nhật
+                String updateQuery = "UPDATE loaisanpham SET TenLoaiSanPham = ?, MoTa = ? WHERE MaLoaiSanPham = ?";
+                ps = connection.prepareStatement(updateQuery);
+                ps.setString(1, category.getCategoryName());
+                ps.setString(2, category.getDescription());
+                ps.setString(3, category.getCategoryId());
+                int result = ps.executeUpdate();
+                ps.close();
+                return result > 0;
+            } else {
+                // Loại sản phẩm chưa tồn tại, thêm mới
+                String insertQuery = "INSERT INTO loaisanpham (MaLoaiSanPham, TenLoaiSanPham, MoTa) VALUES (?, ?, ?)";
+                ps = connection.prepareStatement(insertQuery);
+                ps.setString(1, category.getCategoryId());
+                ps.setString(2, category.getCategoryName());
+                ps.setString(3, category.getDescription());
+                int result = ps.executeUpdate();
+                ps.close();
+                return result > 0;
+            }
+        } catch (SQLException e) {
+            System.err.println("Lỗi khi thêm loại sản phẩm: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 }

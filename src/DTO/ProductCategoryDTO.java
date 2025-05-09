@@ -1,5 +1,8 @@
 package DTO;
 
+/**
+ * Class DTO dùng để lưu trữ thông tin loại sản phẩm
+ */
 public class ProductCategoryDTO {
     private String categoryId;
     private String categoryName;

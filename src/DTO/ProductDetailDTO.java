@@ -5,6 +5,7 @@ public class ProductDetailDTO {
     private String productId;
     private String size;
     private double price;
+    private int quantity;
 
     // For linking to product name in UI
     private String productName;
@@ -12,11 +13,12 @@ public class ProductDetailDTO {
     public ProductDetailDTO() {
     }
 
-    public ProductDetailDTO(String detailId, String productId, String size, double price) {
+    public ProductDetailDTO(String detailId, String productId, String size, double price, int quantity) {
         this.detailId = detailId;
         this.productId = productId;
         this.size = size;
         this.price = price;
+        this.quantity = quantity;
     }
 
     public String getDetailId() {
@@ -49,6 +51,14 @@ public class ProductDetailDTO {
 
     public void setPrice(double price) {
         this.price = price;
+    }
+
+    public int getQuantity() {
+        return quantity;
+    }
+
+    public void setQuantity(int quantity) {
+        this.quantity = quantity;
     }
 
     public String getProductName() {

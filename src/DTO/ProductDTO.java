@@ -7,6 +7,7 @@ public class ProductDTO {
     private String description;
     private String image;
     private String unit;
+    private double price;
 
     // For linking to category name in UI
     private String categoryName;
@@ -18,13 +19,14 @@ public class ProductDTO {
     }
 
     public ProductDTO(String productId, String productName, String categoryId, String description, String image,
-            String unit) {
+            String unit, double price) {
         this.productId = productId;
         this.productName = productName;
         this.categoryId = categoryId;
         this.description = description;
         this.image = image;
         this.unit = unit;
+        this.price = price;
     }
 
     public String getProductId() {
@@ -73,6 +75,14 @@ public class ProductDTO {
 
     public void setUnit(String unit) {
         this.unit = unit;
+    }
+
+    public double getPrice() {
+        return price;
+    }
+
+    public void setPrice(double price) {
+        this.price = price;
     }
 
     public String getCategoryName() {

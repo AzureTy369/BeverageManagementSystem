@@ -26,6 +26,9 @@ public class MainGUI extends JFrame {
     private SupplierGUI supplierPanel;
     private ProductManagementGUI productPanel;
     private ProductStatisticsGUI productStatisticsPanel;
+    private ImportGoodsGUI importGoodsPanel;
+    private ImportReceiptsGUI importReceiptsPanel;
+    private InventoryGUI inventoryPanel;
 
     // Các màu sắc chung cho giao diện
     private final Color primaryColor = new Color(51, 122, 183);
@@ -186,6 +189,21 @@ public class MainGUI extends JFrame {
         statisticsButton.addActionListener(e -> showProductStatisticsPanel());
         navigationPanel.add(statisticsButton);
 
+        // Nhập hàng
+        JButton importGoodsButton = createNavigationButton("Nhập hàng", "\uD83D\uDEE0");
+        importGoodsButton.addActionListener(e -> showImportGoodsPanel());
+        navigationPanel.add(importGoodsButton);
+
+        // Phiếu nhập
+        JButton importReceiptsButton = createNavigationButton("Phiếu nhập", "\uD83D\uDCC3");
+        importReceiptsButton.addActionListener(e -> showImportReceiptsPanel());
+        navigationPanel.add(importReceiptsButton);
+
+        // Tồn kho
+        JButton inventoryButton = createNavigationButton("Tồn kho", "\uD83D\uDCD6");
+        inventoryButton.addActionListener(e -> showInventoryPanel());
+        navigationPanel.add(inventoryButton);
+
         // Add scrolling capability
         JScrollPane scrollPane = new JScrollPane(navigationPanel);
         scrollPane.setBorder(null);
@@ -316,6 +334,27 @@ public class MainGUI extends JFrame {
             productStatisticsPanel = new ProductStatisticsGUI(productController, productDetailController);
         }
         showPanel(productStatisticsPanel);
+    }
+
+    private void showImportGoodsPanel() {
+        if (importGoodsPanel == null) {
+            importGoodsPanel = new ImportGoodsGUI();
+        }
+        showPanel(importGoodsPanel);
+    }
+
+    private void showImportReceiptsPanel() {
+        if (importReceiptsPanel == null) {
+            importReceiptsPanel = new ImportReceiptsGUI();
+        }
+        showPanel(importReceiptsPanel);
+    }
+
+    private void showInventoryPanel() {
+        if (inventoryPanel == null) {
+            inventoryPanel = new InventoryGUI(productController, productDetailController);
+        }
+        showPanel(inventoryPanel);
     }
 
     // Helper method to show panels

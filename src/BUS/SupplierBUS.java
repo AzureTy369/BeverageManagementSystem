@@ -171,6 +171,15 @@ public class SupplierBUS {
     }
 
     /**
+     * Xóa tất cả sản phẩm của tất cả nhà cung cấp
+     * 
+     * @return true nếu xóa thành công, false nếu thất bại
+     */
+    public boolean deleteAllSupplierProducts() {
+        return supplierDAO.deleteAllSupplierProducts();
+    }
+
+    /**
      * Kiểm tra xem sản phẩm của nhà cung cấp đã tồn tại chưa
      * 
      * @param productId  Mã sản phẩm
@@ -189,5 +198,14 @@ public class SupplierBUS {
      */
     public String generateNewSupplierProductId(String supplierId) {
         return supplierDAO.generateNewSupplierProductId(supplierId);
+    }
+
+    /**
+     * Xóa tất cả nhà cung cấp
+     * 
+     * @return true nếu xóa thành công, false nếu thất bại
+     */
+    public boolean deleteAllSuppliers() {
+        return supplierDAO.deleteAllSuppliers();
     }
 }

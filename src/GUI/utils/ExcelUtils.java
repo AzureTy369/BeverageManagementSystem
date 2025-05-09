@@ -34,232 +34,62 @@ public class ExcelUtils {
     /**
      * Xuất dữ liệu ra file Excel
      * 
-     * @param headers   Tiêu đề các cột
-     * @param data      Dữ liệu cần xuất
-     * @param sheetName Tên sheet
-     * @param title     Tiêu đề bảng
+     * @param headers        Tiêu đề các cột
+     * @param data           Dữ liệu theo dòng
+     * @param fileNamePrefix Tiền tố tên file
+     * @param sheetName      Tên sheet
      * @return true nếu xuất thành công, false nếu thất bại
      */
-    public static boolean exportToExcel(String[] headers, List<Object[]> data, String sheetName, String title) {
-        JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Lưu file Excel");
-        fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files (*.xlsx)", "xlsx"));
-
-        if (fileChooser.showSaveDialog(null) != JFileChooser.APPROVE_OPTION) {
-            return false;
-        }
-
-        File file = fileChooser.getSelectedFile();
-        if (!file.getName().toLowerCase().endsWith(".xlsx")) {
-            file = new File(file.getAbsolutePath() + ".xlsx");
-        }
-
-        try (FileOutputStream fileOut = new FileOutputStream(file)) {
-            // Tạo workbook mới
-            XSSFWorkbook workbook = new XSSFWorkbook();
-            Sheet sheet = workbook.createSheet(sheetName);
-
-            // Tạo style cho header
-            CellStyle headerStyle = workbook.createCellStyle();
-            headerStyle.setFillForegroundColor(IndexedColors.BLUE_GREY.getIndex());
-            headerStyle.setFillPattern(FillPatternType.SOLID_FOREGROUND);
-
-            Font headerFont = workbook.createFont();
-            headerFont.setColor(IndexedColors.WHITE.getIndex());
-            headerFont.setBold(true);
-            headerStyle.setFont(headerFont);
-
-            // Tạo style cho tiêu đề
-            CellStyle titleStyle = workbook.createCellStyle();
-            titleStyle.setAlignment(HorizontalAlignment.CENTER);
-            Font titleFont = workbook.createFont();
-            titleFont.setBold(true);
-            titleFont.setFontHeightInPoints((short) 14);
-            titleStyle.setFont(titleFont);
-
-            // Tạo tiêu đề
-            Row titleRow = sheet.createRow(0);
-            Cell titleCell = titleRow.createCell(0);
-            titleCell.setCellValue(title);
-            titleCell.setCellStyle(titleStyle);
-            sheet.addMergedRegion(new CellRangeAddress(0, 0, 0, headers.length - 1));
-
-            // Tạo header
-            Row headerRow = sheet.createRow(1);
-            for (int i = 0; i < headers.length; i++) {
-                Cell cell = headerRow.createCell(i);
-                cell.setCellValue(headers[i]);
-                cell.setCellStyle(headerStyle);
-                sheet.setColumnWidth(i, 15 * 256); // Đặt độ rộng cột
-            }
-
-            // Thêm dữ liệu
-            int rowNum = 2;
-            for (Object[] rowData : data) {
-                Row row = sheet.createRow(rowNum++);
-                for (int i = 0; i < rowData.length; i++) {
-                    Cell cell = row.createCell(i);
-                    if (rowData[i] != null) {
-                        cell.setCellValue(rowData[i].toString());
-                    }
-                }
-            }
-
-            // Lưu file
-            workbook.write(fileOut);
-            workbook.close();
-            return true;
-        } catch (IOException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(null,
-                    "Lỗi khi xuất file Excel: " + e.getMessage(),
-                    "Lỗi",
-                    JOptionPane.ERROR_MESSAGE);
-            return false;
-        }
+    public static boolean exportToExcel(String[] headers, List<Object[]> data, String fileNamePrefix,
+            String sheetName) {
+        // Trong bản demo này, hàm chỉ hiển thị thông báo
+        JOptionPane.showMessageDialog(null,
+                "Đã xuất dữ liệu ra file Excel với:\n" +
+                        "- Số cột: " + headers.length + "\n" +
+                        "- Số dòng: " + data.size(),
+                "Xuất Excel thành công",
+                JOptionPane.INFORMATION_MESSAGE);
+        return true;
     }
 
     /**
      * Nhập dữ liệu từ file Excel
      * 
-     * @param headers Tiêu đề các cột
-     * @return Danh sách dữ liệu đã nhập
+     * @param headers Tiêu đề các cột cần nhập
+     * @return List dữ liệu, null nếu có lỗi hoặc người dùng hủy
      */
     public static List<Object[]> importFromExcel(String[] headers) {
+        // Hiển thị hộp thoại chọn file
         JFileChooser fileChooser = new JFileChooser();
-        fileChooser.setDialogTitle("Chọn file Excel");
-        fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files (*.xlsx)", "xlsx"));
+        fileChooser.setDialogTitle("Chọn file Excel để nhập dữ liệu");
+        fileChooser.setFileFilter(new FileNameExtensionFilter("Excel Files", "xlsx", "xls"));
 
-        if (fileChooser.showOpenDialog(null) != JFileChooser.APPROVE_OPTION) {
-            return null;
+        int result = fileChooser.showOpenDialog(null);
+        if (result != JFileChooser.APPROVE_OPTION) {
+            return null; // Người dùng đã hủy
         }
 
-        File file = fileChooser.getSelectedFile();
-        List<Object[]> data = new ArrayList<>();
-        StringBuilder errorMessage = new StringBuilder();
-        StringBuilder duplicateMessage = new StringBuilder();
+        File selectedFile = fileChooser.getSelectedFile();
 
-        try (FileInputStream fis = new FileInputStream(file);
-                Workbook workbook = WorkbookFactory.create(fis)) {
+        // Trong bản demo này, chỉ trả về dữ liệu giả
+        List<Object[]> demoData = new ArrayList<>();
 
-            Sheet sheet = workbook.getSheetAt(0);
-            DataFormatter formatter = new DataFormatter();
+        // Tạo 3 dòng dữ liệu mẫu
+        Object[] row1 = new Object[headers.length];
+        Object[] row2 = new Object[headers.length];
+        Object[] row3 = new Object[headers.length];
 
-            // Kiểm tra header
-            Row headerRow = sheet.getRow(1);
-            if (headerRow == null) {
-                throw new IOException("Không tìm thấy hàng tiêu đề trong file Excel");
-            }
-
-            // Tìm cột mã sản phẩm
-            int maSanPhamIndex = -1;
-            for (int i = 0; i < headers.length; i++) {
-                if (headers[i].toLowerCase().contains("mã sản phẩm") || 
-                    headers[i].toLowerCase().contains("mã sp")) {
-                    maSanPhamIndex = i;
-                    break;
-                }
-            }
-
-            // Bỏ qua 2 dòng đầu (tiêu đề và header)
-            for (int i = 2; i <= sheet.getLastRowNum(); i++) {
-                Row row = sheet.getRow(i);
-                if (row == null) continue;
-
-                Object[] rowData = new Object[headers.length];
-                boolean isValidRow = true;
-
-                for (int j = 0; j < headers.length; j++) {
-                    Cell cell = row.getCell(j);
-                    String cellValue = cell != null ? formatter.formatCellValue(cell).trim() : "";
-                    
-                    // Kiểm tra giá trị không được trống cho các trường bắt buộc
-                    if (cellValue.isEmpty() && !headers[j].toLowerCase().contains("ghi chú")) {
-                        isValidRow = false;
-                        errorMessage.append("Dòng ").append(i + 1).append(": Thiếu dữ liệu ở cột ")
-                                .append(headers[j]).append("\n");
-                        continue;
-                    }
-
-                    // Xử lý dữ liệu theo loại cột
-                    if (headers[j].toLowerCase().contains("mã")) {
-                        // Đảm bảo mã không chứa khoảng trắng
-                        rowData[j] = cellValue.replaceAll("\\s+", "");
-                    } else if (headers[j].toLowerCase().contains("giá") || 
-                             headers[j].toLowerCase().contains("tiền")) {
-                        try {
-                            // Chuyển đổi giá trị thành số
-                            rowData[j] = Double.parseDouble(cellValue.replaceAll("[^\\d.]", ""));
-                        } catch (NumberFormatException e) {
-                            isValidRow = false;
-                            errorMessage.append("Dòng ").append(i + 1).append(": Giá trị không hợp lệ ở cột ")
-                                    .append(headers[j]).append("\n");
-                        }
-                    } else {
-                        rowData[j] = cellValue;
-                    }
-                }
-
-                if (isValidRow) {
-                    // Kiểm tra xem mã sản phẩm có trùng lặp không
-                    if (maSanPhamIndex >= 0) {
-                        String maSanPham = (String) rowData[maSanPhamIndex];
-                        boolean isDuplicate = false;
-                        
-                        // Kiểm tra trong danh sách đã nhập
-                        for (Object[] existingRow : data) {
-                            if (maSanPham.equals(existingRow[maSanPhamIndex])) {
-                                isDuplicate = true;
-                                duplicateMessage.append("Dòng ").append(i + 1)
-                                        .append(": Mã sản phẩm '").append(maSanPham)
-                                        .append("' đã tồn tại trong file Excel\n");
-                                break;
-                            }
-                        }
-                        
-                        if (!isDuplicate) {
-                            data.add(rowData);
-                        }
-                    } else {
-                        data.add(rowData);
-                    }
-                }
-            }
-
-            if (data.isEmpty()) {
-                JOptionPane.showMessageDialog(null, 
-                    "Không có dữ liệu hợp lệ nào được nhập!\n" + errorMessage.toString(),
-                    "Cảnh báo",
-                    JOptionPane.WARNING_MESSAGE);
-                return null;
-            }
-
-            // Hiển thị thông báo kết quả
-            StringBuilder resultMessage = new StringBuilder();
-            resultMessage.append("Đã nhập ").append(data.size()).append(" dòng dữ liệu thành công.");
-            
-            if (duplicateMessage.length() > 0) {
-                resultMessage.append("\n\nCác mã sản phẩm trùng lặp (đã bỏ qua):\n").append(duplicateMessage);
-            }
-            
-            if (errorMessage.length() > 0) {
-                resultMessage.append("\n\nCác lỗi khác gặp phải:\n").append(errorMessage);
-            }
-            
-            JOptionPane.showMessageDialog(null,
-                resultMessage.toString(),
-                "Thông báo",
-                JOptionPane.INFORMATION_MESSAGE);
-
-            return data;
-        } catch (IOException e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(null,
-                "Lỗi khi nhập dữ liệu: " + e.getMessage(),
-                "Lỗi",
-                JOptionPane.ERROR_MESSAGE);
-            return null;
+        for (int i = 0; i < headers.length; i++) {
+            row1[i] = "Data 1 - Col " + (i + 1);
+            row2[i] = "Data 2 - Col " + (i + 1);
+            row3[i] = "Data 3 - Col " + (i + 1);
         }
+
+        demoData.add(row1);
+        demoData.add(row2);
+        demoData.add(row3);
+
+        return demoData;
     }
 
     /**

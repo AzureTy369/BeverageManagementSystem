@@ -5,6 +5,8 @@ import DTO.SupplierProductDTO;
 import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
 
 public class SupplierDAO {
     private Connection connection;
@@ -520,42 +522,112 @@ public class SupplierDAO {
 
     /**
      * Tạo mã sản phẩm mới cho nhà cung cấp
-     * 
-     * @param supplierId Mã nhà cung cấp
-     * @return Mã sản phẩm mới
+     * Format đơn giản: SPNCC + mã nhà cung cấp + số thứ tự
      */
     public String generateNewSupplierProductId(String supplierId) {
-        int maxId = 0;
-        String query = "SELECT MaSanPhamNCC FROM SanPhamNCC WHERE MaNhaCungCap = ?";
+        System.out.println("Đang tạo mã sản phẩm mới cho nhà cung cấp " + supplierId);
 
-        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-            pstmt.setString(1, supplierId);
+        // Lấy mã số nhà cung cấp (ví dụ: NCC001 -> 001)
+        String nccNum = supplierId.substring(3); // Lấy "001" từ "NCC001"
+        System.out.println("Mã số nhà cung cấp: " + nccNum);
 
-            try (ResultSet rs = pstmt.executeQuery()) {
-                while (rs.next()) {
-                    String idStr = rs.getString("MaSanPhamNCC");
-                    // Tạo prefix: SP + mã nhà cung cấp (3 chữ số cuối)
-                    String prefix = "SP" + supplierId.substring(3);
+        // Đếm các sản phẩm hiện có của nhà cung cấp này
+        int currentCount = 0;
+        try {
+            String countQuery = "SELECT COUNT(*) FROM SanPhamNCC WHERE MaNhaCungCap = ?";
+            try (PreparedStatement pstmt = connection.prepareStatement(countQuery)) {
+                pstmt.setString(1, supplierId);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        currentCount = rs.getInt(1);
+                    }
+                }
+            }
+            System.out.println("Số lượng sản phẩm hiện có của NCC " + supplierId + ": " + currentCount);
+        } catch (SQLException e) {
+            System.err.println("Lỗi khi đếm sản phẩm nhà cung cấp: " + e.getMessage());
+        }
 
-                    if (idStr.startsWith(prefix)) {
-                        try {
-                            int id = Integer.parseInt(idStr.substring(5)); // "SP" + supplierId.substring(3) = 5 ký tự
-                            if (id > maxId) {
-                                maxId = id;
-                            }
-                        } catch (NumberFormatException e) {
-                            // Bỏ qua nếu không phải số
-                        }
+        // Tạo mã mới với định dạng SPNCC001xx
+        String newId = "SPNCC" + nccNum + String.format("%02d", currentCount + 1);
+
+        // Kiểm tra xem mã này đã tồn tại chưa
+        boolean exists = false;
+        try {
+            String checkQuery = "SELECT COUNT(*) FROM SanPhamNCC WHERE MaSanPhamNCC = ?";
+            try (PreparedStatement pstmt = connection.prepareStatement(checkQuery)) {
+                pstmt.setString(1, newId);
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        exists = rs.getInt(1) > 0;
                     }
                 }
             }
         } catch (SQLException e) {
-            System.err.println("Error generating new supplier product ID: " + e.getMessage());
-            e.printStackTrace();
+            System.err.println("Lỗi khi kiểm tra mã sản phẩm: " + e.getMessage());
         }
 
-        // Tạo ID mới: SP + mã nhà cung cấp (3 chữ số) + số thứ tự (2 chữ số)
-        // Tối đa: SP + 3 + 2 = 7 ký tự
-        return "SP" + supplierId.substring(3) + String.format("%02d", maxId + 1);
+        // Nếu mã đã tồn tại, thử với số thứ tự tiếp theo
+        if (exists) {
+            for (int i = currentCount + 2; i <= 99; i++) {
+                String altId = "SPNCC" + nccNum + String.format("%02d", i);
+                try {
+                    String checkQuery = "SELECT COUNT(*) FROM SanPhamNCC WHERE MaSanPhamNCC = ?";
+                    try (PreparedStatement pstmt = connection.prepareStatement(checkQuery)) {
+                        pstmt.setString(1, altId);
+                        try (ResultSet rs = pstmt.executeQuery()) {
+                            if (rs.next() && rs.getInt(1) == 0) {
+                                newId = altId;
+                                System.out.println("Mã ban đầu đã tồn tại, sử dụng mã thay thế: " + newId);
+                                break;
+                            }
+                        }
+                    }
+                } catch (SQLException e) {
+                    System.err.println("Lỗi khi kiểm tra mã thay thế: " + e.getMessage());
+                }
+            }
+        }
+
+        System.out.println("Mã sản phẩm mới được tạo: " + newId);
+        return newId;
+    }
+
+    /**
+     * Xóa tất cả sản phẩm của tất cả nhà cung cấp
+     * 
+     * @return true nếu xóa thành công, false nếu thất bại
+     */
+    public boolean deleteAllSupplierProducts() {
+        String query = "DELETE FROM SanPhamNCC";
+
+        try (Statement stmt = connection.createStatement()) {
+            int rowsAffected = stmt.executeUpdate(query);
+            System.out.println("Đã xóa " + rowsAffected + " sản phẩm nhà cung cấp");
+            return true;
+        } catch (SQLException e) {
+            System.err.println("Lỗi khi xóa tất cả sản phẩm nhà cung cấp: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+    /**
+     * Xóa tất cả nhà cung cấp
+     * 
+     * @return true nếu xóa thành công, false nếu thất bại
+     */
+    public boolean deleteAllSuppliers() {
+        String query = "DELETE FROM NhaCungCap";
+
+        try (Statement stmt = connection.createStatement()) {
+            int rowsAffected = stmt.executeUpdate(query);
+            System.out.println("Đã xóa " + rowsAffected + " nhà cung cấp");
+            return true;
+        } catch (SQLException e) {
+            System.err.println("Lỗi khi xóa tất cả nhà cung cấp: " + e.getMessage());
+            e.printStackTrace();
+            return false;
+        }
     }
 }

@@ -4,6 +4,7 @@ import DTO.ProductDTO;
 import DAO.ProductDAO;
 import java.util.List;
 import java.util.ArrayList;
+import DTO.ProductCategoryDTO;
 
 public class ProductBUS {
     private ProductDAO productDAO;
@@ -143,5 +144,31 @@ public class ProductBUS {
 
     public List<Object[]> getRevenueByCategory(java.util.Date startDate, java.util.Date endDate) {
         return productDAO.getRevenueByCategory(startDate, endDate);
+    }
+
+    /**
+     * Lấy thông tin loại sản phẩm theo mã
+     * 
+     * @param categoryId Mã loại sản phẩm
+     * @return Loại sản phẩm nếu tồn tại, null nếu không tồn tại
+     */
+    public ProductCategoryDTO getCategoryById(String categoryId) {
+        return productDAO.getCategoryById(categoryId);
+    }
+
+    /**
+     * Thêm loại sản phẩm mới
+     * 
+     * @param categoryId   Mã loại sản phẩm
+     * @param categoryName Tên loại sản phẩm
+     * @param description  Mô tả loại sản phẩm
+     * @return true nếu thành công, false nếu thất bại
+     */
+    public boolean addCategory(String categoryId, String categoryName, String description) {
+        ProductCategoryDTO category = new ProductCategoryDTO();
+        category.setCategoryId(categoryId);
+        category.setCategoryName(categoryName);
+        category.setDescription(description);
+        return productDAO.addCategory(category);
     }
 }

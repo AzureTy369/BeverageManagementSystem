@@ -65,4 +65,13 @@ public class ProductDetailBUS {
 
         return results;
     }
+
+    // Phương thức lấy chi tiết sản phẩm theo mã sản phẩm
+    public ProductDetailDTO getProductDetailByProductId(String productId) {
+        List<ProductDetailDTO> details = getProductDetailsByProduct(productId);
+        if (details != null && !details.isEmpty()) {
+            return details.get(0);
+        }
+        return null;
+    }
 }
