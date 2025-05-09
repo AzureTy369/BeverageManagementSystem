@@ -3,7 +3,6 @@ package BUS;
 import DAO.ImportReceiptDetailDAO;
 import DTO.ImportReceiptDetail;
 import java.util.List;
-import java.util.ArrayList;
 
 public class ImportReceiptDetailBUS {
     private ImportReceiptDetailDAO importReceiptDetailDAO;

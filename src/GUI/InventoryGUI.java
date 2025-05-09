@@ -3,7 +3,6 @@ package GUI;
 import BUS.ProductBUS;
 import BUS.ProductDetailBUS;
 import DTO.ProductDTO;
-import DTO.ProductDetailDTO;
 import BUS.InventoryBUS;
 import BUS.ImportReceiptDetailBUS;
 import DTO.ImportReceiptDetail;
@@ -20,7 +19,7 @@ import GUI.utils.ButtonHelper;
 
 public class InventoryGUI extends JPanel {
     private ProductBUS productController;
-    private ProductDetailBUS productDetailController;
+    
 
     private JTable inventoryTable;
     private DefaultTableModel tableModel;
@@ -29,14 +28,10 @@ public class InventoryGUI extends JPanel {
     private JPanel advancedSearchPanel;
 
     private final Color primaryColor = new Color(0, 123, 255);
-    private final Color successColor = new Color(40, 167, 69);
-    private final Color warningColor = new Color(255, 193, 7);
-    private final Color dangerColor = new Color(220, 53, 69);
     private final Color lightColor = new Color(248, 249, 250);
 
     public InventoryGUI(ProductBUS productController, ProductDetailBUS productDetailController) {
         this.productController = productController;
-        this.productDetailController = productDetailController;
 
         setLayout(new BorderLayout());
         setOpaque(false);
@@ -366,132 +361,6 @@ public class InventoryGUI extends JPanel {
         return ButtonHelper.createButton(text, color);
     }
 
-    private void showUpdateInventoryDialog() {
-        int selectedRow = inventoryTable.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this,
-                    "Vui lòng chọn sản phẩm cần cập nhật tồn kho",
-                    "Thông báo",
-                    JOptionPane.INFORMATION_MESSAGE);
-            return;
-        }
-
-        String productId = inventoryTable.getValueAt(selectedRow, 0).toString();
-        String productName = inventoryTable.getValueAt(selectedRow, 1).toString();
-        String currentStock = inventoryTable.getValueAt(selectedRow, 5).toString();
-
-        // Khởi tạo InventoryBUS để cập nhật tồn kho
-        InventoryBUS inventoryBUS = new InventoryBUS();
-
-        // Tạo dialog cập nhật tồn kho
-        JDialog updateDialog = new JDialog();
-        updateDialog.setTitle("Cập nhật tồn kho");
-        updateDialog.setSize(400, 250);
-        updateDialog.setLocationRelativeTo(this);
-        updateDialog.setModal(true);
-        updateDialog.setLayout(new BorderLayout());
-
-        JPanel dialogPanel = new JPanel(new GridBagLayout());
-        dialogPanel.setBorder(new EmptyBorder(15, 15, 15, 15));
-        dialogPanel.setBackground(lightColor);
-
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-        gbc.insets = new Insets(5, 5, 5, 5);
-
-        // Thông tin sản phẩm
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        JLabel productLabel = new JLabel("Sản phẩm:");
-        productLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        dialogPanel.add(productLabel, gbc);
-
-        gbc.gridx = 1;
-        JLabel productValueLabel = new JLabel(productName);
-        productValueLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        dialogPanel.add(productValueLabel, gbc);
-
-        // Tồn kho hiện tại
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        JLabel currentStockLabel = new JLabel("Tồn kho hiện tại:");
-        currentStockLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        dialogPanel.add(currentStockLabel, gbc);
-
-        gbc.gridx = 1;
-        JLabel currentStockValueLabel = new JLabel(currentStock);
-        currentStockValueLabel.setFont(new Font("Arial", Font.PLAIN, 14));
-        dialogPanel.add(currentStockValueLabel, gbc);
-
-        // Số lượng mới
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        JLabel newStockLabel = new JLabel("Số lượng mới:");
-        newStockLabel.setFont(new Font("Arial", Font.BOLD, 14));
-        dialogPanel.add(newStockLabel, gbc);
-
-        gbc.gridx = 1;
-        JTextField newStockField = new JTextField(10);
-        newStockField.setFont(new Font("Arial", Font.PLAIN, 14));
-        newStockField.setText(currentStock);
-        dialogPanel.add(newStockField, gbc);
-
-        // Nút lưu và hủy
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.setBackground(lightColor);
-
-        JButton saveButton = ButtonHelper.createButton("Lưu", successColor);
-        saveButton.addActionListener(e -> {
-            try {
-                int newStock = Integer.parseInt(newStockField.getText().trim());
-                if (newStock < 0) {
-                    JOptionPane.showMessageDialog(updateDialog,
-                            "Số lượng tồn kho không thể âm",
-                            "Lỗi",
-                            JOptionPane.ERROR_MESSAGE);
-                    return;
-                }
-
-                // Lấy số lượng tồn kho hiện tại
-                int currentQuantity = inventoryBUS.getCurrentQuantity(productId);
-
-                // Tính toán sự thay đổi (có thể là số âm nếu giảm tồn kho)
-                int quantityChange = newStock - currentQuantity;
-
-                // Thực hiện cập nhật tồn kho - thêm sự thay đổi vào tồn kho hiện tại
-                boolean result = inventoryBUS.updateInventoryQuantity(productId, quantityChange);
-
-                if (result) {
-                    JOptionPane.showMessageDialog(updateDialog,
-                            "Cập nhật tồn kho thành công",
-                            "Thông báo",
-                            JOptionPane.INFORMATION_MESSAGE);
-                    updateDialog.dispose();
-                    refreshInventoryData();
-                } else {
-                    JOptionPane.showMessageDialog(updateDialog,
-                            "Cập nhật tồn kho thất bại",
-                            "Lỗi",
-                            JOptionPane.ERROR_MESSAGE);
-                }
-            } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(updateDialog,
-                        "Vui lòng nhập số lượng hợp lệ",
-                        "Lỗi",
-                        JOptionPane.ERROR_MESSAGE);
-            }
-        });
-
-        JButton cancelButton = ButtonHelper.createButton("Hủy", dangerColor);
-        cancelButton.addActionListener(e -> updateDialog.dispose());
-
-        buttonPanel.add(saveButton);
-        buttonPanel.add(cancelButton);
-
-        updateDialog.add(dialogPanel, BorderLayout.CENTER);
-        updateDialog.add(buttonPanel, BorderLayout.SOUTH);
-        updateDialog.setVisible(true);
-    }
 
     private void searchInventory() {
         String keyword = inventorySearchField.getText().trim();

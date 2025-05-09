@@ -3,7 +3,6 @@ package GUI;
 import BUS.SupplierBUS;
 import BUS.ProductCategoryBUS;
 import DTO.SupplierDTO;
-import BUS.ProductBUS;
 import GUI.components.SupplierDetailPanel;
 import DTO.SupplierProductDTO;
 import DTO.ProductCategoryDTO;

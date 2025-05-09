@@ -14,10 +14,8 @@ import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
-import java.awt.event.*;
 import java.util.List;
 import java.util.ArrayList;
-import GUI.utils.ExcelUtils;
 import GUI.utils.ButtonHelper;
 
 public class ImportReceiptDetailGUI extends JPanel {
@@ -52,7 +50,6 @@ public class ImportReceiptDetailGUI extends JPanel {
     private final Color primaryColor = new Color(0, 123, 255);
     private final Color successColor = new Color(40, 167, 69);
     private final Color dangerColor = new Color(220, 53, 69);
-    private final Color lightColor = new Color(248, 249, 250);
 
     public ImportReceiptDetailGUI(String receiptId) {
         this(receiptId, false);

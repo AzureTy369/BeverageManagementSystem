@@ -9,11 +9,6 @@ import DTO.SupplierDTO;
 import BUS.ImportReceiptDetailBUS;
 import BUS.InventoryBUS;
 import DTO.ImportReceiptDetail;
-import DTO.ProductDTO;
-import BUS.ProductBUS;
-import DTO.SupplierProductDTO;
-import DAO.ImportReceiptDetailDAO;
-import BUS.Tool;
 import GUI.utils.ExcelUtils;
 import GUI.utils.ButtonHelper;
 
@@ -25,10 +20,6 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 import java.util.ArrayList;
-import java.util.Date;
-import java.text.SimpleDateFormat;
-import java.util.Map;
-import java.util.HashMap;
 
 public class ImportReceiptsGUI extends JPanel {
     private ImportReceiptBUS importReceiptController;
@@ -533,109 +524,6 @@ public class ImportReceiptsGUI extends JPanel {
         ExcelUtils.exportToExcel(headers, data, "Phiếu nhập", "DANH SÁCH PHIẾU NHẬP");
     }
 
-    private void importFromExcel() {
-        try {
-            // Tạo tiêu đề các cột
-            String[] headers = new String[tableModel.getColumnCount()];
-            for (int i = 0; i < tableModel.getColumnCount(); i++) {
-                headers[i] = tableModel.getColumnName(i);
-            }
-
-            // Nhập dữ liệu từ file Excel
-            List<Object[]> data = ExcelUtils.importFromExcel(headers);
-            if (data == null || data.isEmpty()) {
-                JOptionPane.showMessageDialog(this,
-                        "Không có dữ liệu nào được nhập từ file Excel.",
-                        "Thông báo",
-                        JOptionPane.WARNING_MESSAGE);
-                return;
-            }
-
-            // Xác nhận nhập dữ liệu
-            int result = JOptionPane.showConfirmDialog(this,
-                    "Bạn có chắc chắn muốn nhập " + data.size() + " phiếu nhập từ file Excel?",
-                    "Xác nhận nhập dữ liệu",
-                    JOptionPane.YES_NO_OPTION);
-
-            if (result != JOptionPane.YES_OPTION) {
-                return;
-            }
-
-            // Xử lý dữ liệu nhập vào
-            int successCount = 0;
-            int failCount = 0;
-            StringBuilder errorMessages = new StringBuilder();
-
-            for (int rowIndex = 0; rowIndex < data.size(); rowIndex++) {
-                Object[] rowData = data.get(rowIndex);
-                try {
-                    // Kiểm tra dữ liệu bắt buộc
-                    if (rowData.length < 6 || rowData[0] == null || rowData[1] == null ||
-                            rowData[2] == null || rowData[3] == null || rowData[4] == null ||
-                            rowData[5] == null) {
-                        errorMessages.append("Dòng ").append(rowIndex + 1)
-                                .append(": Thiếu thông tin bắt buộc\n");
-                        failCount++;
-                        continue;
-                    }
-
-                    // Tạo đối tượng ImportReceipt từ dữ liệu nhập vào
-                    ImportReceipt receipt = new ImportReceipt();
-                    receipt.setImportId(rowData[0].toString());
-                    receipt.setSupplierId(rowData[1].toString());
-                    receipt.setEmployeeId(rowData[2].toString());
-                    receipt.setImportDate(rowData[3].toString());
-                    receipt.setTotalAmount(rowData[4].toString());
-                    receipt.setNote(rowData[5].toString());
-
-                    // Thêm phiếu nhập vào cơ sở dữ liệu
-                    if (importReceiptController.insertImportReceipt(receipt)) {
-                        successCount++;
-                    } else {
-                        errorMessages.append("Dòng ").append(rowIndex + 1)
-                                .append(": Không thể thêm phiếu nhập vào cơ sở dữ liệu\n");
-                        failCount++;
-                    }
-                } catch (Exception e) {
-                    errorMessages.append("Dòng ").append(rowIndex + 1).append(": Lỗi xử lý dữ liệu - ")
-                            .append(e.getMessage()).append("\n");
-                    failCount++;
-                }
-            }
-
-            // Hiển thị kết quả
-            String message = "Nhập dữ liệu hoàn tất!\n" +
-                    "Số phiếu nhập nhập thành công: " + successCount + "\n" +
-                    "Số phiếu nhập nhập thất bại: " + failCount;
-
-            if (failCount > 0 && errorMessages.length() > 0) {
-                message += "\n\nChi tiết lỗi:\n" + errorMessages.toString();
-            }
-
-            JOptionPane.showMessageDialog(this,
-                    message,
-                    "Kết quả nhập dữ liệu",
-                    failCount > 0 ? JOptionPane.WARNING_MESSAGE : JOptionPane.INFORMATION_MESSAGE);
-
-            // Cập nhật lại dữ liệu hiển thị
-            refreshReceiptData();
-        } catch (Exception e) {
-            JOptionPane.showMessageDialog(this,
-                    "Lỗi khi nhập dữ liệu từ Excel: " + e.getMessage(),
-                    "Lỗi",
-                    JOptionPane.ERROR_MESSAGE);
-            e.printStackTrace();
-        }
-    }
-
-    private void showAddReceiptDialog() {
-        // TODO: Implement add receipt dialog
-        JOptionPane.showMessageDialog(this,
-                "Chức năng thêm phiếu nhập sẽ được triển khai sau",
-                "Thông báo",
-                JOptionPane.INFORMATION_MESSAGE);
-    }
-
     /**
      * Hiển thị dialog xem chi tiết phiếu nhập
      */
@@ -867,107 +755,6 @@ public class ImportReceiptsGUI extends JPanel {
                 refreshReceiptData();
             } else {
                 JOptionPane.showMessageDialog(this, "Cập nhật trạng thái thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
-            }
-        }
-    }
-
-    private void changeReceiptStatus() {
-        int selectedRow = receiptTable.getSelectedRow();
-        if (selectedRow == -1) {
-            JOptionPane.showMessageDialog(this, "Vui lòng chọn phiếu nhập để thay đổi trạng thái");
-            return;
-        }
-
-        String importId = tableModel.getValueAt(selectedRow, 0).toString();
-        ImportReceipt receipt = importReceiptController.getImportReceiptById(importId);
-
-        if (receipt == null) {
-            JOptionPane.showMessageDialog(this, "Không tìm thấy thông tin phiếu nhập");
-            return;
-        }
-
-        String currentStatus = receipt.getStatus();
-        if ("Đã hủy".equals(currentStatus) || "Đã hủy".equals(receipt.getNote())) {
-            JOptionPane.showMessageDialog(this, "Không thể thay đổi trạng thái của phiếu nhập đã hủy");
-            return;
-        }
-
-        // Tạo JComboBox cho trạng thái
-        JComboBox<String> statusComboBox = new JComboBox<>(new String[] { "Đang xử lý", "Đã hoàn thành", "Đã hủy" });
-        statusComboBox.setSelectedItem(currentStatus != null ? currentStatus : "Đang xử lý");
-
-        // Hiển thị dialog
-        int result = JOptionPane.showConfirmDialog(
-                this,
-                new Object[] { "Chọn trạng thái mới cho phiếu nhập " + importId + ":", statusComboBox },
-                "Thay đổi trạng thái phiếu nhập",
-                JOptionPane.OK_CANCEL_OPTION,
-                JOptionPane.PLAIN_MESSAGE);
-
-        if (result == JOptionPane.OK_OPTION) {
-            String newStatus = statusComboBox.getSelectedItem().toString();
-
-            // Nếu trạng thái không thay đổi, không làm gì cả
-            if (newStatus.equals(currentStatus)) {
-                return;
-            }
-
-            // Nếu chuyển từ "Đã hoàn thành" sang trạng thái khác, hiện cảnh báo
-            if ("Đã hoàn thành".equals(currentStatus) && !"Đã hoàn thành".equals(newStatus)) {
-                int confirmResult = JOptionPane.showConfirmDialog(
-                        this,
-                        "Phiếu nhập này đã hoàn thành và có thể đã cập nhật tồn kho.\n" +
-                                "Việc thay đổi trạng thái có thể gây ra sự không nhất quán trong dữ liệu.\n" +
-                                "Bạn có chắc chắn muốn thay đổi trạng thái không?",
-                        "Xác nhận thay đổi trạng thái",
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.WARNING_MESSAGE);
-
-                if (confirmResult != JOptionPane.YES_OPTION) {
-                    return;
-                }
-            }
-
-            // Nếu chuyển sang "Đã hoàn thành", hiện xác nhận cập nhật tồn kho
-            boolean updateInventory = false;
-            if ("Đã hoàn thành".equals(newStatus) && !"Đã hoàn thành".equals(currentStatus)) {
-                int confirmResult = JOptionPane.showConfirmDialog(
-                        this,
-                        "Khi chuyển trạng thái sang 'Đã hoàn thành', bạn có muốn cập nhật tồn kho không?",
-                        "Xác nhận cập nhật tồn kho",
-                        JOptionPane.YES_NO_OPTION,
-                        JOptionPane.QUESTION_MESSAGE);
-
-                updateInventory = (confirmResult == JOptionPane.YES_OPTION);
-            }
-
-            // Cập nhật trạng thái
-            receipt.setStatus(newStatus);
-            receipt.setNote(newStatus); // Đồng bộ cả status và note
-            boolean success = importReceiptController.updateImportReceipt(receipt);
-
-            if (success) {
-                // Cập nhật tồn kho nếu chuyển sang "Đã hoàn thành" và người dùng đồng ý
-                if (updateInventory) {
-                    updateInventoryForReceipt(importId);
-                }
-
-                // Cập nhật hiển thị trong bảng
-                tableModel.setValueAt(newStatus, selectedRow, 5); // Cột trạng thái
-                tableModel.setValueAt(newStatus, selectedRow, 6); // Cột ghi chú
-
-                JOptionPane.showMessageDialog(this,
-                        "Đã cập nhật trạng thái phiếu nhập từ [" + currentStatus + "] thành [" + newStatus + "]",
-                        "Thành công",
-                        JOptionPane.INFORMATION_MESSAGE);
-
-                // Làm mới dữ liệu
-                refreshReceiptData();
-            } else {
-                JOptionPane.showMessageDialog(this,
-                        "Lỗi khi cập nhật trạng thái phiếu nhập",
-                        "Lỗi",
-                        JOptionPane.ERROR_MESSAGE);
             }
         }
     }

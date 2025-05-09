@@ -1,20 +1,15 @@
 package GUI;
 
-import BUS.EmployeeBUS;
 import BUS.ImportReceiptBUS;
 import BUS.ImportReceiptDetailBUS;
-import BUS.InventoryBUS;
 import BUS.ProductBUS;
 import BUS.SupplierBUS;
 import BUS.Tool;
 import DTO.ProductDTO;
 import DTO.SupplierDTO;
-import DTO.EmployeeDTO;
 import DTO.SupplierProductDTO;
 import DTO.ImportReceipt;
 import DTO.ImportReceiptDetail;
-import BUS.Tool;
-import DAO.DBConnection;
 import GUI.utils.ButtonHelper;
 
 import javax.swing.*;
@@ -22,9 +17,6 @@ import javax.swing.border.EmptyBorder;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
 import java.awt.event.*;
-import java.sql.Connection;
-import java.sql.Statement;
-import java.sql.SQLException;
 import java.util.List;
 import java.util.ArrayList;
 import java.text.SimpleDateFormat;
@@ -33,7 +25,6 @@ import java.util.Date;
 public class ImportGoodsGUI extends JPanel {
     private ProductBUS productController = new ProductBUS();
     private SupplierBUS supplierController = new SupplierBUS();
-    private EmployeeBUS employeeController = new EmployeeBUS();
     private ImportReceiptBUS importReceiptController = new ImportReceiptBUS();
     private ImportReceiptDetailBUS importReceiptDetailBUS = new ImportReceiptDetailBUS();
 
@@ -843,228 +834,5 @@ public class ImportGoodsGUI extends JPanel {
 
         // Tạo mã mới
         return String.format("PN%03d", maxId + 1);
-    }
-
-    private void createSampleData() {
-        try {
-            // Tạo mẫu nhà cung cấp
-            SupplierBUS supplierBUS = new SupplierBUS();
-            String supplierId = "NCC002";
-            if (supplierBUS.getSupplierById(supplierId) == null) {
-                supplierBUS.addSupplier(supplierId, "Công ty Pepsi", "HCM", "0987654321", "contact@pepsi.com");
-                System.out.println("Đã tạo nhà cung cấp mẫu: " + supplierId);
-            }
-
-            // Thêm các sản phẩm vào bảng sanpham (nếu chưa có)
-            createSampleProducts();
-
-            // Tạo mẫu sản phẩm của nhà cung cấp
-            if (supplierController.getSupplierProducts(supplierId).isEmpty()) {
-                SupplierProductDTO product1 = new SupplierProductDTO(
-                        "SP00201", supplierId, "Pepsi Lon", "Lon", "Nước ngọt Pepsi", 11000.0);
-                SupplierProductDTO product2 = new SupplierProductDTO(
-                        "SP00202", supplierId, "Mountain Dew", "Chai", "Nước ngọt Mountain Dew", 12000.0);
-                SupplierProductDTO product3 = new SupplierProductDTO(
-                        "SP00203", supplierId, "7Up", "Chai", "Nước ngọt 7Up", 10000.0);
-
-                supplierController.addSupplierProduct(product1);
-                supplierController.addSupplierProduct(product2);
-                supplierController.addSupplierProduct(product3);
-
-                System.out.println("Đã tạo sản phẩm nhà cung cấp mẫu");
-            }
-
-            // Cập nhật giao diện
-            loadSuppliers();
-            JOptionPane.showMessageDialog(this, "Đã tạo dữ liệu mẫu thành công", "Thông báo",
-                    JOptionPane.INFORMATION_MESSAGE);
-        } catch (Exception e) {
-            System.out.println("Lỗi khi tạo dữ liệu mẫu: " + e.getMessage());
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this, "Lỗi khi tạo dữ liệu mẫu: " + e.getMessage(), "Lỗi",
-                    JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void createSampleProducts() {
-        try {
-            ProductBUS productBUS = new ProductBUS();
-
-            // Kiểm tra và tạo loại sản phẩm mẫu nếu chưa có
-            if (productBUS.getCategoryById("LSP001") == null) {
-                productBUS.addCategory("LSP001", "Nước giải khát", "Các loại đồ uống");
-                System.out.println("Đã tạo loại sản phẩm mẫu: LSP001 - Nước giải khát");
-            }
-
-            // Kiểm tra và tạo các sản phẩm mẫu nếu chưa có
-            String[][] products = {
-                    { "SP001", "Nước suối Aquafina", "Chai", "8000", "LSP001" },
-                    { "SP002", "Coca Cola", "Lon", "12000", "LSP001" },
-                    { "SP003", "Sting đỏ", "Chai", "10000", "LSP001" },
-                    { "SP004", "Pepsi", "Lon", "11000", "LSP001" },
-                    { "SP005", "Trà xanh 0 độ", "Chai", "13000", "LSP001" }
-            };
-
-            // Xóa tất cả sản phẩm hiện có (tùy chọn)
-            if (JOptionPane.showConfirmDialog(this,
-                    "Bạn có muốn xóa tất cả sản phẩm hiện có và tạo mới không?",
-                    "Xác nhận", JOptionPane.YES_NO_OPTION) == JOptionPane.YES_OPTION) {
-
-                System.out.println("Xóa tất cả sản phẩm hiện có...");
-                Connection conn = DBConnection.getConnection();
-                if (conn != null) {
-                    Statement stmt = conn.createStatement();
-                    // Tắt kiểm tra khóa ngoại tạm thời
-                    stmt.execute("SET FOREIGN_KEY_CHECKS=0");
-
-                    // Xóa sản phẩm
-                    int deleted = stmt.executeUpdate("DELETE FROM sanpham");
-                    System.out.println("Đã xóa " + deleted + " sản phẩm");
-
-                    // Bật lại kiểm tra khóa ngoại
-                    stmt.execute("SET FOREIGN_KEY_CHECKS=1");
-                    stmt.close();
-                }
-            }
-
-            int addedCount = 0;
-            for (String[] product : products) {
-                // Luôn tạo mới các sản phẩm sau khi xóa
-                ProductDTO newProduct = new ProductDTO();
-                newProduct.setProductId(product[0]);
-                newProduct.setProductName(product[1]);
-                newProduct.setUnit(product[2]);
-                newProduct.setPrice(Double.parseDouble(product[3]));
-                newProduct.setCategoryId(product[4]);
-
-                if (productBUS.getProductById(product[0]) == null) {
-                    productBUS.addProduct(newProduct);
-                } else {
-                    productBUS.updateProduct(newProduct);
-                }
-
-                addedCount++;
-                System.out.println("Đã tạo/cập nhật sản phẩm mẫu: " + product[0] + " - " + product[1]);
-            }
-
-            System.out.println("Đã thêm/cập nhật " + addedCount + " sản phẩm mẫu vào CSDL");
-
-            // Kiểm tra xem sản phẩm đã được thêm thành công chưa
-            System.out.println("Danh sách sản phẩm sau khi thêm:");
-            List<ProductDTO> allProducts = productBUS.getAllProducts();
-            for (ProductDTO p : allProducts) {
-                System.out.println(" - " + p.getProductId() + ": " + p.getProductName());
-            }
-
-            if (allProducts.isEmpty()) {
-                System.out.println("CẢNH BÁO: Vẫn không có sản phẩm nào trong CSDL sau khi thêm!");
-                JOptionPane.showMessageDialog(this,
-                        "Không thể thêm sản phẩm vào CSDL. Vui lòng kiểm tra lại kết nối và quyền truy cập.",
-                        "Lỗi", JOptionPane.ERROR_MESSAGE);
-            }
-
-        } catch (Exception e) {
-            System.out.println("Lỗi khi tạo sản phẩm mẫu: " + e.getMessage());
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this,
-                    "Lỗi khi tạo sản phẩm mẫu: " + e.getMessage(),
-                    "Lỗi", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    /**
-     * Xóa dữ liệu nhà cung cấp và phiếu nhập
-     */
-    private void clearAllData() {
-        try {
-            // Xác nhận trước khi xóa
-            int confirm = JOptionPane.showConfirmDialog(this,
-                    "Bạn có chắc chắn muốn xóa TẤT CẢ dữ liệu phiếu nhập, chi tiết phiếu nhập,\n" +
-                            "sản phẩm nhà cung cấp và nhà cung cấp không?\n\n" +
-                            "LƯU Ý: Hành động này không thể hoàn tác!",
-                    "Xác nhận xóa dữ liệu", JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE);
-
-            if (confirm != JOptionPane.YES_OPTION) {
-                return;
-            }
-
-            // Thực hiện SQL trực tiếp để xóa dữ liệu
-            try {
-                // Sử dụng Statement để xóa dữ liệu
-                Connection conn = null;
-                try {
-                    // Lấy connection
-                    conn = DBConnection.getConnection();
-
-                    if (conn != null) {
-                        Statement stmt = conn.createStatement();
-
-                        // Tắt kiểm tra khóa ngoại tạm thời
-                        stmt.execute("SET FOREIGN_KEY_CHECKS=0");
-
-                        // Xóa dữ liệu từ các bảng theo thứ tự
-                        System.out.println("Xóa dữ liệu từ bảng ChiTietPhieuNhap...");
-                        int detailsDeleted = stmt.executeUpdate("DELETE FROM chitietphieunhap");
-                        System.out.println("Đã xóa " + detailsDeleted + " chi tiết phiếu nhập");
-
-                        System.out.println("Xóa dữ liệu từ bảng PhieuNhap...");
-                        int receiptsDeleted = stmt.executeUpdate("DELETE FROM phieunhap");
-                        System.out.println("Đã xóa " + receiptsDeleted + " phiếu nhập");
-
-                        System.out.println("Xóa dữ liệu từ bảng SanPhamNCC...");
-                        int supplierProductsDeleted = stmt.executeUpdate("DELETE FROM SanPhamNCC");
-                        System.out.println("Đã xóa " + supplierProductsDeleted + " sản phẩm nhà cung cấp");
-
-                        System.out.println("Xóa dữ liệu từ bảng NhaCungCap...");
-                        int suppliersDeleted = stmt.executeUpdate("DELETE FROM NhaCungCap");
-                        System.out.println("Đã xóa " + suppliersDeleted + " nhà cung cấp");
-
-                        // Bật lại kiểm tra khóa ngoại
-                        stmt.execute("SET FOREIGN_KEY_CHECKS=1");
-
-                        JOptionPane.showMessageDialog(this,
-                                "Đã xóa thành công:\n" +
-                                        "- " + detailsDeleted + " chi tiết phiếu nhập\n" +
-                                        "- " + receiptsDeleted + " phiếu nhập\n" +
-                                        "- " + supplierProductsDeleted + " sản phẩm nhà cung cấp\n" +
-                                        "- " + suppliersDeleted + " nhà cung cấp",
-                                "Xóa dữ liệu thành công", JOptionPane.INFORMATION_MESSAGE);
-
-                        // Cập nhật lại giao diện
-                        loadSuppliers();
-                        refreshProductData();
-                        resetForm();
-                    }
-                } catch (SQLException e) {
-                    e.printStackTrace();
-                    JOptionPane.showMessageDialog(this,
-                            "Lỗi khi xóa dữ liệu: " + e.getMessage(),
-                            "Lỗi", JOptionPane.ERROR_MESSAGE);
-                } finally {
-                    // Đóng tài nguyên
-                    try {
-                        if (conn != null)
-                            conn.close();
-                    } catch (SQLException e) {
-                        e.printStackTrace();
-                    }
-                }
-            } catch (Exception e) {
-                e.printStackTrace();
-                JOptionPane.showMessageDialog(this,
-                        "Lỗi không xác định: " + e.getMessage(),
-                        "Lỗi", JOptionPane.ERROR_MESSAGE);
-            }
-        } catch (Exception e) {
-            e.printStackTrace();
-            JOptionPane.showMessageDialog(this,
-                    "Lỗi không xác định: " + e.getMessage(),
-                    "Lỗi", JOptionPane.ERROR_MESSAGE);
-        }
-    }
-
-    private void resetAndCreateData() {
-        clearAllData();
-        createSampleData();
     }
 }
