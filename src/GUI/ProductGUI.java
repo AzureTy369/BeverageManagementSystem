@@ -5,6 +5,7 @@ import BUS.ProductCategoryBUS;
 import DTO.ProductCategoryDTO;
 import DTO.ProductDTO;
 import GUI.utils.ExcelUtils;
+import GUI.utils.ButtonHelper;
 
 import javax.swing.*;
 import javax.swing.border.*;
@@ -88,19 +89,19 @@ public class ProductGUI extends JPanel {
         // Nút thêm - giảm kích thước
         JButton addBtn = createOutlineButton("Thêm", successColor);
         addBtn.setMargin(new Insets(3, 8, 3, 8));
-        addBtn.setFont(new Font("Arial", Font.PLAIN, 12));
+        addBtn.setFont(new Font("Arial", Font.BOLD, 16));
         addBtn.addActionListener(e -> showAddProductDialog());
 
         // Nút xóa - giảm kích thước
         JButton deleteBtn = createOutlineButton("Xóa", dangerColor);
         deleteBtn.setMargin(new Insets(3, 8, 3, 8));
-        deleteBtn.setFont(new Font("Arial", Font.PLAIN, 12));
+        deleteBtn.setFont(new Font("Arial", Font.BOLD, 16));
         deleteBtn.addActionListener(e -> deleteProduct());
 
         // Nút chỉnh sửa - giảm kích thước
         JButton editBtn = createOutlineButton("Chỉnh sửa", warningColor);
         editBtn.setMargin(new Insets(3, 8, 3, 8));
-        editBtn.setFont(new Font("Arial", Font.PLAIN, 12));
+        editBtn.setFont(new Font("Arial", Font.BOLD, 16));
         editBtn.addActionListener(e -> showEditProductDialog());
 
         // Separator
@@ -111,7 +112,7 @@ public class ProductGUI extends JPanel {
         // Nút xuất Excel - giảm kích thước
         JButton exportExcelButton = createOutlineButton("Xuất Excel", primaryColor);
         exportExcelButton.setMargin(new Insets(3, 8, 3, 8));
-        exportExcelButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        exportExcelButton.setFont(new Font("Arial", Font.BOLD, 16));
         exportExcelButton.addActionListener(e -> exportToExcel());
 
         // Thêm nút nhập Excel vào panel chứa các nút
@@ -151,14 +152,23 @@ public class ProductGUI extends JPanel {
 
         // Nút tìm kiếm - giảm kích thước
         JButton searchButton = createOutlineButton("Tìm kiếm", primaryColor);
-        searchButton.setMargin(new Insets(3, 8, 3, 8));
-        searchButton.setFont(new Font("Arial", Font.PLAIN, 12));
-        searchButton.addActionListener(e -> searchProducts());
+        searchButton.setForeground(Color.BLACK);
+        searchButton.setFont(new Font("Arial", Font.BOLD, 16));
+        searchButton.addActionListener(e -> {
+            String keyword = productSearchField.getText().trim();
+            if (keyword.isEmpty()) {
+                refreshProductData();
+                return;
+            }
+
+            List<ProductDTO> results = productController.searchProducts(keyword);
+            displayProducts(results);
+        });
 
         // Nút làm mới - giảm kích thước
         JButton refreshButton = createOutlineButton("Làm mới", new Color(23, 162, 184));
         refreshButton.setMargin(new Insets(3, 8, 3, 8));
-        refreshButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        refreshButton.setFont(new Font("Arial", Font.BOLD, 16));
         refreshButton.addActionListener(e -> refreshProductData());
 
         // Thêm các thành phần vào panel tìm kiếm
@@ -253,7 +263,7 @@ public class ProductGUI extends JPanel {
         statusPanel.setBackground(new Color(248, 249, 250));
 
         JLabel statusLabel = new JLabel("Tổng số sản phẩm: " + productController.getAllProducts().size());
-        statusLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        statusLabel.setFont(new Font("Arial", Font.BOLD, 16));
         statusLabel.setForeground(new Color(33, 37, 41));
         statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 0));
 
@@ -626,8 +636,7 @@ public class ProductGUI extends JPanel {
         imageField.setFont(new Font("Arial", Font.PLAIN, 14));
         imagePanel.add(imageField, BorderLayout.CENTER);
 
-        JButton browseButton = new JButton("Chọn ảnh");
-        browseButton.setFont(new Font("Arial", Font.PLAIN, 14));
+        JButton browseButton = ButtonHelper.createButton("Chọn ảnh", primaryColor);
         browseButton.addActionListener(e -> browseImage());
         imagePanel.add(browseButton, BorderLayout.EAST);
 
@@ -637,11 +646,7 @@ public class ProductGUI extends JPanel {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setOpaque(false);
 
-        JButton saveButton = new JButton("Lưu");
-        saveButton.setFont(new Font("Arial", Font.BOLD, 14));
-        saveButton.setBackground(successColor);
-        saveButton.setForeground(Color.BLACK);
-        saveButton.setFocusPainted(false);
+        JButton saveButton = ButtonHelper.createButton("Lưu", successColor);
         saveButton.addActionListener(e -> {
             if (productFormDialog.getTitle().equals("Thêm sản phẩm mới")) {
                 addProduct();
@@ -650,11 +655,7 @@ public class ProductGUI extends JPanel {
             }
         });
 
-        JButton cancelButton = new JButton("Hủy");
-        cancelButton.setFont(new Font("Arial", Font.BOLD, 14));
-        cancelButton.setBackground(dangerColor);
-        cancelButton.setForeground(Color.BLACK);
-        cancelButton.setFocusPainted(false);
+        JButton cancelButton = ButtonHelper.createButton("Hủy", dangerColor);
         cancelButton.addActionListener(e -> productFormDialog.dispose());
 
         buttonPanel.add(saveButton);
@@ -992,36 +993,7 @@ public class ProductGUI extends JPanel {
     }
 
     private JButton createOutlineButton(String text, Color color) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Arial", Font.PLAIN, 14));
-        button.setBackground(new Color(255, 255, 255));
-        button.setForeground(color);
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createLineBorder(color, 1));
-        button.setToolTipText(text);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setPreferredSize(new Dimension(100, 35));
-
-        // Add hover effect
-        button.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                if (button.isEnabled()) {
-                    button.setBackground(color);
-                    button.setForeground(Color.WHITE);
-                }
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                if (button.isEnabled()) {
-                    button.setBackground(new Color(255, 255, 255));
-                    button.setForeground(color);
-                }
-            }
-        });
-
-        return button;
+        return ButtonHelper.createButton(text, color);
     }
 
     /**

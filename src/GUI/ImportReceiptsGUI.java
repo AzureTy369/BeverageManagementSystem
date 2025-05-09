@@ -14,6 +14,8 @@ import BUS.ProductBUS;
 import DTO.SupplierProductDTO;
 import DAO.ImportReceiptDetailDAO;
 import BUS.Tool;
+import GUI.utils.ExcelUtils;
+import GUI.utils.ButtonHelper;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -25,7 +27,6 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Date;
 import java.text.SimpleDateFormat;
-import GUI.utils.ExcelUtils;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -78,26 +79,16 @@ public class ImportReceiptsGUI extends JPanel {
                 BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
                 BorderFactory.createEmptyBorder(5, 5, 5, 5)));
 
-        // Nút xem chi tiết phiếu nhập
-        JButton viewDetailsButton = new JButton("Xem chi tiết phiếu nhập");
-        viewDetailsButton.setFont(new Font("Arial", Font.PLAIN, 14));
-        viewDetailsButton.setBackground(primaryColor);
-        viewDetailsButton.setForeground(Color.BLACK);
-        viewDetailsButton.setFocusPainted(false);
-        viewDetailsButton.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
-        viewDetailsButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        viewDetailsButton.addActionListener(e -> showReceiptDetails());
-
         // Nút xóa - giảm kích thước
         JButton deleteBtn = createOutlineButton("Xóa", dangerColor);
         deleteBtn.setMargin(new Insets(3, 8, 3, 8));
-        deleteBtn.setFont(new Font("Arial", Font.PLAIN, 12));
+        deleteBtn.setFont(new Font("Arial", Font.BOLD, 16));
         deleteBtn.addActionListener(e -> deleteReceipt());
 
         // Nút chỉnh sửa - giảm kích thước
         JButton editBtn = createOutlineButton("Chỉnh sửa", warningColor);
         editBtn.setMargin(new Insets(3, 8, 3, 8));
-        editBtn.setFont(new Font("Arial", Font.PLAIN, 12));
+        editBtn.setFont(new Font("Arial", Font.BOLD, 16));
         editBtn.addActionListener(e -> showEditReceiptDialog());
 
         // Separator
@@ -108,17 +99,16 @@ public class ImportReceiptsGUI extends JPanel {
         // Nút xuất Excel
         JButton exportExcelButton = createOutlineButton("Xuất Excel", primaryColor);
         exportExcelButton.setMargin(new Insets(3, 8, 3, 8));
-        exportExcelButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        exportExcelButton.setFont(new Font("Arial", Font.BOLD, 16));
         exportExcelButton.addActionListener(e -> exportToExcel());
 
-        // Nút cập nhật trạng thái
-        JButton updateStatusButton = createOutlineButton("Cập nhật trạng thái", new Color(0, 200, 83));
-        updateStatusButton.setMargin(new Insets(3, 8, 3, 8));
-        updateStatusButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        // Nút cập nhật trạng thái - tăng kích thước và làm nổi bật hơn
+        JButton updateStatusButton = ButtonHelper.createButton("Cập nhật trạng thái", successColor);
+        updateStatusButton.setPreferredSize(new Dimension(180, 35));
+        updateStatusButton.setFont(new Font("Arial", Font.BOLD, 16));
         updateStatusButton.addActionListener(e -> updateReceiptNote());
 
         // Thêm các nút vào panel bên trái
-        leftFunctionPanel.add(viewDetailsButton);
         leftFunctionPanel.add(deleteBtn);
         leftFunctionPanel.add(editBtn);
         leftFunctionPanel.add(separator);
@@ -151,14 +141,13 @@ public class ImportReceiptsGUI extends JPanel {
 
         // Nút tìm kiếm
         JButton searchButton = createOutlineButton("Tìm kiếm", primaryColor);
-        searchButton.setMargin(new Insets(3, 8, 3, 8));
-        searchButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        searchButton.setForeground(Color.BLACK);
         searchButton.addActionListener(e -> searchReceipts());
 
         // Nút làm mới
         JButton refreshButton = createOutlineButton("Làm mới", new Color(23, 162, 184));
         refreshButton.setMargin(new Insets(3, 8, 3, 8));
-        refreshButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        refreshButton.setFont(new Font("Arial", Font.BOLD, 16));
         refreshButton.addActionListener(e -> refreshReceiptData());
 
         // Thêm các thành phần vào panel tìm kiếm
@@ -325,22 +314,20 @@ public class ImportReceiptsGUI extends JPanel {
         group.add(andRadio);
         group.add(orRadio);
 
-        JButton searchButton = createOutlineButton("Tìm kiếm", primaryColor);
-        searchButton.setForeground(Color.BLACK);
+        JButton searchButton = ButtonHelper.createButton("Tìm kiếm", primaryColor);
         searchButton.addActionListener(e -> {
-            // Lấy thông tin từ các ô tìm kiếm
+            // Lấy điều kiện tìm kiếm
             String receiptId = receiptIdSearchField.getText().trim();
             String supplier = supplierSearchField.getText().trim();
             String creator = creatorSearchField.getText().trim();
             String note = noteSearchField.getText().trim();
             boolean isAnd = andRadio.isSelected();
 
-            // Gọi phương thức tìm kiếm nâng cao
+            // Tìm kiếm
             advancedSearchReceipts(receiptId, supplier, creator, note, isAnd);
         });
 
-        JButton clearButton = createOutlineButton("Xóa tìm kiếm", new Color(108, 117, 125));
-        clearButton.setForeground(Color.BLACK);
+        JButton clearButton = ButtonHelper.createButton("Xóa tìm kiếm", new Color(108, 117, 125));
         clearButton.addActionListener(e -> {
             receiptIdSearchField.setText("");
             supplierSearchField.setText("");
@@ -449,60 +436,35 @@ public class ImportReceiptsGUI extends JPanel {
     }
 
     private JPanel createStatusPanel() {
-        JPanel panel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-        panel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
-        panel.setBackground(lightColor);
+        JPanel statusPanel = new JPanel(new BorderLayout());
+        statusPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        statusPanel.setBackground(lightColor);
 
-        JButton refreshButton = createOutlineButton("Làm mới", primaryColor);
-        refreshButton.addActionListener(e -> refreshReceiptData());
-        panel.add(refreshButton);
+        JLabel statusLabel = new JLabel("Tổng số phiếu nhập: " + importReceiptController.getAllImportReceipts().size());
+        statusLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        statusLabel.setForeground(new Color(33, 37, 41));
+        statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 0));
 
-        JButton changeStatusButton = createOutlineButton("Thay đổi trạng thái", warningColor);
-        changeStatusButton.addActionListener(e -> changeReceiptStatus());
-        panel.add(changeStatusButton);
+        // Panel for bottom buttons
+        JPanel bottomButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
+        bottomButtonPanel.setName("bottomButtonPanel"); // Set a name for the panel
+        bottomButtonPanel.setOpaque(false);
 
-        JButton viewButton = createOutlineButton("Xem chi tiết", primaryColor);
-        viewButton.addActionListener(e -> showReceiptDetails());
-        panel.add(viewButton);
+        // Add the "View receipt details" button to the bottom panel
+        JButton viewDetailsButton = ButtonHelper.createButton("Xem chi tiết phiếu nhập", primaryColor);
+        viewDetailsButton.setPreferredSize(new Dimension(200, 35));
+        viewDetailsButton.setFont(new Font("Arial", Font.BOLD, 16));
+        viewDetailsButton.addActionListener(e -> showReceiptDetails());
+        bottomButtonPanel.add(viewDetailsButton);
 
-        JButton editButton = createOutlineButton("Sửa phiếu nhập", warningColor);
-        editButton.addActionListener(e -> showEditReceiptDialog());
-        panel.add(editButton);
+        statusPanel.add(statusLabel, BorderLayout.WEST);
+        statusPanel.add(bottomButtonPanel, BorderLayout.EAST);
 
-        JButton deleteButton = createOutlineButton("Xóa phiếu nhập", dangerColor);
-        deleteButton.addActionListener(e -> deleteReceipt());
-        panel.add(deleteButton);
-
-        return panel;
+        return statusPanel;
     }
 
     private JButton createOutlineButton(String text, Color color) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Arial", Font.PLAIN, 14));
-        button.setBackground(new Color(255, 255, 255));
-        button.setForeground(color);
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createLineBorder(color, 1));
-        button.setToolTipText(text);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setPreferredSize(new Dimension(100, 35));
-
-        // Hiệu ứng hover
-        button.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                button.setBackground(color);
-                button.setForeground(Color.WHITE);
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                button.setBackground(new Color(255, 255, 255));
-                button.setForeground(color);
-            }
-        });
-
-        return button;
+        return ButtonHelper.createButton(text, color);
     }
 
     private void searchReceipts() {
@@ -715,7 +677,9 @@ public class ImportReceiptsGUI extends JPanel {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setBackground(Color.WHITE);
 
-        JButton closeButton = new JButton("Đóng");
+        JButton closeButton = ButtonHelper.createButton("Đóng", dangerColor);
+        closeButton.setFont(new Font("Arial", Font.BOLD, 16));
+        closeButton.setPreferredSize(new Dimension(100, 40));
         closeButton.addActionListener(e -> detailDialog.dispose());
         buttonPanel.add(closeButton);
 
@@ -767,10 +731,19 @@ public class ImportReceiptsGUI extends JPanel {
         ImportReceiptDetailGUI detailPanel = new ImportReceiptDetailGUI(receiptId, true);
         dialog.add(detailPanel, BorderLayout.CENTER);
 
-        // Panel nút
+        // Panel nút với định dạng mới
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        JButton saveButton = new JButton("Lưu thay đổi");
-        JButton cancelButton = new JButton("Hủy");
+        buttonPanel.setBackground(Color.WHITE);
+
+        // Nút lưu với font chữ đậm và cỡ 16
+        JButton saveButton = ButtonHelper.createButton("Lưu thay đổi", successColor);
+        saveButton.setFont(new Font("Arial", Font.BOLD, 16));
+        saveButton.setPreferredSize(new Dimension(150, 40));
+
+        // Nút hủy với font chữ đậm và cỡ 16
+        JButton cancelButton = ButtonHelper.createButton("Hủy", dangerColor);
+        cancelButton.setFont(new Font("Arial", Font.BOLD, 16));
+        cancelButton.setPreferredSize(new Dimension(100, 40));
 
         saveButton.addActionListener(e -> {
             boolean success = detailPanel.saveChanges();

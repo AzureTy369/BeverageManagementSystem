@@ -16,6 +16,7 @@ import java.awt.event.*;
 import java.util.List;
 import java.util.ArrayList;
 import GUI.utils.ExcelUtils;
+import GUI.utils.ButtonHelper;
 
 public class InventoryGUI extends JPanel {
     private ProductBUS productController;
@@ -72,26 +73,13 @@ public class InventoryGUI extends JPanel {
                 BorderFactory.createLineBorder(new Color(200, 200, 200), 1),
                 BorderFactory.createEmptyBorder(5, 5, 5, 5)));
 
-        // Nút cập nhật tồn kho
-        JButton updateBtn = createOutlineButton("Cập nhật tồn kho", warningColor);
-        updateBtn.setMargin(new Insets(3, 8, 3, 8));
-        updateBtn.setFont(new Font("Arial", Font.PLAIN, 12));
-        updateBtn.addActionListener(e -> showUpdateInventoryDialog());
-
-        // Separator
-        JSeparator separator = new JSeparator(SwingConstants.VERTICAL);
-        separator.setPreferredSize(new Dimension(1, 20));
-        separator.setForeground(new Color(200, 200, 200));
-
         // Nút xuất Excel
         JButton exportExcelButton = createOutlineButton("Xuất Excel", primaryColor);
         exportExcelButton.setMargin(new Insets(3, 8, 3, 8));
-        exportExcelButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        exportExcelButton.setFont(new Font("Arial", Font.BOLD, 16));
         exportExcelButton.addActionListener(e -> exportToExcel());
 
         // Thêm các nút vào panel bên trái
-        leftFunctionPanel.add(updateBtn);
-        leftFunctionPanel.add(separator);
         leftFunctionPanel.add(exportExcelButton);
 
         // NHÓM 2: Panel tìm kiếm bên phải
@@ -121,13 +109,13 @@ public class InventoryGUI extends JPanel {
         // Nút tìm kiếm
         JButton searchButton = createOutlineButton("Tìm kiếm", primaryColor);
         searchButton.setMargin(new Insets(3, 8, 3, 8));
-        searchButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        searchButton.setFont(new Font("Arial", Font.BOLD, 16));
         searchButton.addActionListener(e -> searchInventory());
 
         // Nút làm mới
         JButton refreshButton = createOutlineButton("Làm mới", new Color(23, 162, 184));
         refreshButton.setMargin(new Insets(3, 8, 3, 8));
-        refreshButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        refreshButton.setFont(new Font("Arial", Font.BOLD, 16));
         refreshButton.addActionListener(e -> refreshInventoryData());
 
         // Thêm các thành phần vào panel tìm kiếm
@@ -375,32 +363,7 @@ public class InventoryGUI extends JPanel {
     }
 
     private JButton createOutlineButton(String text, Color color) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Arial", Font.PLAIN, 14));
-        button.setBackground(new Color(255, 255, 255));
-        button.setForeground(color);
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createLineBorder(color, 1));
-        button.setToolTipText(text);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setPreferredSize(new Dimension(100, 35));
-
-        // Hiệu ứng hover
-        button.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                button.setBackground(color);
-                button.setForeground(Color.WHITE);
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                button.setBackground(new Color(255, 255, 255));
-                button.setForeground(color);
-            }
-        });
-
-        return button;
+        return ButtonHelper.createButton(text, color);
     }
 
     private void showUpdateInventoryDialog() {
@@ -477,10 +440,7 @@ public class InventoryGUI extends JPanel {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setBackground(lightColor);
 
-        JButton saveButton = new JButton("Lưu");
-        saveButton.setFont(new Font("Arial", Font.BOLD, 14));
-        saveButton.setBackground(successColor);
-        saveButton.setForeground(Color.BLACK);
+        JButton saveButton = ButtonHelper.createButton("Lưu", successColor);
         saveButton.addActionListener(e -> {
             try {
                 int newStock = Integer.parseInt(newStockField.getText().trim());
@@ -522,10 +482,7 @@ public class InventoryGUI extends JPanel {
             }
         });
 
-        JButton cancelButton = new JButton("Hủy");
-        cancelButton.setFont(new Font("Arial", Font.BOLD, 14));
-        cancelButton.setBackground(dangerColor);
-        cancelButton.setForeground(Color.BLACK);
+        JButton cancelButton = ButtonHelper.createButton("Hủy", dangerColor);
         cancelButton.addActionListener(e -> updateDialog.dispose());
 
         buttonPanel.add(saveButton);

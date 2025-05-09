@@ -15,6 +15,7 @@ import DTO.ImportReceipt;
 import DTO.ImportReceiptDetail;
 import BUS.Tool;
 import DAO.DBConnection;
+import GUI.utils.ButtonHelper;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -83,30 +84,8 @@ public class ImportGoodsGUI extends JPanel {
         titleLabel.setForeground(primaryColor);
         topPanel.add(titleLabel, BorderLayout.WEST);
 
-        // Create Sample Data Button
-        JButton createSampleButton = new JButton("Tạo dữ liệu mẫu");
-        createSampleButton.setFont(new Font("Arial", Font.BOLD, 14));
-        createSampleButton.setBackground(new Color(108, 117, 125));
-        createSampleButton.setForeground(Color.WHITE);
-        createSampleButton.setFocusPainted(false);
-        createSampleButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        createSampleButton.addActionListener(e -> createSampleData());
-
-        // Add a Reset Data Button
-        JButton resetDataButton = new JButton("Xóa & tạo lại dữ liệu");
-        resetDataButton.setFont(new Font("Arial", Font.BOLD, 14));
-        resetDataButton.setBackground(new Color(220, 53, 69));
-        resetDataButton.setForeground(Color.WHITE);
-        resetDataButton.setFocusPainted(false);
-        resetDataButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        resetDataButton.addActionListener(e -> resetAndCreateData());
-
-        // Add buttons to panel
-        JPanel topButtonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        topButtonPanel.add(resetDataButton);
-        topButtonPanel.add(createSampleButton);
-
-        topPanel.add(topButtonPanel, BorderLayout.EAST);
+        // Xóa các nút tạo dữ liệu mẫu và reset dữ liệu
+        topPanel.add(new JPanel(), BorderLayout.EAST); // Panel trống để thay thế
 
         add(topPanel, BorderLayout.NORTH);
 
@@ -132,11 +111,7 @@ public class ImportGoodsGUI extends JPanel {
         });
 
         // Thêm nút làm mới
-        JButton refreshButton = new JButton("Làm mới");
-        refreshButton.setBackground(primaryColor);
-        refreshButton.setForeground(Color.WHITE);
-        refreshButton.setFocusPainted(false);
-        refreshButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        JButton refreshButton = ButtonHelper.createButton("Làm mới", new Color(0x26A69A));
         refreshButton.addActionListener(e -> refreshSupplierAndProducts());
 
         supplierControlPanel.add(supplierComboBox, BorderLayout.CENTER);
@@ -182,7 +157,7 @@ public class ImportGoodsGUI extends JPanel {
                 }
             }
         });
-        JButton searchButton = new JButton("Tìm kiếm");
+        JButton searchButton = ButtonHelper.createButton("Tìm kiếm", primaryColor);
         searchButton.addActionListener(e -> searchProducts());
         searchPanel.add(searchField, BorderLayout.CENTER);
         searchPanel.add(searchButton, BorderLayout.EAST);
@@ -198,6 +173,8 @@ public class ImportGoodsGUI extends JPanel {
         quantityPanel.setBorder(BorderFactory.createEmptyBorder(10, 0, 0, 0));
         quantityField = new JTextField("1");
         JButton addButton = createOutlineButton("Thêm vào phiếu", successColor);
+        // Tăng chiều rộng nút Thêm vào phiếu
+        addButton.setPreferredSize(new Dimension(150, 35));
         addButton.addActionListener(e -> addToReceipt());
         quantityPanel.add(new JLabel("Số lượng: "), BorderLayout.WEST);
         quantityPanel.add(quantityField, BorderLayout.CENTER);
@@ -256,12 +233,9 @@ public class ImportGoodsGUI extends JPanel {
         importFromExcelButton.addActionListener(e -> importFromExcel());
         actionPanel.add(importFromExcelButton);
 
-        JButton importButton = new JButton("Nhập hàng");
+        // Sử dụng createOutlineButton để tạo nút Nhập hàng có cùng kích thước
+        JButton importButton = createOutlineButton("Nhập hàng", successColor);
         importButton.setFont(new Font("Arial", Font.BOLD, 14));
-        importButton.setBackground(successColor);
-        importButton.setForeground(Color.WHITE);
-        importButton.setFocusPainted(false);
-        importButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
         importButton.addActionListener(e -> confirmImport());
         actionPanel.add(importButton);
 
@@ -316,32 +290,7 @@ public class ImportGoodsGUI extends JPanel {
     }
 
     private JButton createOutlineButton(String text, Color color) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Arial", Font.PLAIN, 14));
-        button.setBackground(new Color(255, 255, 255));
-        button.setForeground(color);
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createLineBorder(color, 1));
-        button.setToolTipText(text);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setPreferredSize(new Dimension(100, 35));
-
-        // Hiệu ứng hover
-        button.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                button.setBackground(color);
-                button.setForeground(Color.WHITE);
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                button.setBackground(new Color(255, 255, 255));
-                button.setForeground(color);
-            }
-        });
-
-        return button;
+        return ButtonHelper.createButton(text, color);
     }
 
     private void loadSuppliers() {

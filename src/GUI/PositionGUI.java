@@ -3,6 +3,7 @@ package GUI;
 import BUS.PositionBUS;
 import DTO.PositionDTO;
 import GUI.utils.ExcelUtils;
+import GUI.utils.ButtonHelper;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -79,13 +80,13 @@ public class PositionGUI extends JPanel {
         // Nút thêm - giảm kích thước
         JButton addBtn = createOutlineButton("Thêm", successColor);
         addBtn.setMargin(new Insets(3, 8, 3, 8));
-        addBtn.setFont(new Font("Arial", Font.PLAIN, 12));
+        addBtn.setFont(new Font("Arial", Font.BOLD, 16));
         addBtn.addActionListener(e -> showAddPositionDialog());
 
         // Nút xóa - giảm kích thước
         JButton deleteBtn = createOutlineButton("Xóa", dangerColor);
         deleteBtn.setMargin(new Insets(3, 8, 3, 8));
-        deleteBtn.setFont(new Font("Arial", Font.PLAIN, 12));
+        deleteBtn.setFont(new Font("Arial", Font.BOLD, 16));
         deleteBtn.addActionListener(e -> deletePosition());
 
         // Gán deleteBtn vào biến thành viên để sử dụng ở nơi khác
@@ -94,7 +95,7 @@ public class PositionGUI extends JPanel {
         // Nút chỉnh sửa - giảm kích thước
         JButton editBtn = createOutlineButton("Chỉnh sửa", warningColor);
         editBtn.setMargin(new Insets(3, 8, 3, 8));
-        editBtn.setFont(new Font("Arial", Font.PLAIN, 12));
+        editBtn.setFont(new Font("Arial", Font.BOLD, 16));
         editBtn.addActionListener(e -> showEditPositionDialog());
 
         // Gán editBtn vào biến thành viên để sử dụng ở nơi khác
@@ -108,13 +109,13 @@ public class PositionGUI extends JPanel {
         // Nút xuất Excel - giảm kích thước
         JButton exportExcelButton = createOutlineButton("Xuất Excel", primaryColor);
         exportExcelButton.setMargin(new Insets(3, 8, 3, 8));
-        exportExcelButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        exportExcelButton.setFont(new Font("Arial", Font.BOLD, 16));
         exportExcelButton.addActionListener(e -> exportToExcel());
 
         // Thêm nút nhập Excel vào panel chứa các nút
         JButton importExcelButton = createOutlineButton("Nhập Excel", successColor);
         importExcelButton.setMargin(new Insets(3, 8, 3, 8));
-        importExcelButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        importExcelButton.setFont(new Font("Arial", Font.BOLD, 16));
         importExcelButton.addActionListener(e -> importFromExcel());
 
         // Thêm các nút vào panel bên trái
@@ -133,12 +134,12 @@ public class PositionGUI extends JPanel {
 
         JLabel searchLabel = new JLabel("Tìm kiếm:");
         searchLabel.setForeground(Color.BLACK);
-        searchLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        searchLabel.setFont(new Font("Arial", Font.BOLD, 16));
 
         // TextField tìm kiếm - giảm kích thước
         positionSearchField = new JTextField(15);
         positionSearchField.setPreferredSize(new Dimension(180, 25));
-        positionSearchField.setFont(new Font("Arial", Font.PLAIN, 12));
+        positionSearchField.setFont(new Font("Arial", Font.BOLD, 16));
         positionSearchField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -378,7 +379,7 @@ public class PositionGUI extends JPanel {
         statusPanel.setBackground(new Color(248, 249, 250));
 
         JLabel statusLabel = new JLabel("Tổng số chức vụ: " + positionController.getAllPositions().size());
-        statusLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        statusLabel.setFont(new Font("Arial", Font.BOLD, 16));
         statusLabel.setForeground(new Color(33, 37, 41));
         statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 0));
 
@@ -388,36 +389,7 @@ public class PositionGUI extends JPanel {
     }
 
     private JButton createOutlineButton(String text, Color color) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Arial", Font.PLAIN, 14));
-        button.setBackground(new Color(255, 255, 255));
-        button.setForeground(color);
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createLineBorder(color, 1));
-        button.setToolTipText(text);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setPreferredSize(new Dimension(100, 35));
-
-        // Add hover effect
-        button.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                if (button.isEnabled()) {
-                    button.setBackground(color);
-                    button.setForeground(Color.WHITE);
-                }
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                if (button.isEnabled()) {
-                    button.setBackground(new Color(255, 255, 255));
-                    button.setForeground(color);
-                }
-            }
-        });
-
-        return button;
+        return ButtonHelper.createButton(text, color);
     }
 
     private void searchPositions() {

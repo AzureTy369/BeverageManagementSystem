@@ -2,6 +2,7 @@ package GUI;
 
 import BUS.ProductCategoryBUS;
 import DTO.ProductCategoryDTO;
+import GUI.utils.ButtonHelper;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -194,35 +195,8 @@ public class ProductCategoryGUI extends JPanel {
     }
 
     private JButton createButton(String text, Color backgroundColor, String icon) {
-        JButton button = new JButton(icon + " " + text);
-        button.setFont(new Font("Arial", Font.PLAIN, 14));
-        button.setBackground(backgroundColor);
-        button.setForeground(Color.BLACK);
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-
-        button.addMouseListener(new java.awt.event.MouseAdapter() {
-            @Override
-            public void mouseEntered(java.awt.event.MouseEvent evt) {
-                button.setBackground(darker(backgroundColor, 0.8f));
-            }
-
-            @Override
-            public void mouseExited(java.awt.event.MouseEvent evt) {
-                button.setBackground(backgroundColor);
-            }
-        });
-
+        JButton button = ButtonHelper.createButton(icon + " " + text, backgroundColor);
         return button;
-    }
-
-    private Color darker(Color color, float factor) {
-        return new Color(
-                Math.max((int) (color.getRed() * factor), 0),
-                Math.max((int) (color.getGreen() * factor), 0),
-                Math.max((int) (color.getBlue() * factor), 0),
-                color.getAlpha());
     }
 
     private void refreshCategoryData() {

@@ -13,6 +13,7 @@ import java.awt.event.*;
 import java.util.List;
 import java.util.ArrayList;
 import GUI.utils.ExcelUtils;
+import GUI.utils.ButtonHelper;
 
 public class EmployeeGUI extends JPanel {
     private EmployeeBUS employeeController;
@@ -84,19 +85,19 @@ public class EmployeeGUI extends JPanel {
         // Nút thêm - giảm kích thước
         JButton addBtn = createOutlineButton("Thêm", successColor);
         addBtn.setMargin(new Insets(3, 8, 3, 8));
-        addBtn.setFont(new Font("Arial", Font.PLAIN, 12));
+        addBtn.setFont(new Font("Arial", Font.BOLD, 16));
         addBtn.addActionListener(e -> showAddEmployeeDialog());
 
         // Nút xóa - giảm kích thước
         JButton deleteBtn = createOutlineButton("Xóa", dangerColor);
         deleteBtn.setMargin(new Insets(3, 8, 3, 8));
-        deleteBtn.setFont(new Font("Arial", Font.PLAIN, 12));
+        deleteBtn.setFont(new Font("Arial", Font.BOLD, 16));
         deleteBtn.addActionListener(e -> deleteEmployee());
 
         // Nút chỉnh sửa - giảm kích thước
         JButton editBtn = createOutlineButton("Chỉnh sửa", warningColor);
         editBtn.setMargin(new Insets(3, 8, 3, 8));
-        editBtn.setFont(new Font("Arial", Font.PLAIN, 12));
+        editBtn.setFont(new Font("Arial", Font.BOLD, 16));
         editBtn.addActionListener(e -> showEditEmployeeDialog());
 
         // Separator
@@ -107,13 +108,13 @@ public class EmployeeGUI extends JPanel {
         // Nút xuất Excel - giảm kích thước
         JButton exportExcelButton = createOutlineButton("Xuất Excel", primaryColor);
         exportExcelButton.setMargin(new Insets(3, 8, 3, 8));
-        exportExcelButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        exportExcelButton.setFont(new Font("Arial", Font.BOLD, 16));
         exportExcelButton.addActionListener(e -> exportToExcel());
 
         // Thêm nút nhập Excel vào panel chứa các nút
         JButton importExcelButton = createOutlineButton("Nhập Excel", successColor);
         importExcelButton.setMargin(new Insets(3, 8, 3, 8));
-        importExcelButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        importExcelButton.setFont(new Font("Arial", Font.BOLD, 16));
         importExcelButton.addActionListener(e -> importFromExcel());
 
         // Thêm các nút vào panel bên trái
@@ -133,12 +134,12 @@ public class EmployeeGUI extends JPanel {
 
         JLabel searchLabel = new JLabel("Tìm kiếm:");
         searchLabel.setForeground(Color.BLACK);
-        searchLabel.setFont(new Font("Arial", Font.PLAIN, 12));
+        searchLabel.setFont(new Font("Arial", Font.BOLD, 16));
 
         // TextField tìm kiếm - giảm kích thước
         employeeSearchField = new JTextField(15);
         employeeSearchField.setPreferredSize(new Dimension(180, 25));
-        employeeSearchField.setFont(new Font("Arial", Font.PLAIN, 12));
+        employeeSearchField.setFont(new Font("Arial", Font.BOLD, 16));
         employeeSearchField.addKeyListener(new KeyAdapter() {
             @Override
             public void keyPressed(KeyEvent e) {
@@ -151,13 +152,13 @@ public class EmployeeGUI extends JPanel {
         // Nút tìm kiếm - giảm kích thước
         JButton searchButton = createOutlineButton("Tìm kiếm", primaryColor);
         searchButton.setMargin(new Insets(3, 8, 3, 8));
-        searchButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        searchButton.setFont(new Font("Arial", Font.BOLD, 16));
         searchButton.addActionListener(e -> searchEmployees());
 
         // Nút làm mới - giảm kích thước
         JButton refreshButton = createOutlineButton("Làm mới", new Color(23, 162, 184));
         refreshButton.setMargin(new Insets(3, 8, 3, 8));
-        refreshButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        refreshButton.setFont(new Font("Arial", Font.BOLD, 16));
         refreshButton.addActionListener(e -> refreshEmployeeData());
 
         // Thêm các thành phần vào panel tìm kiếm
@@ -332,7 +333,6 @@ public class EmployeeGUI extends JPanel {
         group.add(orRadio);
 
         JButton searchButton = createOutlineButton("Tìm kiếm", primaryColor);
-        searchButton.setForeground(Color.BLACK);
         searchButton.addActionListener(e -> {
             // Lấy thông tin từ các ô tìm kiếm
             String lastName = lastNameSearchField.getText().trim();
@@ -346,7 +346,6 @@ public class EmployeeGUI extends JPanel {
         });
 
         JButton clearButton = createOutlineButton("Xóa tìm kiếm", new Color(108, 117, 125));
-        clearButton.setForeground(Color.BLACK);
         clearButton.addActionListener(e -> {
             lastNameSearchField.setText("");
             firstNameSearchField.setText("");
@@ -411,32 +410,7 @@ public class EmployeeGUI extends JPanel {
     }
 
     private JButton createOutlineButton(String text, Color color) {
-        JButton button = new JButton(text);
-        button.setFont(new Font("Arial", Font.PLAIN, 14));
-        button.setBackground(new Color(255, 255, 255));
-        button.setForeground(color);
-        button.setFocusPainted(false);
-        button.setBorder(BorderFactory.createLineBorder(color, 1));
-        button.setToolTipText(text);
-        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        button.setPreferredSize(new Dimension(100, 35));
-
-        // Hiệu ứng hover
-        button.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                button.setBackground(color);
-                button.setForeground(Color.WHITE);
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                button.setBackground(new Color(255, 255, 255));
-                button.setForeground(color);
-            }
-        });
-
-        return button;
+        return ButtonHelper.createButton(text, color);
     }
 
     private void createEmployeeFormDialog() {
@@ -554,11 +528,7 @@ public class EmployeeGUI extends JPanel {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setOpaque(false);
 
-        JButton saveButton = new JButton("Lưu");
-        saveButton.setFont(new Font("Arial", Font.BOLD, 14));
-        saveButton.setBackground(successColor);
-        saveButton.setForeground(Color.BLACK);
-        saveButton.setFocusPainted(false);
+        JButton saveButton = ButtonHelper.createButton("Lưu", successColor);
         saveButton.addActionListener(e -> {
             // Sử dụng tag đặc biệt thay vì kiểm tra idField.isEditable()
             if (employeeFormDialog.getTitle().contains("Thêm nhân viên")) {
@@ -570,11 +540,7 @@ public class EmployeeGUI extends JPanel {
             }
         });
 
-        JButton cancelButton = new JButton("Hủy");
-        cancelButton.setFont(new Font("Arial", Font.BOLD, 14));
-        cancelButton.setBackground(dangerColor);
-        cancelButton.setForeground(Color.BLACK);
-        cancelButton.setFocusPainted(false);
+        JButton cancelButton = ButtonHelper.createButton("Hủy", dangerColor);
         cancelButton.addActionListener(e -> employeeFormDialog.dispose());
 
         buttonPanel.add(saveButton);
@@ -937,8 +903,8 @@ public class EmployeeGUI extends JPanel {
                 Object[] rowData = data.get(rowIndex);
                 try {
                     // Kiểm tra dữ liệu bắt buộc
-                    if (rowData.length < 4 || rowData[0] == null || rowData[1] == null || 
-                        rowData[2] == null || rowData[3] == null) {
+                    if (rowData.length < 4 || rowData[0] == null || rowData[1] == null ||
+                            rowData[2] == null || rowData[3] == null) {
                         errorMessages.append("Dòng ").append(rowIndex + 1)
                                 .append(": Thiếu thông tin bắt buộc (Mã NV, Tên đăng nhập, Họ, Tên)\n");
                         failCount++;
@@ -992,8 +958,7 @@ public class EmployeeGUI extends JPanel {
                     employee.setFirstName(firstName);
 
                     // Chức vụ
-                    String positionName = rowData.length > 4 && rowData[4] != null ? 
-                            rowData[4].toString().trim() : "";
+                    String positionName = rowData.length > 4 && rowData[4] != null ? rowData[4].toString().trim() : "";
                     boolean positionFound = false;
                     for (PositionDTO position : positionController.getAllPositions()) {
                         if (position.getPositionName().equals(positionName)) {

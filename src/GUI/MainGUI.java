@@ -179,16 +179,6 @@ public class MainGUI extends JFrame {
         supplierButton.addActionListener(e -> showSupplierPanel());
         navigationPanel.add(supplierButton);
 
-        // Quản lý sản phẩm
-        JButton productButton = createNavigationButton("Sản phẩm", "\uD83C\uDF7A");
-        productButton.addActionListener(e -> showProductPanel());
-        navigationPanel.add(productButton);
-
-        // Thống kê sản phẩm
-        JButton statisticsButton = createNavigationButton("Thống kê sản phẩm", "\uD83D\uDCCA");
-        statisticsButton.addActionListener(e -> showProductStatisticsPanel());
-        navigationPanel.add(statisticsButton);
-
         // Nhập hàng
         JButton importGoodsButton = createNavigationButton("Nhập hàng", "\uD83D\uDEE0");
         importGoodsButton.addActionListener(e -> showImportGoodsPanel());
@@ -203,6 +193,16 @@ public class MainGUI extends JFrame {
         JButton inventoryButton = createNavigationButton("Tồn kho", "\uD83D\uDCD6");
         inventoryButton.addActionListener(e -> showInventoryPanel());
         navigationPanel.add(inventoryButton);
+
+        // Quản lý sản phẩm
+        JButton productButton = createNavigationButton("Sản phẩm", "\uD83C\uDF7A");
+        productButton.addActionListener(e -> showProductPanel());
+        navigationPanel.add(productButton);
+
+        // Thống kê sản phẩm
+        JButton statisticsButton = createNavigationButton("Thống kê", "\uD83D\uDCCA");
+        statisticsButton.addActionListener(e -> showProductStatisticsPanel());
+        navigationPanel.add(statisticsButton);
 
         // Add scrolling capability
         JScrollPane scrollPane = new JScrollPane(navigationPanel);

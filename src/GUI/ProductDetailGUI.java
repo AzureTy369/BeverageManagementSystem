@@ -4,6 +4,7 @@ import BUS.ProductBUS;
 import BUS.ProductDetailBUS;
 import DTO.ProductDTO;
 import DTO.ProductDetailDTO;
+import GUI.utils.ButtonHelper;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -63,18 +64,12 @@ public class ProductDetailGUI extends JPanel {
         JPanel titlePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         titlePanel.setBackground(lightColor);
 
-        JLabel titleLabel = new JLabel("Quản Lý Chi Tiết Sản Phẩm");
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 18));
-        titleLabel.setForeground(primaryColor);
-
-        titlePanel.add(titleLabel);
-
         // Panel tìm kiếm và thêm mới
         JPanel searchPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         searchPanel.setOpaque(false);
 
         detailSearchField = new JTextField(20);
-        detailSearchField.setFont(new Font("Arial", Font.PLAIN, 14));
+        detailSearchField.setFont(new Font("Arial", Font.PLAIN, 16));
         detailSearchField.setBorder(BorderFactory.createCompoundBorder(
                 detailSearchField.getBorder(),
                 BorderFactory.createEmptyBorder(5, 5, 5, 5)));
@@ -88,36 +83,16 @@ public class ProductDetailGUI extends JPanel {
             }
         });
 
-        JButton searchButton = new JButton("Tìm kiếm");
-        searchButton.setFont(new Font("Arial", Font.PLAIN, 14));
-        searchButton.setBackground(primaryColor);
-        searchButton.setForeground(Color.BLACK);
-        searchButton.setFocusPainted(false);
-        searchButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        JButton searchButton = ButtonHelper.createButton("Tìm kiếm", primaryColor);
         searchButton.addActionListener(e -> searchProductDetails());
 
-        addDetailButton = new JButton("Thêm mới");
-        addDetailButton.setFont(new Font("Arial", Font.PLAIN, 14));
-        addDetailButton.setBackground(successColor);
-        addDetailButton.setForeground(Color.BLACK);
-        addDetailButton.setFocusPainted(false);
-        addDetailButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        addDetailButton = ButtonHelper.createButton("Thêm mới", successColor);
         addDetailButton.addActionListener(e -> showAddDetailDialog());
 
-        editDetailButton = new JButton("Sửa");
-        editDetailButton.setFont(new Font("Arial", Font.PLAIN, 14));
-        editDetailButton.setBackground(warningColor);
-        editDetailButton.setForeground(Color.BLACK);
-        editDetailButton.setFocusPainted(false);
-        editDetailButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        editDetailButton = ButtonHelper.createButton("Sửa", warningColor);
         editDetailButton.addActionListener(e -> showEditDetailDialog());
 
-        deleteDetailButton = new JButton("Xóa");
-        deleteDetailButton.setFont(new Font("Arial", Font.PLAIN, 14));
-        deleteDetailButton.setBackground(dangerColor);
-        deleteDetailButton.setForeground(Color.BLACK);
-        deleteDetailButton.setFocusPainted(false);
-        deleteDetailButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        deleteDetailButton = ButtonHelper.createButton("Xóa", dangerColor);
         deleteDetailButton.addActionListener(e -> deleteProductDetail());
 
         searchPanel.add(new JLabel("Tìm kiếm: "));
@@ -169,11 +144,11 @@ public class ProductDetailGUI extends JPanel {
         };
 
         detailTable = new JTable(detailTableModel);
-        detailTable.setFont(new Font("Arial", Font.PLAIN, 14));
+        detailTable.setFont(new Font("Arial", Font.PLAIN, 16));
         detailTable.setRowHeight(25);
         detailTable.setGridColor(new Color(230, 230, 230));
         detailTable.setSelectionBackground(new Color(173, 216, 230));
-        detailTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 14));
+        detailTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 16));
         detailTable.getTableHeader().setBackground(primaryColor);
         detailTable.getTableHeader().setForeground(Color.BLACK);
         detailTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
@@ -210,12 +185,12 @@ public class ProductDetailGUI extends JPanel {
         gbc.gridx = 0;
         gbc.gridy = 0;
         JLabel idLabel = new JLabel("Mã chi tiết:");
-        idLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        idLabel.setFont(new Font("Arial", Font.BOLD, 16));
         formPanel.add(idLabel, gbc);
 
         gbc.gridx = 1;
         detailIdField = new JTextField(20);
-        detailIdField.setFont(new Font("Arial", Font.PLAIN, 14));
+        detailIdField.setFont(new Font("Arial", Font.PLAIN, 16));
         detailIdField.setEditable(false);
         formPanel.add(detailIdField, gbc);
 
@@ -223,47 +198,43 @@ public class ProductDetailGUI extends JPanel {
         gbc.gridx = 0;
         gbc.gridy = 1;
         JLabel productLabel = new JLabel("Sản phẩm:");
-        productLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        productLabel.setFont(new Font("Arial", Font.BOLD, 16));
         formPanel.add(productLabel, gbc);
 
         gbc.gridx = 1;
         productComboBox = new JComboBox<>();
-        productComboBox.setFont(new Font("Arial", Font.PLAIN, 14));
+        productComboBox.setFont(new Font("Arial", Font.PLAIN, 16));
         formPanel.add(productComboBox, gbc);
 
         // Kích thước
         gbc.gridx = 0;
         gbc.gridy = 2;
         JLabel sizeLabel = new JLabel("Kích thước:");
-        sizeLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        sizeLabel.setFont(new Font("Arial", Font.BOLD, 16));
         formPanel.add(sizeLabel, gbc);
 
         gbc.gridx = 1;
         sizeField = new JTextField(20);
-        sizeField.setFont(new Font("Arial", Font.PLAIN, 14));
+        sizeField.setFont(new Font("Arial", Font.PLAIN, 16));
         formPanel.add(sizeField, gbc);
 
         // Giá
         gbc.gridx = 0;
         gbc.gridy = 3;
         JLabel priceLabel = new JLabel("Giá:");
-        priceLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        priceLabel.setFont(new Font("Arial", Font.BOLD, 16));
         formPanel.add(priceLabel, gbc);
 
         gbc.gridx = 1;
         priceField = new JTextField(20);
-        priceField.setFont(new Font("Arial", Font.PLAIN, 14));
+        priceField.setFont(new Font("Arial", Font.PLAIN, 16));
         formPanel.add(priceField, gbc);
 
         // Button panel
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setOpaque(false);
 
-        JButton saveButton = new JButton("Lưu");
-        saveButton.setFont(new Font("Arial", Font.BOLD, 14));
-        saveButton.setBackground(successColor);
-        saveButton.setForeground(Color.BLACK);
-        saveButton.setFocusPainted(false);
+        JButton saveButton = ButtonHelper.createButton("Lưu", successColor);
         saveButton.addActionListener(e -> {
             if (detailIdField.isEditable()) {
                 addProductDetail();
@@ -272,11 +243,7 @@ public class ProductDetailGUI extends JPanel {
             }
         });
 
-        JButton cancelButton = new JButton("Hủy");
-        cancelButton.setFont(new Font("Arial", Font.BOLD, 14));
-        cancelButton.setBackground(dangerColor);
-        cancelButton.setForeground(Color.BLACK);
-        cancelButton.setFocusPainted(false);
+        JButton cancelButton = ButtonHelper.createButton("Hủy", dangerColor);
         cancelButton.addActionListener(e -> detailFormDialog.dispose());
 
         buttonPanel.add(saveButton);
@@ -599,7 +566,7 @@ public class ProductDetailGUI extends JPanel {
         JPanel headerPanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
         headerPanel.setOpaque(false);
         JLabel headerLabel = new JLabel("Tìm kiếm nâng cao - Nhập các điều kiện tìm kiếm");
-        headerLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        headerLabel.setFont(new Font("Arial", Font.BOLD, 16));
         headerPanel.add(headerLabel);
         advancedSearchPanel.add(headerPanel);
 
@@ -614,46 +581,46 @@ public class ProductDetailGUI extends JPanel {
         gbc.gridx = 0;
         gbc.gridy = 0;
         JLabel nameLabel = new JLabel("Tên sản phẩm:");
-        nameLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        nameLabel.setFont(new Font("Arial", Font.PLAIN, 16));
         conditionsPanel.add(nameLabel, gbc);
 
         gbc.gridx = 1;
         JTextField nameField = new JTextField(15);
-        nameField.setFont(new Font("Arial", Font.PLAIN, 14));
+        nameField.setFont(new Font("Arial", Font.PLAIN, 16));
         conditionsPanel.add(nameField, gbc);
 
         // Kích thước
         gbc.gridx = 2;
         JLabel sizeLabel = new JLabel("Kích thước:");
-        sizeLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        sizeLabel.setFont(new Font("Arial", Font.PLAIN, 16));
         conditionsPanel.add(sizeLabel, gbc);
 
         gbc.gridx = 3;
         JTextField sizeField = new JTextField(15);
-        sizeField.setFont(new Font("Arial", Font.PLAIN, 14));
+        sizeField.setFont(new Font("Arial", Font.PLAIN, 16));
         conditionsPanel.add(sizeField, gbc);
 
         // Giá
         gbc.gridx = 0;
         gbc.gridy = 1;
         JLabel priceLabel = new JLabel("Giá (từ):");
-        priceLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        priceLabel.setFont(new Font("Arial", Font.PLAIN, 16));
         conditionsPanel.add(priceLabel, gbc);
 
         gbc.gridx = 1;
         JTextField priceFromField = new JTextField(15);
-        priceFromField.setFont(new Font("Arial", Font.PLAIN, 14));
+        priceFromField.setFont(new Font("Arial", Font.PLAIN, 16));
         conditionsPanel.add(priceFromField, gbc);
 
         // Giá đến
         gbc.gridx = 2;
         JLabel priceToLabel = new JLabel("Giá (đến):");
-        priceToLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        priceToLabel.setFont(new Font("Arial", Font.PLAIN, 16));
         conditionsPanel.add(priceToLabel, gbc);
 
         gbc.gridx = 3;
         JTextField priceToField = new JTextField(15);
-        priceToField.setFont(new Font("Arial", Font.PLAIN, 14));
+        priceToField.setFont(new Font("Arial", Font.PLAIN, 16));
         conditionsPanel.add(priceToField, gbc);
 
         advancedSearchPanel.add(conditionsPanel);
@@ -663,24 +630,19 @@ public class ProductDetailGUI extends JPanel {
         controlPanel.setOpaque(false);
 
         JRadioButton andRadio = new JRadioButton("Tất cả điều kiện");
-        andRadio.setFont(new Font("Arial", Font.PLAIN, 14));
+        andRadio.setFont(new Font("Arial", Font.PLAIN, 16));
         andRadio.setOpaque(false);
         andRadio.setSelected(true);
 
         JRadioButton orRadio = new JRadioButton("Bất kỳ điều kiện nào");
-        orRadio.setFont(new Font("Arial", Font.PLAIN, 14));
+        orRadio.setFont(new Font("Arial", Font.PLAIN, 16));
         orRadio.setOpaque(false);
 
         ButtonGroup group = new ButtonGroup();
         group.add(andRadio);
         group.add(orRadio);
 
-        JButton searchButton = new JButton("Tìm kiếm");
-        searchButton.setFont(new Font("Arial", Font.PLAIN, 14));
-        searchButton.setBackground(primaryColor);
-        searchButton.setForeground(Color.BLACK);
-        searchButton.setFocusPainted(false);
-        searchButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        JButton searchButton = ButtonHelper.createButton("Tìm kiếm", primaryColor);
         searchButton.addActionListener(e -> {
             // Lấy thông tin từ các ô tìm kiếm
             String name = nameField.getText().trim();
@@ -693,12 +655,7 @@ public class ProductDetailGUI extends JPanel {
             advancedSearchProductDetails(name, size, priceFrom, priceTo, isAnd);
         });
 
-        JButton clearButton = new JButton("Xóa tìm kiếm");
-        clearButton.setFont(new Font("Arial", Font.PLAIN, 14));
-        clearButton.setBackground(new Color(108, 117, 125));
-        clearButton.setForeground(Color.BLACK);
-        clearButton.setFocusPainted(false);
-        clearButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        JButton clearButton = ButtonHelper.createButton("Xóa tìm kiếm", new Color(108, 117, 125));
         clearButton.addActionListener(e -> {
             nameField.setText("");
             sizeField.setText("");

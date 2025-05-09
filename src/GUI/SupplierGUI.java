@@ -90,13 +90,13 @@ public class SupplierGUI extends JPanel {
         // Nút thêm - giảm kích thước
         JButton addBtn = createOutlineButton("Thêm", successColor);
         addBtn.setMargin(new Insets(3, 8, 3, 8));
-        addBtn.setFont(new Font("Arial", Font.PLAIN, 12));
+        addBtn.setFont(new Font("Arial", Font.BOLD, 16));
         addBtn.addActionListener(e -> showAddSupplierDialog());
 
         // Nút xóa - giảm kích thước
         JButton deleteBtn = createOutlineButton("Xóa", dangerColor);
         deleteBtn.setMargin(new Insets(3, 8, 3, 8));
-        deleteBtn.setFont(new Font("Arial", Font.PLAIN, 12));
+        deleteBtn.setFont(new Font("Arial", Font.BOLD, 16));
         deleteBtn.addActionListener(e -> deleteSupplier());
 
         // Gán deleteBtn vào biến thành viên để sử dụng ở nơi khác
@@ -105,7 +105,7 @@ public class SupplierGUI extends JPanel {
         // Nút chỉnh sửa - giảm kích thước
         JButton editBtn = createOutlineButton("Chỉnh sửa", warningColor);
         editBtn.setMargin(new Insets(3, 8, 3, 8));
-        editBtn.setFont(new Font("Arial", Font.PLAIN, 12));
+        editBtn.setFont(new Font("Arial", Font.BOLD, 16));
         editBtn.addActionListener(e -> showEditSupplierDialog());
 
         // Gán editBtn vào biến thành viên để sử dụng ở nơi khác
@@ -119,11 +119,11 @@ public class SupplierGUI extends JPanel {
         // Nút xuất Excel - giảm kích thước
         JButton exportBtn = createOutlineButton("Xuất Excel", new Color(108, 117, 125));
         exportBtn.setMargin(new Insets(3, 8, 3, 8));
-        exportBtn.setFont(new Font("Arial", Font.PLAIN, 12));
+        exportBtn.setFont(new Font("Arial", Font.BOLD, 16));
         // Nút Nhập Excel - giảm kích thước
         JButton importBtn = createOutlineButton("Nhập Excel", new Color(108, 117, 125));
         importBtn.setMargin(new Insets(3, 8, 3, 8));
-        importBtn.setFont(new Font("Arial", Font.PLAIN, 12));
+        importBtn.setFont(new Font("Arial", Font.BOLD, 16));
 
         // Thêm các nút vào panel bên trái
         leftFunctionPanel.add(addBtn);
@@ -160,13 +160,13 @@ public class SupplierGUI extends JPanel {
         // Nút tìm kiếm - giảm kích thước
         JButton searchButton = createOutlineButton("Tìm kiếm", primaryColor);
         searchButton.setMargin(new Insets(3, 8, 3, 8));
-        searchButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        searchButton.setFont(new Font("Arial", Font.BOLD, 16));
         searchButton.addActionListener(e -> searchSuppliers());
 
         // Nút làm mới - giảm kích thước
         JButton refreshButton = createOutlineButton("Làm mới", new Color(23, 162, 184));
         refreshButton.setMargin(new Insets(3, 8, 3, 8));
-        refreshButton.setFont(new Font("Arial", Font.PLAIN, 12));
+        refreshButton.setFont(new Font("Arial", Font.BOLD, 16));
         refreshButton.addActionListener(e -> refreshSupplierData());
 
         // Thêm các thành phần vào panel tìm kiếm
@@ -246,19 +246,6 @@ public class SupplierGUI extends JPanel {
         // Thêm vào layout chính
         add(headerPanel, BorderLayout.NORTH);
         add(contentPanel, BorderLayout.CENTER);
-
-        // Thêm nút "Xóa tất cả dữ liệu"
-        JButton btnDeleteAll = new JButton("Xóa tất cả dữ liệu");
-        btnDeleteAll.setBackground(new Color(255, 99, 71)); // Màu đỏ cam
-        btnDeleteAll.setForeground(Color.WHITE);
-        btnDeleteAll.addActionListener(e -> deleteAllData());
-
-        // Thêm nút vào panel chức năng
-        JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
-        buttonPanel.add(btnDeleteAll);
-
-        // Thêm panel chức năng vào giao diện
-        add(buttonPanel, BorderLayout.SOUTH);
     }
 
     private void createAdvancedSearchPanel() {
@@ -340,6 +327,7 @@ public class SupplierGUI extends JPanel {
 
         JButton searchButton = createOutlineButton("Tìm kiếm", primaryColor);
         searchButton.setForeground(Color.BLACK);
+        searchButton.setFont(new Font("Arial", Font.BOLD, 16));
         searchButton.addActionListener(e -> {
             // Lấy thông tin từ các ô tìm kiếm
             String name = nameField.getText().trim();
@@ -353,6 +341,7 @@ public class SupplierGUI extends JPanel {
 
         JButton clearButton = createOutlineButton("Xóa tìm kiếm", new Color(108, 117, 125));
         clearButton.setForeground(Color.BLACK);
+        clearButton.setFont(new Font("Arial", Font.BOLD, 16));
         clearButton.addActionListener(e -> {
             nameField.setText("");
             addressField.setText("");
@@ -409,7 +398,7 @@ public class SupplierGUI extends JPanel {
         statusPanel.setBackground(new Color(248, 249, 250));
 
         JLabel statusLabel = new JLabel("Tổng số nhà cung cấp: " + supplierController.getAllSuppliers().size());
-        statusLabel.setFont(new Font("Arial", Font.BOLD, 12));
+        statusLabel.setFont(new Font("Arial", Font.BOLD, 16));
         statusLabel.setForeground(new Color(33, 37, 41));
         statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 0));
 
@@ -420,6 +409,9 @@ public class SupplierGUI extends JPanel {
         rightPanel.setOpaque(false);
 
         JButton viewDetailButton = createOutlineButton("Xem chi tiết nhà cung cấp", primaryColor);
+        // Tăng kích thước nút
+        viewDetailButton.setPreferredSize(new Dimension(200, 35));
+        viewDetailButton.setFont(new Font("Arial", Font.BOLD, 16));
         viewDetailButton.addActionListener(e -> {
             int selectedRow = supplierTable.getSelectedRow();
             if (selectedRow == -1) {
@@ -439,34 +431,56 @@ public class SupplierGUI extends JPanel {
     }
 
     private JButton createOutlineButton(String text, Color color) {
-        JButton button = new JButton(text);
+        JButton button = new JButton(text) {
+            @Override
+            protected void paintComponent(Graphics g) {
+                // Xác định màu nền dựa theo loại nút
+                Color bgColor;
+                if (text.toLowerCase().contains("thêm")) {
+                    bgColor = new Color(0x4CAF50); // Xanh lá
+                } else if (text.toLowerCase().contains("xóa")) {
+                    bgColor = new Color(0xF44336); // Đỏ
+                } else if (text.toLowerCase().contains("sửa") || text.toLowerCase().contains("chỉnh sửa")) {
+                    bgColor = new Color(0xFFCA28); // Vàng
+                } else if (text.toLowerCase().contains("tìm kiếm")) {
+                    bgColor = primaryColor; // Màu menu của đồ án
+                } else if (text.toLowerCase().contains("excel")) {
+                    bgColor = new Color(0x455A64); // Xám đậm
+                } else if (text.toLowerCase().contains("làm mới") || text.toLowerCase().contains("refresh")) {
+                    bgColor = new Color(0x26A69A); // Xanh ngọc
+                } else {
+                    // Các nút khác
+                    bgColor = color;
+                }
+
+                // Vẽ background
+                g.setColor(bgColor);
+                g.fillRect(0, 0, getWidth(), getHeight());
+
+                // Vẽ text
+                FontMetrics fm = g.getFontMetrics();
+                int textWidth = fm.stringWidth(getText());
+                int textHeight = fm.getHeight();
+
+                Color textColor;
+                if (text.toLowerCase().contains("sửa") || text.toLowerCase().contains("chỉnh sửa")) {
+                    textColor = new Color(0x000000); // Đen
+                } else {
+                    textColor = new Color(0xFFFFFF); // Trắng
+                }
+
+                g.setColor(textColor);
+                g.drawString(getText(), (getWidth() - textWidth) / 2,
+                        (getHeight() - textHeight) / 2 + fm.getAscent());
+            }
+        };
+
         button.setFont(new Font("Arial", Font.PLAIN, 14));
-        button.setBackground(new Color(255, 255, 255));
-        button.setForeground(color);
         button.setFocusPainted(false);
         button.setBorder(BorderFactory.createLineBorder(color, 1));
         button.setToolTipText(text);
         button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         button.setPreferredSize(new Dimension(100, 35));
-
-        // Add hover effect
-        button.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseEntered(MouseEvent e) {
-                if (button.isEnabled()) {
-                    button.setBackground(color);
-                    button.setForeground(Color.WHITE);
-                }
-            }
-
-            @Override
-            public void mouseExited(MouseEvent e) {
-                if (button.isEnabled()) {
-                    button.setBackground(new Color(255, 255, 255));
-                    button.setForeground(color);
-                }
-            }
-        });
 
         return button;
     }
@@ -575,7 +589,7 @@ public class SupplierGUI extends JPanel {
         formPanel.add(phoneField);
         formPanel.add(emailLabel);
         formPanel.add(emailField);
-        
+
         // Bảng sản phẩm
         JPanel productPanel = new JPanel(new BorderLayout());
         productPanel.setBorder(BorderFactory.createTitledBorder("Danh sách sản phẩm của nhà cung cấp"));
@@ -1128,80 +1142,5 @@ public class SupplierGUI extends JPanel {
             detailDialog.add(detailPanel);
             detailDialog.setVisible(true);
         }
-    }
-
-    /**
-     * Xóa tất cả dữ liệu nhà cung cấp và sản phẩm nhà cung cấp
-     */
-    private void deleteAllData() {
-        int confirm = JOptionPane.showConfirmDialog(
-                this,
-                "Bạn có chắc chắn muốn xóa TẤT CẢ dữ liệu nhà cung cấp và sản phẩm nhà cung cấp?\n" +
-                        "Thao tác này không thể hoàn tác!",
-                "Xác nhận xóa dữ liệu",
-                JOptionPane.YES_NO_OPTION,
-                JOptionPane.WARNING_MESSAGE);
-
-        if (confirm == JOptionPane.YES_OPTION) {
-            try {
-                // Xóa tất cả sản phẩm nhà cung cấp trước
-                boolean productsDeleted = supplierController.deleteAllSupplierProducts();
-
-                // Sau đó xóa tất cả nhà cung cấp
-                boolean suppliersDeleted = supplierController.deleteAllSuppliers();
-
-                if (productsDeleted && suppliersDeleted) {
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "Đã xóa thành công tất cả dữ liệu nhà cung cấp và sản phẩm nhà cung cấp!",
-                            "Thành công",
-                            JOptionPane.INFORMATION_MESSAGE);
-
-                    // Làm mới danh sách
-                    loadSuppliers();
-                } else {
-                    JOptionPane.showMessageDialog(
-                            this,
-                            "Có lỗi xảy ra khi xóa dữ liệu. Một số dữ liệu có thể vẫn còn tồn tại.",
-                            "Lỗi",
-                            JOptionPane.ERROR_MESSAGE);
-                }
-            } catch (Exception e) {
-                JOptionPane.showMessageDialog(
-                        this,
-                        "Lỗi khi xóa dữ liệu: " + e.getMessage(),
-                        "Lỗi",
-                        JOptionPane.ERROR_MESSAGE);
-                e.printStackTrace();
-            }
-        }
-    }
-
-    /**
-     * Làm mới danh sách nhà cung cấp
-     */
-    private void loadSuppliers() {
-        // Xóa dữ liệu cũ
-        tableModel.setRowCount(0);
-        List<SupplierDTO> suppliers = supplierController.getAllSuppliers();
-        suppliers.clear();
-
-        // Lấy danh sách nhà cung cấp mới
-        suppliers = supplierController.getAllSuppliers();
-
-        // Thêm nhà cung cấp vào bảng
-        for (SupplierDTO supplier : suppliers) {
-            tableModel.addRow(new Object[] {
-                    supplier.getSupplierId(),
-                    supplier.getSupplierName(),
-                    supplier.getPhone(),
-                    supplier.getAddress(),
-                    supplier.getEmail(),
-                    supplier.getProducts().size()
-            });
-        }
-
-        // Thông báo đã tải xong
-        System.out.println("Đã tải " + suppliers.size() + " nhà cung cấp");
     }
 }

@@ -4,6 +4,7 @@ import BUS.ProductBUS;
 import BUS.ProductDetailBUS;
 import BUS.ProductCategoryBUS;
 import BUS.SupplierBUS;
+import GUI.utils.ButtonHelper;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -28,7 +29,7 @@ public class ProductManagementGUI extends JPanel {
         this.categoryController = categoryController;
 
         setLayout(new BorderLayout());
-        setBorder(new EmptyBorder(20, 20, 20, 20));
+        setBorder(new EmptyBorder(10, 10, 10, 10));
         setBackground(lightColor);
 
         createGUI();
@@ -49,13 +50,8 @@ public class ProductManagementGUI extends JPanel {
     }
 
     private void addViewDetailsButtonToProductPanel() {
-        JButton viewDetailsButton = new JButton("Xem chi tiết sản phẩm");
-        viewDetailsButton.setFont(new Font("Arial", Font.PLAIN, 14));
-        viewDetailsButton.setBackground(primaryColor);
-        viewDetailsButton.setForeground(Color.BLACK);
-        viewDetailsButton.setFocusPainted(false);
-        viewDetailsButton.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
-        viewDetailsButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        JButton viewDetailsButton = ButtonHelper.createButton("Xem chi tiết sản phẩm", primaryColor);
+        viewDetailsButton.setPreferredSize(new Dimension(200, 35));
 
         viewDetailsButton.addActionListener(e -> {
             int selectedRow = productPanel.getSelectedProductRow();
@@ -78,13 +74,8 @@ public class ProductManagementGUI extends JPanel {
     }
 
     private void addCategoryManagementButtonToProductPanel() {
-        JButton categoryButton = new JButton("Xem chi tiết danh mục sản phẩm");
-        categoryButton.setFont(new Font("Arial", Font.PLAIN, 14));
-        categoryButton.setBackground(primaryColor);
-        categoryButton.setForeground(Color.BLACK);
-        categoryButton.setFocusPainted(false);
-        categoryButton.setBorder(BorderFactory.createEmptyBorder(8, 15, 8, 15));
-        categoryButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        JButton categoryButton = ButtonHelper.createButton("Xem chi tiết danh mục sản phẩm", primaryColor);
+        categoryButton.setPreferredSize(new Dimension(230, 35));
 
         categoryButton.addActionListener(e -> showCategoryManagementDialog());
 
@@ -109,11 +100,8 @@ public class ProductManagementGUI extends JPanel {
         JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
         buttonPanel.setBackground(lightColor);
 
-        JButton closeButton = new JButton("Đóng");
-        closeButton.setFont(new Font("Arial", Font.PLAIN, 14));
-        closeButton.setBackground(new Color(108, 117, 125)); // gray
-        closeButton.setForeground(Color.BLACK);
-        closeButton.setFocusPainted(false);
+        JButton closeButton = ButtonHelper.createButton("Đóng", new Color(220, 53, 69)); // Sử dụng màu đỏ cho nút đóng
+
         closeButton.addActionListener(e -> detailsDialog.dispose());
 
         buttonPanel.add(closeButton);
@@ -150,11 +138,9 @@ public class ProductManagementGUI extends JPanel {
             JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.RIGHT));
             buttonPanel.setBackground(lightColor);
 
-            JButton closeButton = new JButton("Đóng");
-            closeButton.setFont(new Font("Arial", Font.PLAIN, 14));
-            closeButton.setBackground(new Color(108, 117, 125)); // gray
-            closeButton.setForeground(Color.BLACK);
-            closeButton.setFocusPainted(false);
+            JButton closeButton = ButtonHelper.createButton("Đóng", new Color(220, 53, 69)); // Sử dụng màu đỏ cho nút
+                                                                                             // đóng
+
             closeButton.addActionListener(e -> categoryDialog.dispose());
 
             buttonPanel.add(closeButton);

@@ -18,6 +18,7 @@ import java.awt.event.*;
 import java.util.List;
 import java.util.ArrayList;
 import GUI.utils.ExcelUtils;
+import GUI.utils.ButtonHelper;
 
 public class ImportReceiptDetailGUI extends JPanel {
     private ImportReceiptBUS importReceiptController;
@@ -197,9 +198,9 @@ public class ImportReceiptDetailGUI extends JPanel {
         buttonPanel.setBackground(Color.WHITE);
 
         if (!isEditable) {
-            JButton exportPdfButton = new JButton("Xuất PDF");
-            exportPdfButton.setFont(new Font("Arial", Font.BOLD, 14));
-            exportPdfButton.setBackground(primaryColor);
+            JButton exportPdfButton = ButtonHelper.createButton("Xuất PDF", primaryColor);
+            exportPdfButton.setFont(new Font("Arial", Font.BOLD, 16));
+            exportPdfButton.setPreferredSize(new Dimension(120, 35));
             exportPdfButton.setForeground(Color.WHITE);
             exportPdfButton.addActionListener(e -> exportToPdf());
             buttonPanel.add(exportPdfButton);
@@ -232,8 +233,8 @@ public class ImportReceiptDetailGUI extends JPanel {
         JPanel searchPanel = new JPanel();
         searchPanel.setBackground(Color.WHITE);
         JTextField searchField = new JTextField(15);
-        JButton searchButton = new JButton("Tìm kiếm");
-        searchButton.setBackground(primaryColor);
+        JButton searchButton = ButtonHelper.createButton("Tìm kiếm", primaryColor);
+        searchButton.setFont(new Font("Arial", Font.BOLD, 16));
         searchButton.setForeground(Color.WHITE);
 
         searchButton.addActionListener(e -> {
@@ -262,8 +263,9 @@ public class ImportReceiptDetailGUI extends JPanel {
         addPanel.setBackground(Color.WHITE);
         addPanel.add(new JLabel("Số lượng:"));
         quantityField = new JTextField("1", 5);
-        JButton addButton = new JButton("Thêm vào phiếu");
-        addButton.setBackground(successColor);
+        JButton addButton = ButtonHelper.createButton("Thêm vào phiếu", successColor);
+        addButton.setFont(new Font("Arial", Font.BOLD, 16));
+        addButton.setPreferredSize(new Dimension(150, 35));
         addButton.setForeground(Color.WHITE);
 
         addButton.addActionListener(e -> addProductToReceipt());
@@ -288,12 +290,14 @@ public class ImportReceiptDetailGUI extends JPanel {
         JPanel functionPanel = new JPanel();
         functionPanel.setBackground(Color.WHITE);
 
-        JButton editButton = new JButton("Sửa số lượng");
-        editButton.setBackground(successColor);
+        JButton editButton = ButtonHelper.createButton("Sửa số lượng", successColor);
+        editButton.setFont(new Font("Arial", Font.BOLD, 16));
+        editButton.setPreferredSize(new Dimension(150, 35));
         editButton.setForeground(Color.WHITE);
 
-        JButton deleteButton = new JButton("Xóa sản phẩm");
-        deleteButton.setBackground(dangerColor);
+        JButton deleteButton = ButtonHelper.createButton("Xóa sản phẩm", dangerColor);
+        deleteButton.setFont(new Font("Arial", Font.BOLD, 16));
+        deleteButton.setPreferredSize(new Dimension(150, 35));
         deleteButton.setForeground(Color.WHITE);
 
         editButton.addActionListener(e -> editProductQuantity());
