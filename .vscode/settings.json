@@ -15,7 +15,9 @@
     "lib/poi-5.4.1.jar",
     "lib/poi-ooxml-5.4.1.jar",
     "lib/poi-ooxml-lite-5.4.1.jar",
-    "lib/xmlbeans-5.2.0.jar"
+    "lib/xmlbeans-5.2.0.jar",
+    "lib/itextpdf-5.5.13.2.jar",
+    "lib/bcprov-jdk15on-1.70.jar"
   ],
   "C_Cpp_Runner.cCompilerPath": "gcc",
   "C_Cpp_Runner.cppCompilerPath": "g++",

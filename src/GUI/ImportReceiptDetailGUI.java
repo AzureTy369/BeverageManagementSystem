@@ -17,6 +17,14 @@ import java.awt.*;
 import java.util.List;
 import java.util.ArrayList;
 import GUI.utils.ButtonHelper;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.awt.Desktop;
+
+// Bỏ comment các import iText
+import com.itextpdf.text.*;
+import com.itextpdf.text.pdf.*;
+import javax.swing.filechooser.FileNameExtensionFilter;
 
 public class ImportReceiptDetailGUI extends JPanel {
     private ImportReceiptBUS importReceiptController;
@@ -91,7 +99,7 @@ public class ImportReceiptDetailGUI extends JPanel {
         titlePanel.setBackground(Color.WHITE);
 
         titleLabel = new JLabel("CHI TIẾT PHIẾU NHẬP", JLabel.CENTER);
-        titleLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        titleLabel.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 24));
         titleLabel.setForeground(primaryColor); // Đổi màu chữ thành màu chính
 
         titlePanel.add(titleLabel, BorderLayout.CENTER);
@@ -103,15 +111,15 @@ public class ImportReceiptDetailGUI extends JPanel {
 
         // Left column
         JLabel receiptIdLabel = new JLabel("Mã phiếu:");
-        receiptIdLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        receiptIdLabel.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 14));
         infoPanel.add(receiptIdLabel);
 
         receiptIdValueLabel = new JLabel(receipt != null ? receipt.getImportId() : "N/A");
-        receiptIdValueLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        receiptIdValueLabel.setFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, 14));
         infoPanel.add(receiptIdValueLabel);
 
         JLabel supplierLabel = new JLabel("Nhà cung cấp:");
-        supplierLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        supplierLabel.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 14));
         infoPanel.add(supplierLabel);
 
         String supplierName = "N/A";
@@ -120,12 +128,12 @@ public class ImportReceiptDetailGUI extends JPanel {
             // In a real application, you would fetch the supplier name from the database
         }
         supplierValueLabel = new JLabel(supplierName);
-        supplierValueLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        supplierValueLabel.setFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, 14));
         infoPanel.add(supplierValueLabel);
 
         // Right column
         JLabel creatorLabel = new JLabel("Người tạo:");
-        creatorLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        creatorLabel.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 14));
         infoPanel.add(creatorLabel);
 
         String creatorName = "N/A";
@@ -134,15 +142,15 @@ public class ImportReceiptDetailGUI extends JPanel {
             // In a real application, you would fetch the employee name from the database
         }
         creatorValueLabel = new JLabel(creatorName);
-        creatorValueLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        creatorValueLabel.setFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, 14));
         infoPanel.add(creatorValueLabel);
 
         JLabel dateLabel = new JLabel("Thời gian tạo:");
-        dateLabel.setFont(new Font("Arial", Font.BOLD, 14));
+        dateLabel.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 14));
         infoPanel.add(dateLabel);
 
         dateValueLabel = new JLabel(receipt != null ? receipt.getImportDate() : "N/A");
-        dateValueLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        dateValueLabel.setFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, 14));
         infoPanel.add(dateValueLabel);
 
         // Table panel
@@ -171,7 +179,7 @@ public class ImportReceiptDetailGUI extends JPanel {
         totalPanel.setBackground(Color.WHITE);
 
         JLabel totalLabel = new JLabel("TỔNG TIỀN:");
-        totalLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        totalLabel.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 16));
         totalPanel.add(totalLabel);
 
         String formattedAmount = "0đ";
@@ -184,7 +192,7 @@ public class ImportReceiptDetailGUI extends JPanel {
             }
         }
         totalAmountLabel = new JLabel(formattedAmount);
-        totalAmountLabel.setFont(new Font("Arial", Font.BOLD, 16));
+        totalAmountLabel.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 16));
         totalAmountLabel.setForeground(primaryColor); // Đổi màu chữ thành màu chính
         totalPanel.add(totalAmountLabel);
 
@@ -196,7 +204,7 @@ public class ImportReceiptDetailGUI extends JPanel {
 
         if (!isEditable) {
             JButton exportPdfButton = ButtonHelper.createButton("Xuất PDF", primaryColor);
-            exportPdfButton.setFont(new Font("Arial", Font.BOLD, 16));
+            exportPdfButton.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 16));
             exportPdfButton.setPreferredSize(new Dimension(120, 35));
             exportPdfButton.setForeground(Color.WHITE);
             exportPdfButton.addActionListener(e -> exportToPdf());
@@ -231,7 +239,7 @@ public class ImportReceiptDetailGUI extends JPanel {
         searchPanel.setBackground(Color.WHITE);
         JTextField searchField = new JTextField(15);
         JButton searchButton = ButtonHelper.createButton("Tìm kiếm", primaryColor);
-        searchButton.setFont(new Font("Arial", Font.BOLD, 16));
+        searchButton.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 16));
         searchButton.setForeground(Color.WHITE);
 
         searchButton.addActionListener(e -> {
@@ -261,7 +269,7 @@ public class ImportReceiptDetailGUI extends JPanel {
         addPanel.add(new JLabel("Số lượng:"));
         quantityField = new JTextField("1", 5);
         JButton addButton = ButtonHelper.createButton("Thêm vào phiếu", successColor);
-        addButton.setFont(new Font("Arial", Font.BOLD, 16));
+        addButton.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 16));
         addButton.setPreferredSize(new Dimension(150, 35));
         addButton.setForeground(Color.WHITE);
 
@@ -288,12 +296,12 @@ public class ImportReceiptDetailGUI extends JPanel {
         functionPanel.setBackground(Color.WHITE);
 
         JButton editButton = ButtonHelper.createButton("Sửa số lượng", successColor);
-        editButton.setFont(new Font("Arial", Font.BOLD, 16));
+        editButton.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 16));
         editButton.setPreferredSize(new Dimension(150, 35));
         editButton.setForeground(Color.WHITE);
 
         JButton deleteButton = ButtonHelper.createButton("Xóa sản phẩm", dangerColor);
-        deleteButton.setFont(new Font("Arial", Font.BOLD, 16));
+        deleteButton.setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 16));
         deleteButton.setPreferredSize(new Dimension(150, 35));
         deleteButton.setForeground(Color.WHITE);
 
@@ -342,10 +350,10 @@ public class ImportReceiptDetailGUI extends JPanel {
         };
 
         detailTable = new JTable(tableModel);
-        detailTable.setFont(new Font("Arial", Font.PLAIN, 14));
+        detailTable.setFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, 14));
         detailTable.setRowHeight(25);
         detailTable.setGridColor(new Color(230, 230, 230));
-        detailTable.getTableHeader().setFont(new Font("Arial", Font.BOLD, 14));
+        detailTable.getTableHeader().setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 14));
         detailTable.getTableHeader().setReorderingAllowed(false);
         detailTable.setBackground(Color.WHITE);
         detailTable.getTableHeader().setBackground(Color.WHITE);
@@ -736,8 +744,195 @@ public class ImportReceiptDetailGUI extends JPanel {
     }
 
     private void exportToPdf() {
-        // TODO: Implement PDF export functionality
-        JOptionPane.showMessageDialog(this, "Chức năng xuất PDF đang được phát triển", "Thông báo",
-                JOptionPane.INFORMATION_MESSAGE);
+        FileOutputStream fos = null;
+        try {
+            // Create file chooser for saving the PDF
+            JFileChooser fileChooser = new JFileChooser();
+            fileChooser.setDialogTitle("Lưu file PDF");
+            fileChooser.setFileFilter(new FileNameExtensionFilter("PDF Files", "pdf"));
+
+            // Add default file name
+            String defaultFileName = "phieunhap_" + receiptId + ".pdf";
+            fileChooser.setSelectedFile(new File(defaultFileName));
+
+            int userSelection = fileChooser.showSaveDialog(this);
+            if (userSelection != JFileChooser.APPROVE_OPTION) {
+                return; // User cancelled
+            }
+
+            File fileToSave = fileChooser.getSelectedFile();
+            // Add .pdf extension if not already present
+            if (!fileToSave.getName().toLowerCase().endsWith(".pdf")) {
+                fileToSave = new File(fileToSave.getAbsolutePath() + ".pdf");
+            }
+
+            // Create PDF document
+            Document document = new Document(PageSize.A4);
+            fos = new FileOutputStream(fileToSave);
+            PdfWriter writer = PdfWriter.getInstance(document, fos);
+            document.open();
+
+            // Initialize fonts for Vietnamese support
+            BaseFont baseFont;
+            try {
+                // Try to load Arial Unicode MS from Windows system (good for Vietnamese)
+                baseFont = BaseFont.createFont("C:\\Windows\\Fonts\\arialuni.ttf", BaseFont.IDENTITY_H,
+                        BaseFont.EMBEDDED);
+            } catch (Exception e) {
+                try {
+                    // Try Times New Roman which usually has better Vietnamese support
+                    baseFont = BaseFont.createFont("C:\\Windows\\Fonts\\times.ttf", BaseFont.IDENTITY_H,
+                            BaseFont.EMBEDDED);
+                } catch (Exception e2) {
+                    // Fallback to built-in font
+                    baseFont = BaseFont.createFont(BaseFont.TIMES_ROMAN, BaseFont.IDENTITY_H, BaseFont.EMBEDDED);
+                }
+            }
+
+            // Create fonts
+            com.itextpdf.text.Font titleFont = new com.itextpdf.text.Font(baseFont, 18, com.itextpdf.text.Font.BOLD);
+            com.itextpdf.text.Font normalFont = new com.itextpdf.text.Font(baseFont, 12, com.itextpdf.text.Font.NORMAL);
+            com.itextpdf.text.Font boldFont = new com.itextpdf.text.Font(baseFont, 12, com.itextpdf.text.Font.BOLD);
+
+            // Add title
+            Paragraph title = new Paragraph("CHI TIẾT PHIẾU NHẬP", titleFont);
+            title.setAlignment(Element.ALIGN_CENTER);
+            document.add(title);
+            document.add(new Paragraph(" ")); // Empty line
+
+            // Create 2 column table for receipt info
+            PdfPTable infoTable = new PdfPTable(2);
+            infoTable.setWidthPercentage(100);
+
+            // Add receipt info
+            addInfoRow(infoTable, "Mã phiếu:", receiptIdValueLabel.getText(), boldFont, normalFont);
+            addInfoRow(infoTable, "Nhà cung cấp:", supplierValueLabel.getText(), boldFont, normalFont);
+            addInfoRow(infoTable, "Người tạo:", creatorValueLabel.getText(), boldFont, normalFont);
+            addInfoRow(infoTable, "Thời gian tạo:", dateValueLabel.getText(), boldFont, normalFont);
+
+            document.add(infoTable);
+            document.add(new Paragraph(" ")); // Empty line
+
+            // Create table for receipt details
+            PdfPTable detailsTable = new PdfPTable(5);
+            detailsTable.setWidthPercentage(100);
+            try {
+                float[] columnWidths = { 0.5f, 2f, 2f, 1f, 1.5f };
+                detailsTable.setWidths(columnWidths);
+            } catch (DocumentException e) {
+                e.printStackTrace();
+            }
+
+            // Add table headers
+            String[] headers = { "STT", "Mã SP", "Tên SP", "Số lượng", "Thành tiền" };
+            for (String header : headers) {
+                PdfPCell headerCell = new PdfPCell(new Phrase(header, boldFont));
+                headerCell.setHorizontalAlignment(Element.ALIGN_CENTER);
+                headerCell.setBackgroundColor(BaseColor.LIGHT_GRAY);
+                headerCell.setPadding(5);
+                detailsTable.addCell(headerCell);
+            }
+
+            // Add table data
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                // STT column
+                addCell(detailsTable, String.valueOf(i + 1), normalFont, Element.ALIGN_CENTER);
+
+                // Mã SP column
+                addCell(detailsTable, tableModel.getValueAt(i, 1).toString(), normalFont, Element.ALIGN_LEFT);
+
+                // Tên SP column
+                addCell(detailsTable, tableModel.getValueAt(i, 2).toString(), normalFont, Element.ALIGN_LEFT);
+
+                // Số lượng column
+                addCell(detailsTable, tableModel.getValueAt(i, 3).toString(), normalFont, Element.ALIGN_CENTER);
+
+                // Thành tiền column
+                addCell(detailsTable, tableModel.getValueAt(i, 5).toString(), normalFont, Element.ALIGN_RIGHT);
+            }
+
+            document.add(detailsTable);
+            document.add(new Paragraph(" ")); // Empty line
+
+            // Add total amount
+            Paragraph totalParagraph = new Paragraph("Tổng tiền: " + totalAmountLabel.getText(), boldFont);
+            totalParagraph.setAlignment(Element.ALIGN_RIGHT);
+            document.add(totalParagraph);
+
+            // Add footer
+            document.add(new Paragraph(" "));
+            document.add(new Paragraph(" "));
+
+            Paragraph dateParagraph = new Paragraph(
+                    "Ngày ......... tháng ......... năm .........", normalFont);
+            dateParagraph.setAlignment(Element.ALIGN_RIGHT);
+            document.add(dateParagraph);
+
+            Paragraph signatureParagraph = new Paragraph(
+                    "Người lập phiếu", boldFont);
+            signatureParagraph.setAlignment(Element.ALIGN_RIGHT);
+            document.add(signatureParagraph);
+
+            Paragraph signatureNameParagraph = new Paragraph(
+                    "(Ký, ghi rõ họ tên)", normalFont);
+            signatureNameParagraph.setAlignment(Element.ALIGN_RIGHT);
+            document.add(signatureNameParagraph);
+
+            // Ensure all data is written
+            writer.flush();
+
+            // Close the document and writer
+            if (document != null && document.isOpen()) {
+                document.close();
+            }
+            if (writer != null) {
+                writer.close();
+            }
+
+            // Show success message
+            JOptionPane.showMessageDialog(this,
+                    "Xuất PDF thành công:\n" + fileToSave.getAbsolutePath(),
+                    "Thành công",
+                    JOptionPane.INFORMATION_MESSAGE);
+
+            // Open the PDF file with the default PDF viewer
+            if (Desktop.isDesktopSupported()) {
+                Desktop.getDesktop().open(fileToSave);
+            }
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            JOptionPane.showMessageDialog(this,
+                    "Lỗi khi xuất PDF: " + ex.getMessage(),
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+        } finally {
+            // Đảm bảo đóng FileOutputStream
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+
+    // Helper method to add info row to the table
+    private void addInfoRow(PdfPTable table, String label, String value, com.itextpdf.text.Font labelFont,
+            com.itextpdf.text.Font valueFont) {
+        PdfPCell labelCell = new PdfPCell(new Phrase(label, labelFont));
+        labelCell.setBorder(com.itextpdf.text.Rectangle.NO_BORDER);
+        table.addCell(labelCell);
+
+        PdfPCell valueCell = new PdfPCell(new Phrase(value, valueFont));
+        valueCell.setBorder(com.itextpdf.text.Rectangle.NO_BORDER);
+        table.addCell(valueCell);
+    }
+
+    // Helper method to add a cell to the table
+    private void addCell(PdfPTable table, String text, com.itextpdf.text.Font font, int alignment) {
+        PdfPCell cell = new PdfPCell(new Phrase(text, font));
+        cell.setHorizontalAlignment(alignment);
+        table.addCell(cell);
     }
 }
