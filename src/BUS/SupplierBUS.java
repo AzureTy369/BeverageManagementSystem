@@ -3,6 +3,8 @@ package BUS;
 import DAO.SupplierDAO;
 import DTO.SupplierDTO;
 import DTO.SupplierProductDTO;
+import DTO.ProductCategoryDTO;
+import BUS.ProductCategoryBUS;
 import java.util.List;
 import java.util.ArrayList;
 
@@ -126,15 +128,26 @@ public class SupplierBUS {
      * @param unit        Đơn vị tính
      * @param description Mô tả
      * @param price       Giá
+     * @param categoryId  Mã danh mục
      * @return true nếu thêm thành công, false nếu thất bại
      */
     public boolean addSupplierProduct(String supplierId, String productName, String unit, String description,
-            double price) {
+            double price, String categoryId) {
         // Tạo mã sản phẩm mới
         String productId = supplierDAO.generateNewSupplierProductId(supplierId);
 
+        // Lấy tên danh mục
+        String categoryName = "";
+        if (categoryId != null && !categoryId.isEmpty()) {
+            ProductCategoryBUS categoryBUS = new ProductCategoryBUS();
+            ProductCategoryDTO category = categoryBUS.getCategoryById(categoryId);
+            if (category != null) {
+                categoryName = category.getCategoryName();
+            }
+        }
+
         SupplierProductDTO product = new SupplierProductDTO(
-                productId, supplierId, productName, unit, description, price);
+                productId, supplierId, productName, unit, description, price, categoryId, categoryName);
 
         return supplierDAO.addSupplierProduct(product);
     }

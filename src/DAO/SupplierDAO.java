@@ -68,12 +68,14 @@ public class SupplierDAO {
                     String createTableSQL = "CREATE TABLE SanPhamNCC (" +
                             "MaSanPhamNCC VARCHAR(10) NOT NULL, " +
                             "MaNhaCungCap VARCHAR(10) NOT NULL, " +
-                            "TenSanPham NVARCHAR(255) NOT NULL, " +
-                            "DonViTinh NVARCHAR(50), " +
-                            "MoTa NVARCHAR(500), " +
-                            "Gia DOUBLE, " +
+                            "TenSanPham NVARCHAR(100) NOT NULL, " +
+                            "DonViTinh VARCHAR(50), " +
+                            "MoTa NVARCHAR(255), " +
+                            "Gia DECIMAL(10, 2), " +
+                            "MaLoaiSP VARCHAR(10), " +
                             "PRIMARY KEY (MaSanPhamNCC), " +
-                            "FOREIGN KEY (MaNhaCungCap) REFERENCES NhaCungCap(MaNhaCungCap)" +
+                            "FOREIGN KEY (MaNhaCungCap) REFERENCES NhaCungCap(MaNhaCungCap), " +
+                            "FOREIGN KEY (MaLoaiSP) REFERENCES LoaiSanPham(MaLoaiSP)" +
                             ")";
                     stmt.executeUpdate(createTableSQL);
                     System.out.println("SanPhamNCC table created successfully.");
@@ -386,6 +388,25 @@ public class SupplierDAO {
                     product.setUnit(rs.getString("DonViTinh"));
                     product.setDescription(rs.getString("MoTa"));
                     product.setPrice(rs.getDouble("Gia"));
+                    product.setCategoryId(rs.getString("MaLoaiSP"));
+
+                    // Lấy tên danh mục nếu có mã danh mục
+                    if (product.getCategoryId() != null && !product.getCategoryId().isEmpty()) {
+                        try {
+                            Statement stmtCategory = connection.createStatement();
+                            ResultSet rsCategory = stmtCategory.executeQuery(
+                                    "SELECT TenLoaiSP FROM LoaiSanPham WHERE MaLoaiSP = '" + product.getCategoryId()
+                                            + "'");
+                            if (rsCategory.next()) {
+                                product.setCategoryName(rsCategory.getString("TenLoaiSP"));
+                            }
+                            rsCategory.close();
+                            stmtCategory.close();
+                        } catch (SQLException e) {
+                            System.err.println("Error getting category name: " + e.getMessage());
+                        }
+                    }
+
                     products.add(product);
                 }
             }
@@ -404,7 +425,7 @@ public class SupplierDAO {
      * @return true nếu thêm thành công, false nếu thất bại
      */
     public boolean addSupplierProduct(SupplierProductDTO product) {
-        String query = "INSERT INTO SanPhamNCC (MaSanPhamNCC, MaNhaCungCap, TenSanPham, DonViTinh, MoTa, Gia) VALUES (?, ?, ?, ?, ?, ?)";
+        String query = "INSERT INTO SanPhamNCC (MaSanPhamNCC, MaNhaCungCap, TenSanPham, DonViTinh, MoTa, Gia, MaLoaiSP) VALUES (?, ?, ?, ?, ?, ?, ?)";
 
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setString(1, product.getProductId());
@@ -413,12 +434,12 @@ public class SupplierDAO {
             pstmt.setString(4, product.getUnit());
             pstmt.setString(5, product.getDescription());
             pstmt.setDouble(6, product.getPrice());
+            pstmt.setString(7, product.getCategoryId());
 
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
         } catch (SQLException e) {
             System.err.println("Error adding supplier product: " + e.getMessage());
-            e.printStackTrace();
             return false;
         }
     }
@@ -430,21 +451,21 @@ public class SupplierDAO {
      * @return true nếu cập nhật thành công, false nếu thất bại
      */
     public boolean updateSupplierProduct(SupplierProductDTO product) {
-        String query = "UPDATE SanPhamNCC SET TenSanPham = ?, DonViTinh = ?, MoTa = ?, Gia = ? WHERE MaSanPhamNCC = ? AND MaNhaCungCap = ?";
+        String query = "UPDATE SanPhamNCC SET TenSanPham = ?, DonViTinh = ?, MoTa = ?, Gia = ?, MaLoaiSP = ? WHERE MaSanPhamNCC = ? AND MaNhaCungCap = ?";
 
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
             pstmt.setString(1, product.getProductName());
             pstmt.setString(2, product.getUnit());
             pstmt.setString(3, product.getDescription());
             pstmt.setDouble(4, product.getPrice());
-            pstmt.setString(5, product.getProductId());
-            pstmt.setString(6, product.getSupplierId());
+            pstmt.setString(5, product.getCategoryId());
+            pstmt.setString(6, product.getProductId());
+            pstmt.setString(7, product.getSupplierId());
 
             int rowsAffected = pstmt.executeUpdate();
             return rowsAffected > 0;
         } catch (SQLException e) {
             System.err.println("Error updating supplier product: " + e.getMessage());
-            e.printStackTrace();
             return false;
         }
     }

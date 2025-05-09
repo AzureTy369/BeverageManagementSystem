@@ -317,8 +317,9 @@ public class ImportReceiptDetailGUI extends JPanel {
     }
 
     private void createProductTable() {
-        String[] columns = { "Mã SP", "Tên SP", "Đơn vị", "Giá nhập", "Danh mục" };
-        productTableModel = new DefaultTableModel(columns, 0) {
+        // Tạo model cho bảng sản phẩm
+        productTableModel = new DefaultTableModel(
+                new String[] { "Mã sản phẩm", "Tên sản phẩm", "Đơn vị tính", "Giá", "Danh mục" }, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
                 return false;
@@ -328,10 +329,6 @@ public class ImportReceiptDetailGUI extends JPanel {
         productTable = new JTable(productTableModel);
         productTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
         productTable.setRowHeight(25);
-        productTable.getTableHeader().setReorderingAllowed(false);
-        productTable.setBackground(Color.WHITE);
-        productTable.getTableHeader().setBackground(Color.WHITE);
-        productTable.setGridColor(new Color(230, 230, 230));
     }
 
     private void createDetailTable() {
@@ -468,9 +465,11 @@ public class ImportReceiptDetailGUI extends JPanel {
 
         // Hiển thị dữ liệu mới
         for (SupplierProductDTO product : supplierProducts) {
-            // Lấy thông tin danh mục
-            ProductDTO productInfo = productController.getProductById(product.getProductId());
-            String category = (productInfo != null) ? productInfo.getCategoryName() : "N/A";
+            // Lấy thông tin danh mục từ đối tượng SupplierProductDTO
+            String category = product.getCategoryName();
+            if (category == null || category.isEmpty()) {
+                category = "Chưa phân loại";
+            }
 
             Object[] row = {
                     product.getProductId(),
@@ -494,9 +493,11 @@ public class ImportReceiptDetailGUI extends JPanel {
             if (product.getProductId().toLowerCase().contains(keyword) ||
                     product.getProductName().toLowerCase().contains(keyword)) {
 
-                // Lấy thông tin danh mục
-                ProductDTO productInfo = productController.getProductById(product.getProductId());
-                String category = (productInfo != null) ? productInfo.getCategoryName() : "N/A";
+                // Lấy thông tin danh mục từ đối tượng SupplierProductDTO
+                String category = product.getCategoryName();
+                if (category == null || category.isEmpty()) {
+                    category = "Chưa phân loại";
+                }
 
                 Object[] row = {
                         product.getProductId(),

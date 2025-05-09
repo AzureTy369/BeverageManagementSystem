@@ -1,8 +1,10 @@
 package GUI.components;
 
 import BUS.SupplierBUS;
+import BUS.ProductCategoryBUS;
 import DTO.SupplierDTO;
 import DTO.SupplierProductDTO;
+import DTO.ProductCategoryDTO;
 import javax.swing.*;
 import javax.swing.table.DefaultTableModel;
 import java.awt.*;
@@ -80,7 +82,7 @@ public class SupplierDetailPanel extends JPanel {
         productPanel.setBackground(lightColor);
         productPanel.setBorder(BorderFactory.createTitledBorder("Danh sách sản phẩm của nhà cung cấp"));
 
-        String[] columns = { "Mã sản phẩm", "Tên sản phẩm", "Đơn vị tính", "Giá", "Mô tả" };
+        String[] columns = { "Mã sản phẩm", "Tên sản phẩm", "Danh mục", "Đơn vị tính", "Giá", "Mô tả" };
         productTableModel = new DefaultTableModel(columns, 0) {
             @Override
             public boolean isCellEditable(int row, int column) {
@@ -169,6 +171,7 @@ public class SupplierDetailPanel extends JPanel {
                 Object[] rowData = {
                         product.getProductId(),
                         product.getProductName(),
+                        product.getCategoryName(),
                         product.getUnit(),
                         product.getPrice(),
                         product.getDescription()
@@ -182,7 +185,7 @@ public class SupplierDetailPanel extends JPanel {
         JDialog dialog = new JDialog();
         dialog.setTitle("Thêm sản phẩm cho nhà cung cấp");
         dialog.setModal(true);
-        dialog.setSize(400, 300);
+        dialog.setSize(400, 450);
         dialog.setLocationRelativeTo(this);
 
         JPanel panel = new JPanel(new GridBagLayout());
@@ -193,7 +196,14 @@ public class SupplierDetailPanel extends JPanel {
         gbc.insets = new Insets(5, 5, 5, 5);
 
         JTextField nameField = new JTextField(20);
-        JTextField unitField = new JTextField(20);
+
+        // ComboBox cho danh mục
+        JComboBox<ProductCategoryDTO> categoryComboBox = new JComboBox<>();
+        loadProductCategories(categoryComboBox, null);
+
+        // ComboBox cho đơn vị tính
+        JComboBox<String> unitComboBox = new JComboBox<>(new String[] { "Chai", "Lon", "Hộp", "Thùng" });
+
         JTextField priceField = new JTextField(20);
         JTextArea descriptionArea = new JTextArea(3, 20);
         JScrollPane descScrollPane = new JScrollPane(descriptionArea);
@@ -207,20 +217,27 @@ public class SupplierDetailPanel extends JPanel {
 
         gbc.gridx = 0;
         gbc.gridy = 1;
-        panel.add(new JLabel("Đơn vị tính:"), gbc);
+        panel.add(new JLabel("Danh mục:"), gbc);
 
         gbc.gridx = 1;
-        panel.add(unitField, gbc);
+        panel.add(categoryComboBox, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 2;
+        panel.add(new JLabel("Đơn vị tính:"), gbc);
+
+        gbc.gridx = 1;
+        panel.add(unitComboBox, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 3;
         panel.add(new JLabel("Giá:"), gbc);
 
         gbc.gridx = 1;
         panel.add(priceField, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 3;
+        gbc.gridy = 4;
         panel.add(new JLabel("Mô tả:"), gbc);
 
         gbc.gridx = 1;
@@ -243,10 +260,22 @@ public class SupplierDetailPanel extends JPanel {
                     return;
                 }
 
+                ProductCategoryDTO selectedCategory = (ProductCategoryDTO) categoryComboBox.getSelectedItem();
+                if (selectedCategory == null) {
+                    JOptionPane.showMessageDialog(dialog, "Vui lòng chọn danh mục sản phẩm!", "Lỗi",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
                 double price = 0;
                 try {
                     if (!priceField.getText().trim().isEmpty()) {
                         price = Double.parseDouble(priceField.getText().trim());
+                        if (price <= 0) {
+                            JOptionPane.showMessageDialog(dialog, "Giá phải lớn hơn 0!", "Lỗi",
+                                    JOptionPane.ERROR_MESSAGE);
+                            return;
+                        }
                     }
                 } catch (NumberFormatException ex) {
                     JOptionPane.showMessageDialog(dialog, "Giá không hợp lệ!", "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -255,12 +284,27 @@ public class SupplierDetailPanel extends JPanel {
 
                 // Tạo sản phẩm mới
                 String productName = nameField.getText().trim();
-                String unit = unitField.getText().trim();
+                String unit = (String) unitComboBox.getSelectedItem();
                 String description = descriptionArea.getText().trim();
+                String categoryId = selectedCategory.getCategoryId();
+                String categoryName = selectedCategory.getCategoryName();
+
+                // Tạo đối tượng SupplierProductDTO mới
+                SupplierProductDTO newProduct = new SupplierProductDTO();
+                newProduct.setSupplierId(supplier.getSupplierId());
+                newProduct.setProductName(productName);
+                newProduct.setUnit(unit);
+                newProduct.setDescription(description);
+                newProduct.setPrice(price);
+                newProduct.setCategoryId(categoryId);
+                newProduct.setCategoryName(categoryName);
+
+                // Tạo mã sản phẩm mới
+                String productId = supplierController.generateNewSupplierProductId(supplier.getSupplierId());
+                newProduct.setProductId(productId);
 
                 // Thêm sản phẩm vào nhà cung cấp
-                boolean success = supplierController.addSupplierProduct(
-                        supplier.getSupplierId(), productName, unit, description, price);
+                boolean success = supplierController.addSupplierProduct(newProduct);
 
                 if (success) {
                     JOptionPane.showMessageDialog(dialog, "Thêm sản phẩm thành công!");
@@ -308,7 +352,7 @@ public class SupplierDetailPanel extends JPanel {
         JDialog dialog = new JDialog();
         dialog.setTitle("Sửa thông tin sản phẩm");
         dialog.setModal(true);
-        dialog.setSize(400, 300);
+        dialog.setSize(400, 450);
         dialog.setLocationRelativeTo(this);
 
         JPanel panel = new JPanel(new GridBagLayout());
@@ -320,7 +364,24 @@ public class SupplierDetailPanel extends JPanel {
 
         JLabel idLabel = new JLabel("Mã sản phẩm: " + product.getProductId());
         JTextField nameField = new JTextField(product.getProductName(), 20);
-        JTextField unitField = new JTextField(product.getUnit(), 20);
+
+        // ComboBox cho danh mục
+        JComboBox<ProductCategoryDTO> categoryComboBox = new JComboBox<>();
+        loadProductCategories(categoryComboBox, product.getCategoryId());
+
+        // ComboBox cho đơn vị tính
+        JComboBox<String> unitComboBox = new JComboBox<>(new String[] { "Chai", "Lon", "Hộp", "Thùng" });
+
+        // Chọn đơn vị tính mặc định nếu có
+        if (product.getUnit() != null && !product.getUnit().isEmpty()) {
+            for (int i = 0; i < unitComboBox.getItemCount(); i++) {
+                if (unitComboBox.getItemAt(i).equals(product.getUnit())) {
+                    unitComboBox.setSelectedIndex(i);
+                    break;
+                }
+            }
+        }
+
         JTextField priceField = new JTextField(String.valueOf(product.getPrice()), 20);
         JTextArea descriptionArea = new JTextArea(product.getDescription(), 3, 20);
         JScrollPane descScrollPane = new JScrollPane(descriptionArea);
@@ -337,20 +398,27 @@ public class SupplierDetailPanel extends JPanel {
 
         gbc.gridx = 0;
         gbc.gridy = 2;
-        panel.add(new JLabel("Đơn vị tính:"), gbc);
+        panel.add(new JLabel("Danh mục:"), gbc);
 
         gbc.gridx = 1;
-        panel.add(unitField, gbc);
+        panel.add(categoryComboBox, gbc);
 
         gbc.gridx = 0;
         gbc.gridy = 3;
+        panel.add(new JLabel("Đơn vị tính:"), gbc);
+
+        gbc.gridx = 1;
+        panel.add(unitComboBox, gbc);
+
+        gbc.gridx = 0;
+        gbc.gridy = 4;
         panel.add(new JLabel("Giá:"), gbc);
 
         gbc.gridx = 1;
         panel.add(priceField, gbc);
 
         gbc.gridx = 0;
-        gbc.gridy = 4;
+        gbc.gridy = 5;
         panel.add(new JLabel("Mô tả:"), gbc);
 
         gbc.gridx = 1;
@@ -373,6 +441,13 @@ public class SupplierDetailPanel extends JPanel {
                     return;
                 }
 
+                ProductCategoryDTO selectedCategory = (ProductCategoryDTO) categoryComboBox.getSelectedItem();
+                if (selectedCategory == null) {
+                    JOptionPane.showMessageDialog(dialog, "Vui lòng chọn danh mục sản phẩm!", "Lỗi",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
                 double price = 0;
                 try {
                     if (!priceField.getText().trim().isEmpty()) {
@@ -385,9 +460,11 @@ public class SupplierDetailPanel extends JPanel {
 
                 // Cập nhật thông tin sản phẩm
                 product.setProductName(nameField.getText().trim());
-                product.setUnit(unitField.getText().trim());
+                product.setUnit((String) unitComboBox.getSelectedItem());
                 product.setDescription(descriptionArea.getText().trim());
                 product.setPrice(price);
+                product.setCategoryId(selectedCategory.getCategoryId());
+                product.setCategoryName(selectedCategory.getCategoryName());
 
                 // Cập nhật sản phẩm
                 boolean success = supplierController.updateSupplierProduct(product);
@@ -418,6 +495,31 @@ public class SupplierDetailPanel extends JPanel {
 
         dialog.add(mainPanel);
         dialog.setVisible(true);
+    }
+
+    /**
+     * Tải danh sách danh mục sản phẩm vào combo box và chọn danh mục mặc định
+     */
+    private void loadProductCategories(JComboBox<ProductCategoryDTO> comboBox, String selectedCategoryId) {
+        comboBox.removeAllItems();
+
+        // Sử dụng ProductCategoryBUS để lấy danh sách danh mục
+        ProductCategoryBUS categoryController = new ProductCategoryBUS();
+        List<ProductCategoryDTO> categories = categoryController.getAllCategories();
+
+        ProductCategoryDTO selectedCategory = null;
+
+        for (ProductCategoryDTO category : categories) {
+            comboBox.addItem(category);
+
+            if (category.getCategoryId().equals(selectedCategoryId)) {
+                selectedCategory = category;
+            }
+        }
+
+        if (selectedCategory != null) {
+            comboBox.setSelectedItem(selectedCategory);
+        }
     }
 
     private void removeSelectedProduct() {

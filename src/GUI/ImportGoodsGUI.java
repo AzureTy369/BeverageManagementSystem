@@ -459,11 +459,10 @@ public class ImportGoodsGUI extends JPanel {
         currentSupplierProducts = products;
 
         for (SupplierProductDTO product : products) {
-            // Lấy thông tin danh mục của sản phẩm (nếu có)
-            String categoryName = "Chưa phân loại";
-            ProductDTO productInfo = productController.getProductById(product.getProductId());
-            if (productInfo != null) {
-                categoryName = productInfo.getCategoryName();
+            // Lấy thông tin danh mục của sản phẩm từ SupplierProductDTO
+            String categoryName = product.getCategoryName();
+            if (categoryName == null || categoryName.isEmpty()) {
+                categoryName = "Chưa phân loại";
             }
 
             productTableModel.addRow(new Object[] {
