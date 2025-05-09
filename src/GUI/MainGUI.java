@@ -357,6 +357,8 @@ public class MainGUI extends JFrame {
         showPanel(inventoryPanel);
     }
 
+    
+
     // Helper method to show panels
     private void showPanel(JPanel panel) {
         mainContentPanel.removeAll();
