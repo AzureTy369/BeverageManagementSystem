@@ -1,8 +1,21 @@
+<<<<<<< HEAD
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+package BUS;
+
+import DAO.*;
+import DAO.CustomerDAO;
+import DTO.*;
+import GUI.CustomerPanel;
+=======
 
 package BUS;
 
 import DAO.*;
 import DTO.*;
+>>>>>>> d9978e96461c8db2003c751a909670c9ff81ff31
 import GUI.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -11,13 +24,22 @@ import javax.swing.JOptionPane;
 
 /**
  *
+<<<<<<< HEAD
+ * @author ASUS
+=======
  * @author TAINHAT
+>>>>>>> d9978e96461c8db2003c751a909670c9ff81ff31
  */
 public class CustomerBUS implements ActionListener {
 
     private ListCustomer listCtm;
+<<<<<<< HEAD
+    private CustomerPanel  jPanelCustomer;
+    private String customerID, firstname, lastname, address, phone;
+=======
     private CustomerPanel jPanelCustomer;
     private String customerID, firstname, lastname, point, phone;
+>>>>>>> d9978e96461c8db2003c751a909670c9ff81ff31
 
     public CustomerBUS(ListCustomer listCtm, CustomerPanel jPanelCustomer) {
         this.listCtm = listCtm;
@@ -44,7 +66,11 @@ public class CustomerBUS implements ActionListener {
         customerID = jPanelCustomer.getTextFieldCustomerID().getText().trim();
         firstname = jPanelCustomer.getTextFieldCustomerFirstname().getText().trim();
         lastname = jPanelCustomer.getTextFieldCustomerLastname().getText().trim();
+<<<<<<< HEAD
+        address = jPanelCustomer.getTextFieldCustomerAddress().getText().trim();
+=======
         point= Integer.toString(0);
+>>>>>>> d9978e96461c8db2003c751a909670c9ff81ff31
         phone = jPanelCustomer.getTextFieldCustomerPhone().getText().trim();
     }
 
@@ -53,6 +79,10 @@ public class CustomerBUS implements ActionListener {
         jPanelCustomer.getTextFieldCustomerID().setText("");
         jPanelCustomer.getTextFieldCustomerFirstname().setText("");
         jPanelCustomer.getTextFieldCustomerLastname().setText("");
+<<<<<<< HEAD
+        jPanelCustomer.getTextFieldCustomerAddress().setText("");
+=======
+>>>>>>> d9978e96461c8db2003c751a909670c9ff81ff31
         jPanelCustomer.getTextFieldCustomerPhone().setText("");
         jPanelCustomer.getTextFieldSearch().setText("");
     }
@@ -72,7 +102,15 @@ public class CustomerBUS implements ActionListener {
                     JOptionPane.ERROR_MESSAGE);
             jPanelCustomer.getTextFieldCustomerLastname().requestFocus();
             return false;
+<<<<<<< HEAD
+        } else if (address == null || address.isEmpty()) {
+            JOptionPane.showMessageDialog(jPanelCustomer, "Địa chỉ của khách hàng không được để trống.", "Thông báo",
+                    JOptionPane.ERROR_MESSAGE);
+            jPanelCustomer.getTextFieldCustomerAddress().requestFocus();
+            return false;
+=======
 
+>>>>>>> d9978e96461c8db2003c751a909670c9ff81ff31
         } else if (phone == null || phone.isEmpty()) {
             JOptionPane.showMessageDialog(jPanelCustomer, "Số điện thoại của khách hàng không được để trống.", "Thông báo",
                     JOptionPane.ERROR_MESSAGE);
@@ -93,7 +131,11 @@ public class CustomerBUS implements ActionListener {
         }
 
         customerID = listCtm.createCustomerID();
+<<<<<<< HEAD
+        listCtm.addCustomer(customerID, firstname, lastname, address, phone);
+=======
         listCtm.addCustomer(customerID, firstname, lastname, point,phone);
+>>>>>>> d9978e96461c8db2003c751a909670c9ff81ff31
         CustomerDAO.setAllCustomers(listCtm.getList());
         jPanelCustomer.showList(listCtm.getList());
         clear();
@@ -115,7 +157,11 @@ public class CustomerBUS implements ActionListener {
             return;
         }
 
+<<<<<<< HEAD
+        listCtm.fix(selectedRow, customerID, firstname, lastname, address, phone);
+=======
         listCtm.fix(selectedRow, customerID, firstname, lastname, phone);
+>>>>>>> d9978e96461c8db2003c751a909670c9ff81ff31
         CustomerDAO.setAllCustomers(listCtm.getList());
         jPanelCustomer.showList(listCtm.getList());
         clear();
