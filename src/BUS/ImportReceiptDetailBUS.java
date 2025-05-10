@@ -1,8 +1,11 @@
 package BUS;
 
+import DAO.ImportReceiptDAO;
 import DAO.ImportReceiptDetailDAO;
 import DTO.ImportReceiptDetail;
 import java.util.List;
+
+import org.jfree.chart.JFreeChart;
 
 public class ImportReceiptDetailBUS {
     private ImportReceiptDetailDAO importReceiptDetailDAO;
@@ -100,5 +103,8 @@ public class ImportReceiptDetailBUS {
      */
     public boolean deleteAllImportReceiptDetails(String receiptId) {
         return importReceiptDetailDAO.deleteAllImportReceiptDetails(receiptId);
+    }
+    public JFreeChart createImportChart() {
+        return ImportReceiptDAO.createImportChart();
     }
 }
