@@ -1,4 +1,3 @@
-
 package GUI;
 
 import BUS.CreateImage;
