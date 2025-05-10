@@ -1,14 +1,17 @@
 package DAO;
 
-import java.sql.Connection; 
+import DTO.Discount;
+import DTO.DetailDiscount;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 
-import DTO.*;
-
 public class DiscountDAO {
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+
     public static ArrayList<Discount> getAllDiscounts() {
         ArrayList<Discount> discounts = new ArrayList<>();
         Connection connection = null;
@@ -16,18 +19,24 @@ public class DiscountDAO {
         ResultSet resultSet = null;
         try {
             connection = DBConnection.getConnection();
-            String query = "SELECT * FROM discount";
+            String query = "SELECT MaKhuyenMai, TenKhuyenMai, NgayBatDau, NgayKetThuc FROM khuyenmai";
             pstmt = connection.prepareStatement(query);
             resultSet = pstmt.executeQuery();
 
             while (resultSet.next()) {
-                String discountID = resultSet.getString("discountID");
-                String discountName = resultSet.getString("name");
-                String percentDiscount = resultSet.getString("percentDiscount");
-                String begin = resultSet.getString("begin");
-                String end = resultSet.getString("end");
+                String discountId = resultSet.getString("MaKhuyenMai");
+                String discountName = resultSet.getString("TenKhuyenMai");
+                Timestamp beginTimestamp = resultSet.getTimestamp("NgayBatDau");
+                Timestamp endTimestamp = resultSet.getTimestamp("NgayKetThuc");
 
-                discounts.add(new Discount(discountID, discountName, begin,end, Double.parseDouble(percentDiscount)));
+                String begin = beginTimestamp != null ? DATE_FORMAT.format(beginTimestamp) : null;
+                String end = endTimestamp != null ? DATE_FORMAT.format(endTimestamp) : null;
+
+                // Lấy percentDiscount từ DetailDiscountDAO
+                ArrayList<DetailDiscount> details = DetailDiscountDAO.getAllDetailDiscounts(discountId);
+                double percentDiscount = details.isEmpty() ? 0.0 : details.get(0).getPercentDiscount();
+
+                discounts.add(new Discount(discountId, discountName, begin, end, percentDiscount));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -54,7 +63,9 @@ public class DiscountDAO {
         PreparedStatement pstmt = null;
         try {
             connection = DBConnection.getConnection();
-            String query = "DELETE FROM discount";
+            // Xóa chi tiết khuyến mãi trước do ràng buộc khóa ngoại
+            DetailDiscountDAO.deleteAllDetailDiscounts();
+            String query = "DELETE FROM khuyenmai";
             pstmt = connection.prepareStatement(query);
             pstmt.executeUpdate();
         } catch (SQLException e) {
@@ -68,6 +79,7 @@ public class DiscountDAO {
                     connection.close();
                 }
             } catch (SQLException e) {
+                e.printStackTrace();
             }
         }
     }
@@ -81,30 +93,34 @@ public class DiscountDAO {
         try {
             connection = DBConnection.getConnection();
             String query;
-
             if (info != null && !info.isEmpty()) {
-                query = "SELECT * FROM discount WHERE discountID LIKE ? OR name LIKE ? OR percentDiscount LIKE ? OR begin LIKE ?";
+                query = "SELECT MaKhuyenMai, TenKhuyenMai, NgayBatDau, NgayKetThuc FROM khuyenmai " +
+                        "WHERE MaKhuyenMai LIKE ? OR TenKhuyenMai LIKE ?";
                 pstmt = connection.prepareStatement(query);
                 String searchValue = "%" + info + "%";
                 pstmt.setString(1, searchValue);
                 pstmt.setString(2, searchValue);
-                pstmt.setString(3, searchValue);
-                pstmt.setString(4, searchValue);
             } else {
-                query = "SELECT * FROM discount";
+                query = "SELECT MaKhuyenMai, TenKhuyenMai, NgayBatDau, NgayKetThuc FROM khuyenmai";
                 pstmt = connection.prepareStatement(query);
             }
 
             resultSet = pstmt.executeQuery();
 
             while (resultSet.next()) {
-                String discountId = resultSet.getString("discountID");
-                String discountName = resultSet.getString("name");
-                double percentDiscount = resultSet.getDouble("percentDiscount");
-                String begin = resultSet.getString("begin");
-                String end = resultSet.getString("end");
+                String discountId = resultSet.getString("MaKhuyenMai");
+                String discountName = resultSet.getString("TenKhuyenMai");
+                Timestamp beginTimestamp = resultSet.getTimestamp("NgayBatDau");
+                Timestamp endTimestamp = resultSet.getTimestamp("NgayKetThuc");
 
-                discounts.add(new Discount( discountId , discountName, begin, end , percentDiscount));
+                String begin = beginTimestamp != null ? DATE_FORMAT.format(beginTimestamp) : null;
+                String end = endTimestamp != null ? DATE_FORMAT.format(endTimestamp) : null;
+
+                // Lấy percentDiscount từ DetailDiscountDAO
+                ArrayList<DetailDiscount> details = DetailDiscountDAO.getAllDetailDiscounts(discountId);
+                double percentDiscount = details.isEmpty() ? 0.0 : details.get(0).getPercentDiscount();
+
+                discounts.add(new Discount(discountId, discountName, begin, end, percentDiscount));
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -123,10 +139,54 @@ public class DiscountDAO {
                 e.printStackTrace();
             }
         }
-
         return discounts;
     }
 
     public static void setAllDiscounts(ArrayList<Discount> list) {
-}
+        Connection connection = null;
+        PreparedStatement pstmt = null;
+        try {
+            // Xóa tất cả khuyến mãi và chi tiết khuyến mãi hiện có
+            deleteAllDiscounts();
+            connection = DBConnection.getConnection();
+
+            String sql = "INSERT INTO khuyenmai (MaKhuyenMai, TenKhuyenMai, NgayBatDau, NgayKetThuc) VALUES (?, ?, ?, ?)";
+            pstmt = connection.prepareStatement(sql);
+
+            ArrayList<DetailDiscount> detailDiscounts = new ArrayList<>();
+            for (Discount discount : list) {
+                pstmt.setString(1, discount.getDiscountId());
+                pstmt.setString(2, discount.getDiscountName());
+                pstmt.setString(3, discount.getBegin());
+                pstmt.setString(4, discount.getEnd());
+
+                pstmt.addBatch();
+
+                // Lưu percentDiscount vào detailDiscounts để chèn vào chitietkhuyenmai
+                if (discount.getPercentDiscount() > 0) {
+                    // Giả định MaSanPham mặc định hoặc cần cung cấp
+                    detailDiscounts.add(new DetailDiscount(discount.getDiscountId(), "SP_DEFAULT", discount.getPercentDiscount()));
+                }
+            }
+            pstmt.executeBatch();
+
+            // Chèn chi tiết khuyến mãi
+            if (!detailDiscounts.isEmpty()) {
+                DetailDiscountDAO.setAllDetailDiscounts(detailDiscounts);
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                if (pstmt != null) {
+                    pstmt.close();
+                }
+                if (connection != null) {
+                    connection.close();
+                }
+            } catch (SQLException e) {
+                e.printStackTrace();
+            }
+        }
+    }
 }
