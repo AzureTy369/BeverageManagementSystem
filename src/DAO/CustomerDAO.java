@@ -26,9 +26,14 @@ public class CustomerDAO {
                 String lastname = resultSet.getString("lastname");
                 String address = resultSet.getString("address");
                 String phone = resultSet.getString("phone");
+<<<<<<< HEAD
+
+                customers.add(new Customer(customerID, firstname, lastname, address, phone));
+=======
                 String customerDate = resultSet.getString("customerDate");
 
                 customers.add(new Customer(customerID, firstname, lastname, address, phone,  customerDate));
+>>>>>>> d9978e96461c8db2003c751a909670c9ff81ff31
             }
         } catch (SQLException e) {
             e.printStackTrace();
@@ -100,7 +105,11 @@ public class CustomerDAO {
                 String phone = resultSet.getString("phone");
                 String customerDate = resultSet.getString("customerDate");
                 
+<<<<<<< HEAD
+                customers.add(new Customer(customerID, firstname, lastname, address, phone));
+=======
                 customers.add(new Customer(customerID, firstname, lastname, address, phone, customerDate));
+>>>>>>> d9978e96461c8db2003c751a909670c9ff81ff31
             }
         } catch (SQLException e) {
             e.printStackTrace();

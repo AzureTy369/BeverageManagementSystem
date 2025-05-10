@@ -2,11 +2,28 @@ package DAO;
 
 import DTO.ImportReceipt;
 import java.util.List;
+<<<<<<< HEAD
+
+import org.jfree.chart.ChartFactory;
+import org.jfree.chart.JFreeChart;
+import org.jfree.chart.plot.CategoryPlot;
+import org.jfree.chart.renderer.category.BarRenderer;
+import org.jfree.data.category.DefaultCategoryDataset;
+
 import java.util.ArrayList;
+import java.util.Collections;
+import java.awt.Color;
+=======
+import java.util.ArrayList;
+>>>>>>> d9978e96461c8db2003c751a909670c9ff81ff31
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+<<<<<<< HEAD
+import java.sql.Statement;
+=======
+>>>>>>> d9978e96461c8db2003c751a909670c9ff81ff31
 import java.sql.DatabaseMetaData;
 
 public class ImportReceiptDAO {
@@ -359,4 +376,53 @@ public class ImportReceiptDAO {
             return results;
         }
     }
+<<<<<<< HEAD
+    public static JFreeChart createImportChart() {
+        DefaultCategoryDataset dataset = new DefaultCategoryDataset();
+        try {
+            Connection connection = DBConnection.getConnection();
+            String query = """
+                   SELECT SUBSTRING(date, 7, 4) AS year, CAST(SUM(totalCost) AS UNSIGNED) AS total_import_cost
+                   FROM Import
+                   GROUP BY SUBSTRING(date, 7, 4)
+                   ORDER BY year DESC
+                   LIMIT 5""";
+
+            try (Statement statement = connection.createStatement(); ResultSet rs = statement.executeQuery(query)) {
+                // Tạo list để lưu trữ dữ liệu
+                List<String[]> dataList = new ArrayList<>();
+
+                // Lưu trữ dữ liệu vào list
+                while (rs.next()) {
+                    String year = rs.getString("year");
+                    int totalImportCost = rs.getInt("total_import_cost");
+                    dataList.add(new String[]{year, String.valueOf(totalImportCost)});
+                }
+
+                // Đảo ngược thứ tự list
+                Collections.reverse(dataList);
+
+                // Thêm dữ liệu từ list đã đảo ngược vào dataset
+                for (String[] data : dataList) {
+                    dataset.addValue(Integer.parseInt(data[1]), "Chi phí nhập", data[0]);
+                }
+            }
+        } catch (SQLException e) {
+            e.printStackTrace();
+        }
+
+        JFreeChart chart = ChartFactory.createBarChart(
+                "Thống kê tổng tiền nhập hàng hằng năm",
+                "Năm",
+                "Tổng tiền nhập hàng",
+                dataset
+        );
+        CategoryPlot plot = (CategoryPlot) chart.getPlot();
+        BarRenderer renderer = (BarRenderer) plot.getRenderer();
+        renderer.setSeriesPaint(0, Color.CYAN);
+
+        return chart;
+    }
+=======
+>>>>>>> d9978e96461c8db2003c751a909670c9ff81ff31
 }
