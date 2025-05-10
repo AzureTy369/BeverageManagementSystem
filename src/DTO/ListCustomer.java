@@ -21,6 +21,15 @@ public class ListCustomer {
 				return false;
 		return true;
 	}
+<<<<<<< HEAD
+	public void addCustomer (String cusId , String cusFirstName , String cusLastName , String cusAddress , String cusPhone ) {
+		list.add(0, new Customer(cusId , cusFirstName,cusLastName,cusAddress, cusPhone ));
+	}
+	
+	public void fix (int i , String cusId , String cusFirstName , String cusLastName , String cusAddress , String cusPhone) {
+		Customer ctm = list.get(i);
+		ctm.setAll(cusId, cusFirstName, cusLastName, cusAddress, cusPhone );
+=======
 	public void addCustomer (String cusId , String cusFirstName , String cusLastName , String cusAddress , String cusPhone , String cusDate ) {
 		list.add(0, new Customer(cusId , cusFirstName,cusLastName,cusAddress, cusPhone , cusDate));
 	}
@@ -28,6 +37,7 @@ public class ListCustomer {
 	public void fix (int i , String cusId , String cusFirstName , String cusLastName , String cusAddress , String cusPhone ,String cusPoint, String cusDate ) {
 		Customer ctm = list.get(i);
 		ctm.setAll(cusId, cusFirstName, cusLastName, cusAddress, cusPhone ,cusDate);
+>>>>>>> d9978e96461c8db2003c751a909670c9ff81ff31
 	}
 	public ArrayList<Customer> search(String info) {
         return CustomerDAO.search(info);

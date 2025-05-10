@@ -47,6 +47,20 @@ public class Customer {
 		public void setCustomerLastname(String customerLastname) {
 			this.customerLastname = customerLastname;
 		}
+<<<<<<< HEAD
+		public void setAll (String id , String first , String last ,String address ,String phone ) {
+			setCustomerFirstname(first);
+			setCustomerId(id);
+			setCustomerLastname(last);
+			setCustomerAddress(address);
+			setCustomerPhone(phone);
+		}
+		public Customer(String customerId, String customerFirstname , String customerLastname, String cusAdrress,String customerPhone) {
+			super();
+			this.customerId = customerId;
+			this.customerFirstname = customerFirstname;
+			this.customerAddress = cusAdrress;
+=======
 		public void setAll (String id , String first , String last , String phone ) {
 			setCustomerFirstname(first);
 			setCustomerId(id);
@@ -58,6 +72,7 @@ public class Customer {
 			this.customerId = customerId;
 			this.customerFirstname = customerFirstname;
 			this.customerPoint = cusPoint;
+>>>>>>> d9978e96461c8db2003c751a909670c9ff81ff31
 			this.customerPhone = customerPhone;
 			this.customerLastname = customerLastname;
 		}
