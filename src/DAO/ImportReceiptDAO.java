@@ -1,8 +1,7 @@
 package DAO;
 
-import DTO.ImportReceipt;
+import DTO.ImportReceipt; 
 import java.util.List;
-<<<<<<< HEAD
 
 import org.jfree.chart.ChartFactory;
 import org.jfree.chart.JFreeChart;
@@ -13,17 +12,12 @@ import org.jfree.data.category.DefaultCategoryDataset;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.awt.Color;
-=======
 import java.util.ArrayList;
->>>>>>> d9978e96461c8db2003c751a909670c9ff81ff31
 import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-<<<<<<< HEAD
 import java.sql.Statement;
-=======
->>>>>>> d9978e96461c8db2003c751a909670c9ff81ff31
 import java.sql.DatabaseMetaData;
 
 public class ImportReceiptDAO {
@@ -376,7 +370,6 @@ public class ImportReceiptDAO {
             return results;
         }
     }
-<<<<<<< HEAD
     public static JFreeChart createImportChart() {
         DefaultCategoryDataset dataset = new DefaultCategoryDataset();
         try {
@@ -423,6 +416,5 @@ public class ImportReceiptDAO {
 
         return chart;
     }
-=======
->>>>>>> d9978e96461c8db2003c751a909670c9ff81ff31
+
 }
