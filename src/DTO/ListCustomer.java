@@ -1,45 +1,43 @@
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
 package DTO;
 
 import BUS.Tool;
+import DAO.*;
 import java.util.ArrayList;
 
-import DAO.CustomerDAO;
-
 public class ListCustomer {
-	private ArrayList<Customer>  list = new ArrayList<Customer>() ;
+    private ArrayList<Customer> list = new ArrayList<>();
 
-	public ArrayList<Customer> getList() {
-		return list;
-	}
-	
-	public ListCustomer() {
-		this.list = CustomerDAO.getAllCustomers();
-	}
-	public boolean checkPhoneExist(String phone) {
-		for(Customer ctm : list )
-			if (ctm.getCustomerPhone().equals(phone))
-				return false;
-		return true;
-	}
-<<<<<<< HEAD
-	public void addCustomer (String cusId , String cusFirstName , String cusLastName , String cusAddress , String cusPhone ) {
-		list.add(0, new Customer(cusId , cusFirstName,cusLastName,cusAddress, cusPhone ));
-	}
-	
-	public void fix (int i , String cusId , String cusFirstName , String cusLastName , String cusAddress , String cusPhone) {
-		Customer ctm = list.get(i);
-		ctm.setAll(cusId, cusFirstName, cusLastName, cusAddress, cusPhone );
-=======
-	public void addCustomer (String cusId , String cusFirstName , String cusLastName , String cusAddress , String cusPhone , String cusDate ) {
-		list.add(0, new Customer(cusId , cusFirstName,cusLastName,cusAddress, cusPhone , cusDate));
-	}
-	
-	public void fix (int i , String cusId , String cusFirstName , String cusLastName , String cusAddress , String cusPhone ,String cusPoint, String cusDate ) {
-		Customer ctm = list.get(i);
-		ctm.setAll(cusId, cusFirstName, cusLastName, cusAddress, cusPhone ,cusDate);
->>>>>>> d9978e96461c8db2003c751a909670c9ff81ff31
-	}
-	public ArrayList<Customer> search(String info) {
+    public ListCustomer() {
+        this.list = CustomerDAO.getAllCustomers();
+    }
+
+    public ArrayList<Customer> getList() {
+        return list;
+    }
+
+    public boolean checkPhoneExist(String phone){
+        for(Customer ctmDTO : list) {
+              if(ctmDTO.getPhone().equals(phone)){
+                return false;
+              }
+        }
+        return true;
+    }
+
+    public void add(String customerID, String firstname, String lastname, String address, String phone) {
+        list.add(0, new Customer(customerID, firstname, lastname, address, phone));
+    }
+
+    public void fix(int i, String customerID, String firstname, String lastname, String address, String phone) {
+        Customer ctmDTO = list.get(i);
+        ctmDTO.setAll(customerID, firstname, lastname, address, phone);
+    }
+
+    public ArrayList<Customer> search(String info) {
         return CustomerDAO.search(info);
     }
 
@@ -69,7 +67,4 @@ public class ListCustomer {
         }
         return listCustomerID;
     }
-
-	
-	
 }

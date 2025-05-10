@@ -1,85 +1,79 @@
 package DTO;
 
 public class Customer {
-	 private String customerId;
-	    private String customerFirstname;
-	    private String customerAddress;
-	    private String customerPhone;
-	    private String customerPoint;
-	    private String customerDate ;
-	    private String customerLastname;
-		public String getCustomerId() {
-			return customerId;
-		}
-		public void setCustomerId(String customerId) {
-			this.customerId = customerId;
-		}
-		public String getCustomerFirstname() {
-			return customerFirstname;
-		}
-		public void setCustomerFirstname(String customerFirstname) {
-			this.customerFirstname = customerFirstname;
-		}
-		public String getCustomerAddress() {
-			return customerAddress;
-		}
-		public void setCustomerAddress(String customerAddress) {
-			this.customerAddress = customerAddress;
-		}
-		public String getCustomerPhone() {
-			return customerPhone;
-		}
-		public void setCustomerPhone(String customerPhone) {
-			this.customerPhone = customerPhone;
-		}
-		public String getCustomerPoint() {
-			return customerPoint;
-		}
-		public void setCustomerPoint(String customerPoint) {
-			this.customerPoint = customerPoint;
-		}
-		public String getCustomerDate() {
-			return customerDate;
-		}
-		public String getCustomerLastname() {
-			return customerLastname;
-		}
-		public void setCustomerLastname(String customerLastname) {
-			this.customerLastname = customerLastname;
-		}
-<<<<<<< HEAD
-		public void setAll (String id , String first , String last ,String address ,String phone ) {
-			setCustomerFirstname(first);
-			setCustomerId(id);
-			setCustomerLastname(last);
-			setCustomerAddress(address);
-			setCustomerPhone(phone);
-		}
-		public Customer(String customerId, String customerFirstname , String customerLastname, String cusAdrress,String customerPhone) {
-			super();
-			this.customerId = customerId;
-			this.customerFirstname = customerFirstname;
-			this.customerAddress = cusAdrress;
-=======
-		public void setAll (String id , String first , String last , String phone ) {
-			setCustomerFirstname(first);
-			setCustomerId(id);
-			setCustomerLastname(last);
-			setCustomerPhone(phone);
-		}
-		public Customer(String customerId, String customerFirstname , String customerLastname, String cusPoint,String customerPhone) {
-			super();
-			this.customerId = customerId;
-			this.customerFirstname = customerFirstname;
-			this.customerPoint = cusPoint;
->>>>>>> d9978e96461c8db2003c751a909670c9ff81ff31
-			this.customerPhone = customerPhone;
-			this.customerLastname = customerLastname;
-		}
-		public Customer() {
-			super();
-		}
-	
-	    
-	    
+    private String customerId;
+    private String firstname;
+    private String lastname;
+    private String address;
+    private String phone;
+    private String point;
+
+    // Constructors
+    public Customer() {
+    }
+
+    public Customer(String customerId, String firstname, String lastname, String address, String phone) {
+        this.customerId = customerId;
+        this.firstname = firstname;
+        this.lastname = lastname;
+        this.address = address;
+        this.phone = phone;
+    }
+
+
+    // Helper method to set all basic fields
+    public void setAll(String id, String first, String last, String address, String phone) {
+        this.customerId = id;
+        this.firstname = first;
+        this.lastname = last;
+        this.address = address;
+        this.phone = phone;
+    }
+
+    // Getters and Setters
+    public String getCustomerId() {
+        return customerId;
+    }
+
+    public void setCustomerId(String customerId) {
+        this.customerId = customerId;
+    }
+
+    public String getFirstname() {
+        return firstname;
+    }
+
+    public void setFirstname(String firstname) {
+        this.firstname = firstname;
+    }
+
+    public String getLastname() {
+        return lastname;
+    }
+
+    public void setLastname(String lastname) {
+        this.lastname = lastname;
+    }
+
+    public String getAddress() {
+        return address;
+    }
+
+    public void setAddress(String address) {
+        this.address = address;
+    }
+
+    public String getPhone() {
+        return phone;
+    }
+
+    public void setPhone(String phone) {
+        this.phone = phone;
+    }
+
+    public String getPoint() {
+        return point;
+    }
+
+  
 }
