@@ -379,6 +379,7 @@ public class PositionGUI extends JPanel {
         statusPanel.setBackground(new Color(248, 249, 250));
 
         JLabel statusLabel = new JLabel("Tổng số chức vụ: " + positionController.getAllPositions().size());
+        statusLabel.setName("statusLabel");
         statusLabel.setFont(new Font("Arial", Font.BOLD, 16));
         statusLabel.setForeground(new Color(33, 37, 41));
         statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 0));
@@ -633,20 +634,11 @@ public class PositionGUI extends JPanel {
     }
 
     private void refreshPositionData() {
-        // Clear table
         tableModel.setRowCount(0);
-
-        // Get all positions
         List<PositionDTO> positions = positionController.getAllPositions();
+        displayPositions(positions);
 
-        // Add positions to table
-        for (PositionDTO position : positions) {
-            Object[] row = new Object[3];
-            row[0] = position.getPositionId();
-            row[1] = position.getPositionName();
-            row[2] = String.format("%,.0f VNĐ", position.getSalary());
-            tableModel.addRow(row);
-        }
+        updateStatusPanel();
     }
 
     private void displayPositionData(PositionDTO position) {
@@ -704,6 +696,7 @@ public class PositionGUI extends JPanel {
                     JOptionPane.INFORMATION_MESSAGE);
             positionFormDialog.dispose();
             refreshPositionData();
+            updateStatusPanel();
         } else {
             JOptionPane.showMessageDialog(this, "Thêm chức vụ thất bại", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
@@ -733,6 +726,7 @@ public class PositionGUI extends JPanel {
                     JOptionPane.INFORMATION_MESSAGE);
             positionFormDialog.dispose();
             refreshPositionData();
+            updateStatusPanel();
         } else {
             JOptionPane.showMessageDialog(this, "Cập nhật chức vụ thất bại", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
@@ -760,6 +754,7 @@ public class PositionGUI extends JPanel {
                 JOptionPane.showMessageDialog(this, "Xóa chức vụ thành công", "Thông báo",
                         JOptionPane.INFORMATION_MESSAGE);
                 refreshPositionData();
+                updateStatusPanel();
             } else {
                 JOptionPane.showMessageDialog(this, "Xóa chức vụ thất bại. Chức vụ này có thể đang được sử dụng.",
                         "Lỗi", JOptionPane.ERROR_MESSAGE);
@@ -967,6 +962,34 @@ public class PositionGUI extends JPanel {
                     "Lỗi",
                     JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Cập nhật hiển thị tổng số chức vụ trong panel trạng thái
+     */
+    private void updateStatusPanel() {
+        // Đếm lại số lượng chức vụ từ database
+        int positionCount = positionController.getAllPositions().size();
+
+        // Tìm tất cả các components trong GUI
+        for (Component comp : this.getComponents()) {
+            if (comp instanceof JPanel) {
+                searchStatusLabelInPanel((JPanel) comp, positionCount);
+            }
+        }
+    }
+
+    private void searchStatusLabelInPanel(JPanel panel, int positionCount) {
+        // Tìm kiếm trực tiếp trong panel này
+        for (Component comp : panel.getComponents()) {
+            if (comp instanceof JLabel && "statusLabel".equals(comp.getName())) {
+                ((JLabel) comp).setText("Tổng số chức vụ: " + positionCount);
+                return;
+            } else if (comp instanceof JPanel) {
+                // Tìm kiếm đệ quy trong các panel con
+                searchStatusLabelInPanel((JPanel) comp, positionCount);
+            }
         }
     }
 }

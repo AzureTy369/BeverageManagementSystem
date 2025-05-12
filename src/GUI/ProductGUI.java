@@ -263,6 +263,7 @@ public class ProductGUI extends JPanel {
         statusPanel.setBackground(new Color(248, 249, 250));
 
         JLabel statusLabel = new JLabel("Tổng số sản phẩm: " + productController.getAllProducts().size());
+        statusLabel.setName("statusLabel"); // Add name for the label so we can find it later
         statusLabel.setFont(new Font("Arial", Font.BOLD, 16));
         statusLabel.setForeground(new Color(33, 37, 41));
         statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 0));
@@ -276,6 +277,34 @@ public class ProductGUI extends JPanel {
         statusPanel.add(bottomButtonPanel, BorderLayout.EAST);
 
         return statusPanel;
+    }
+
+    /**
+     * Cập nhật hiển thị tổng số sản phẩm trong panel trạng thái
+     */
+    private void updateStatusPanel() {
+        // Đếm lại số lượng sản phẩm từ database
+        int productCount = productController.getAllProducts().size();
+
+        // Tìm tất cả các components trong GUI
+        for (Component comp : this.getComponents()) {
+            if (comp instanceof JPanel) {
+                searchStatusLabelInPanel((JPanel) comp, productCount);
+            }
+        }
+    }
+
+    private void searchStatusLabelInPanel(JPanel panel, int productCount) {
+        // Tìm kiếm trực tiếp trong panel này
+        for (Component comp : panel.getComponents()) {
+            if (comp instanceof JLabel && "statusLabel".equals(comp.getName())) {
+                ((JLabel) comp).setText("Tổng số sản phẩm: " + productCount);
+                return;
+            } else if (comp instanceof JPanel) {
+                // Tìm kiếm đệ quy trong các panel con
+                searchStatusLabelInPanel((JPanel) comp, productCount);
+            }
+        }
     }
 
     /**
@@ -777,6 +806,9 @@ public class ProductGUI extends JPanel {
                     product.getDescription()
             });
         }
+
+        // Update status panel to show the current count
+        updateStatusPanel();
     }
 
     private void addProduct() {
@@ -933,15 +965,10 @@ public class ProductGUI extends JPanel {
         List<ProductDTO> products = productController.getAllProducts();
 
         // Add products to table
-        for (ProductDTO product : products) {
-            tableModel.addRow(new Object[] {
-                    product.getProductId(),
-                    product.getProductName(),
-                    product.getCategoryName(),
-                    product.getUnit(),
-                    product.getDescription()
-            });
-        }
+        displayProducts(products);
+
+        // Update status panel to show the current count
+        updateStatusPanel();
     }
 
     // Helper methods for product selection for other components

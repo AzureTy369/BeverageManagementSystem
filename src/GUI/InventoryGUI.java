@@ -346,14 +346,38 @@ public class InventoryGUI extends JPanel {
         statusPanel.setOpaque(false);
 
         JLabel statusLabel = new JLabel("Tổng số sản phẩm: 0");
+        statusLabel.setName("statusLabel");
         statusLabel.setFont(new Font("Arial", Font.PLAIN, 14));
 
         statusPanel.add(statusLabel, BorderLayout.WEST);
 
-        // Cập nhật số lượng sản phẩm khi dữ liệu thay đổi
-        statusLabel.setText("Tổng số sản phẩm: " + productController.getAllProducts().size());
+        updateStatusPanel();
 
         return statusPanel;
+    }
+
+    /**
+     * Cập nhật hiển thị tổng số sản phẩm trong kho
+     */
+    private void updateStatusPanel() {
+        int productCount = productController.getAllProducts().size();
+
+        for (Component comp : this.getComponents()) {
+            if (comp instanceof JPanel) {
+                searchStatusLabelInPanel((JPanel) comp, productCount);
+            }
+        }
+    }
+
+    private void searchStatusLabelInPanel(JPanel panel, int productCount) {
+        for (Component comp : panel.getComponents()) {
+            if (comp instanceof JLabel && "statusLabel".equals(comp.getName())) {
+                ((JLabel) comp).setText("Tổng số sản phẩm: " + productCount);
+                return;
+            } else if (comp instanceof JPanel) {
+                searchStatusLabelInPanel((JPanel) comp, productCount);
+            }
+        }
     }
 
     private JButton createOutlineButton(String text, Color color) {
@@ -485,43 +509,17 @@ public class InventoryGUI extends JPanel {
     }
 
     private void refreshInventoryData() {
-        // Lấy danh sách sản phẩm
-        List<ProductDTO> products = productController.getAllProducts();
-
-        // Khởi tạo InventoryBUS để lấy thông tin tồn kho
-        InventoryBUS inventoryBUS = new InventoryBUS();
-        ImportReceiptDetailBUS importReceiptDetailBUS = new ImportReceiptDetailBUS();
-
-        // Xóa dữ liệu cũ
+        // Clear table
         tableModel.setRowCount(0);
 
-        // Thêm dữ liệu mới
-        for (ProductDTO product : products) {
-            // Lấy số lượng tồn kho từ bảng sanphamtonkho
-            int quantity = inventoryBUS.getCurrentQuantity(product.getProductId());
-            String status = (quantity > 0) ? "Còn hàng" : "Hết hàng";
+        // Get all products
+        List<ProductDTO> products = productController.getAllProducts();
 
-            // Lấy giá nhập từ phiếu nhập chi tiết
-            double importPrice = getImportPrice(product.getProductId(), importReceiptDetailBUS);
-            String formattedPrice = String.format("%,.0f", importPrice);
+        // Add products to table
+        displayInventory(products);
 
-            // Đảm bảo thông tin danh mục được hiển thị đúng
-            String categoryName = product.getCategoryName();
-            if (categoryName == null || categoryName.isEmpty()) {
-                categoryName = "Chưa phân loại";
-            }
-
-            Object[] row = {
-                    product.getProductId(),
-                    product.getProductName(),
-                    categoryName,
-                    product.getUnit(),
-                    formattedPrice,
-                    quantity,
-                    status
-            };
-            tableModel.addRow(row);
-        }
+        // Update status panel to show current count
+        updateStatusPanel();
     }
 
     /**
@@ -599,6 +597,48 @@ public class InventoryGUI extends JPanel {
                     "Lỗi",
                     JOptionPane.ERROR_MESSAGE);
             e.printStackTrace();
+        }
+    }
+
+    /**
+     * Display inventory data in the table
+     * 
+     * @param products List of products to display
+     */
+    private void displayInventory(List<ProductDTO> products) {
+        // Clear table
+        tableModel.setRowCount(0);
+
+        // Khởi tạo InventoryBUS để lấy thông tin tồn kho
+        InventoryBUS inventoryBUS = new InventoryBUS();
+        ImportReceiptDetailBUS importReceiptDetailBUS = new ImportReceiptDetailBUS();
+
+        // Thêm dữ liệu mới
+        for (ProductDTO product : products) {
+            // Lấy số lượng tồn kho từ bảng sanphamtonkho
+            int quantity = inventoryBUS.getCurrentQuantity(product.getProductId());
+            String status = (quantity > 0) ? "Còn hàng" : "Hết hàng";
+
+            // Lấy giá nhập từ phiếu nhập chi tiết
+            double importPrice = getImportPrice(product.getProductId(), importReceiptDetailBUS);
+            String formattedPrice = String.format("%,.0f", importPrice);
+
+            // Đảm bảo thông tin danh mục được hiển thị đúng
+            String categoryName = product.getCategoryName();
+            if (categoryName == null || categoryName.isEmpty()) {
+                categoryName = "Chưa phân loại";
+            }
+
+            Object[] row = {
+                    product.getProductId(),
+                    product.getProductName(),
+                    categoryName,
+                    product.getUnit(),
+                    formattedPrice,
+                    quantity,
+                    status
+            };
+            tableModel.addRow(row);
         }
     }
 }

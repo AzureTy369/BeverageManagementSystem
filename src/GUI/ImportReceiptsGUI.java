@@ -434,6 +434,7 @@ public class ImportReceiptsGUI extends JPanel {
         statusPanel.setBackground(lightColor);
 
         JLabel statusLabel = new JLabel("Tổng số phiếu nhập: " + importReceiptController.getAllImportReceipts().size());
+        statusLabel.setName("statusLabel"); // Add name for the label so we can find it later
         statusLabel.setFont(new Font("Arial", Font.BOLD, 16));
         statusLabel.setForeground(new Color(33, 37, 41));
         statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 0));
@@ -454,6 +455,34 @@ public class ImportReceiptsGUI extends JPanel {
         statusPanel.add(bottomButtonPanel, BorderLayout.EAST);
 
         return statusPanel;
+    }
+
+    /**
+     * Cập nhật hiển thị tổng số phiếu nhập trong panel trạng thái
+     */
+    private void updateStatusPanel() {
+        // Đếm lại số lượng phiếu nhập từ database
+        int receiptCount = importReceiptController.getAllImportReceipts().size();
+
+        // Tìm tất cả các components trong GUI
+        for (Component comp : this.getComponents()) {
+            if (comp instanceof JPanel) {
+                searchStatusLabelInPanel((JPanel) comp, receiptCount);
+            }
+        }
+    }
+
+    private void searchStatusLabelInPanel(JPanel panel, int receiptCount) {
+        // Tìm kiếm trực tiếp trong panel này
+        for (Component comp : panel.getComponents()) {
+            if (comp instanceof JLabel && "statusLabel".equals(comp.getName())) {
+                ((JLabel) comp).setText("Tổng số phiếu nhập: " + receiptCount);
+                return;
+            } else if (comp instanceof JPanel) {
+                // Tìm kiếm đệ quy trong các panel con
+                searchStatusLabelInPanel((JPanel) comp, receiptCount);
+            }
+        }
     }
 
     private JButton createOutlineButton(String text, Color color) {
@@ -503,6 +532,9 @@ public class ImportReceiptsGUI extends JPanel {
     private void refreshReceiptData() {
         List<ImportReceipt> receipts = importReceiptController.getAllImportReceipts();
         displayReceipts(receipts);
+
+        // Update status panel to show current count
+        updateStatusPanel();
     }
 
     private void exportToExcel() {

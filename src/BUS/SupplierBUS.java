@@ -220,4 +220,25 @@ public class SupplierBUS {
     public boolean deleteAllSuppliers() {
         return supplierDAO.deleteAllSuppliers();
     }
+
+    /**
+     * Kiểm tra số điện thoại đã tồn tại chưa
+     * 
+     * @param phone             Số điện thoại cần kiểm tra
+     * @param excludeSupplierId ID nhà cung cấp cần loại trừ (dùng khi cập nhật)
+     * @return true nếu số điện thoại đã tồn tại, false nếu chưa
+     */
+    public boolean isPhoneExists(String phone, String excludeSupplierId) {
+        return supplierDAO.isPhoneExists(phone, excludeSupplierId);
+    }
+
+    /**
+     * Kiểm tra số điện thoại đã tồn tại chưa (dùng khi thêm mới)
+     * 
+     * @param phone Số điện thoại cần kiểm tra
+     * @return true nếu số điện thoại đã tồn tại, false nếu chưa
+     */
+    public boolean isPhoneExists(String phone) {
+        return supplierDAO.isPhoneExists(phone);
+    }
 }

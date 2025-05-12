@@ -553,4 +553,52 @@ public class EmployeeDAO {
         System.out.println("===== KẾT THÚC THÊM DỮ LIỆU MẪU =====\n");
         return success;
     }
+
+    /**
+     * Kiểm tra xem số điện thoại đã tồn tại trong hệ thống hay chưa
+     * 
+     * @param phone             Số điện thoại cần kiểm tra
+     * @param excludeEmployeeId ID của nhân viên cần loại trừ khỏi việc kiểm tra
+     *                          (dùng khi cập nhật)
+     * @return true nếu số điện thoại đã tồn tại, false nếu chưa
+     */
+    public boolean isPhoneExists(String phone, String excludeEmployeeId) {
+        if (phone == null || phone.trim().isEmpty()) {
+            return false;
+        }
+
+        if (!checkConnection()) {
+            System.err.println("Không thể kiểm tra số điện thoại do kết nối cơ sở dữ liệu không hợp lệ");
+            return false;
+        }
+
+        String query = "SELECT COUNT(*) FROM NhanVien WHERE SoDienThoai = ? AND MaNhanVien != ?";
+
+        try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+            pstmt.setString(1, phone);
+            pstmt.setString(2, excludeEmployeeId != null ? excludeEmployeeId : "");
+
+            try (ResultSet rs = pstmt.executeQuery()) {
+                if (rs.next()) {
+                    int count = rs.getInt(1);
+                    return count > 0;
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Lỗi kiểm tra số điện thoại: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    /**
+     * Kiểm tra xem số điện thoại đã tồn tại trong hệ thống hay chưa
+     * 
+     * @param phone Số điện thoại cần kiểm tra
+     * @return true nếu số điện thoại đã tồn tại, false nếu chưa
+     */
+    public boolean isPhoneExists(String phone) {
+        return isPhoneExists(phone, null);
+    }
 }

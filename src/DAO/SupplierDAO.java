@@ -6,8 +6,6 @@ import java.sql.*;
 import java.util.ArrayList;
 import java.util.List;
 
-
-
 public class SupplierDAO {
     private Connection connection;
 
@@ -650,5 +648,49 @@ public class SupplierDAO {
             e.printStackTrace();
             return false;
         }
+    }
+
+    /**
+     * Kiểm tra số điện thoại đã tồn tại chưa
+     * 
+     * @param phone             Số điện thoại cần kiểm tra
+     * @param excludeSupplierId ID nhà cung cấp cần loại trừ (dùng khi cập nhật)
+     * @return true nếu số điện thoại đã tồn tại, false nếu chưa
+     */
+    public boolean isPhoneExists(String phone, String excludeSupplierId) {
+        if (phone == null || phone.trim().isEmpty()) {
+            return false;
+        }
+
+        try {
+            String query = "SELECT COUNT(*) FROM NhaCungCap WHERE SoDienThoai = ? AND MaNhaCungCap != ?";
+
+            try (PreparedStatement pstmt = connection.prepareStatement(query)) {
+                pstmt.setString(1, phone);
+                pstmt.setString(2, excludeSupplierId != null ? excludeSupplierId : "");
+
+                try (ResultSet rs = pstmt.executeQuery()) {
+                    if (rs.next()) {
+                        int count = rs.getInt(1);
+                        return count > 0;
+                    }
+                }
+            }
+        } catch (SQLException e) {
+            System.err.println("Lỗi kiểm tra số điện thoại: " + e.getMessage());
+            e.printStackTrace();
+        }
+
+        return false;
+    }
+
+    /**
+     * Kiểm tra số điện thoại đã tồn tại chưa (dùng khi thêm mới)
+     * 
+     * @param phone Số điện thoại cần kiểm tra
+     * @return true nếu số điện thoại đã tồn tại, false nếu chưa
+     */
+    public boolean isPhoneExists(String phone) {
+        return isPhoneExists(phone, null);
     }
 }

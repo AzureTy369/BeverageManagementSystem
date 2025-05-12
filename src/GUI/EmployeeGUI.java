@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.ArrayList;
 import GUI.utils.ExcelUtils;
 import GUI.utils.ButtonHelper;
+import BUS.Tool;
 
 public class EmployeeGUI extends JPanel {
     private EmployeeBUS employeeController;
@@ -398,15 +399,59 @@ public class EmployeeGUI extends JPanel {
                 BorderFactory.createEmptyBorder(10, 0, 0, 0)));
         statusPanel.setOpaque(false);
 
-        JLabel statusLabel = new JLabel("Tổng số nhân viên: 0");
+        JLabel statusLabel = new JLabel();
         statusLabel.setFont(new Font("Arial", Font.PLAIN, 14));
+        statusLabel.setName("statusLabel"); // Đặt tên cho label để dễ tìm kiếm sau này
 
         statusPanel.add(statusLabel, BorderLayout.WEST);
 
-        // Cập nhật số lượng nhân viên khi dữ liệu thay đổi
-        statusLabel.setText("Tổng số nhân viên: " + employeeController.getAllEmployees().size());
+        // Cập nhật số lượng nhân viên
+        updateStatusPanel(statusPanel);
 
         return statusPanel;
+    }
+
+    /**
+     * Cập nhật hiển thị tổng số nhân viên trong panel trạng thái
+     */
+    private void updateStatusPanel(JPanel statusPanel) {
+        // Đếm lại số lượng nhân viên từ database
+        int employeeCount = employeeController.getAllEmployees().size();
+
+        // Tìm label hiển thị trong statusPanel
+        for (Component comp : statusPanel.getComponents()) {
+            if (comp instanceof JLabel && "statusLabel".equals(comp.getName())) {
+                ((JLabel) comp).setText("Tổng số nhân viên: " + employeeCount);
+                break;
+            }
+        }
+    }
+
+    /**
+     * Cập nhật hiển thị tổng số nhân viên trong toàn bộ giao diện
+     */
+    private void updateAllStatusPanels() {
+        // Tìm tất cả các status panel trong giao diện
+        for (Component comp : this.getComponents()) {
+            if (comp instanceof JPanel) {
+                for (Component innerComp : ((JPanel) comp).getComponents()) {
+                    if (innerComp instanceof JPanel && innerComp.getClass().equals(JPanel.class)) {
+                        // Kiểm tra nếu panel này có chứa JLabel có tên là "statusLabel"
+                        boolean hasStatusLabel = false;
+                        for (Component c : ((JPanel) innerComp).getComponents()) {
+                            if (c instanceof JLabel && "statusLabel".equals(c.getName())) {
+                                hasStatusLabel = true;
+                                break;
+                            }
+                        }
+
+                        if (hasStatusLabel) {
+                            updateStatusPanel((JPanel) innerComp);
+                        }
+                    }
+                }
+            }
+        }
     }
 
     private JButton createOutlineButton(String text, Color color) {
@@ -700,6 +745,9 @@ public class EmployeeGUI extends JPanel {
     private void refreshEmployeeData() {
         List<EmployeeDTO> employees = employeeController.getAllEmployees();
         displayEmployees(employees);
+
+        // Cập nhật hiển thị tổng số nhân viên
+        updateAllStatusPanels();
     }
 
     private void deleteEmployee() {
@@ -758,6 +806,24 @@ public class EmployeeGUI extends JPanel {
             return;
         }
 
+        // Kiểm tra số điện thoại
+        if (!Tool.checkPhone(phone)) {
+            JOptionPane.showMessageDialog(employeeFormDialog,
+                    "Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại bắt đầu bằng số 0 và có 10 số.",
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Kiểm tra số điện thoại đã tồn tại chưa
+        if (employeeController.isPhoneExists(phone)) {
+            JOptionPane.showMessageDialog(employeeFormDialog,
+                    "Số điện thoại đã được sử dụng bởi nhân viên khác.",
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
         // Tạo đối tượng EmployeeDTO
         EmployeeDTO employee = new EmployeeDTO(id, username, password, firstName, lastName, positionId, phone);
 
@@ -802,6 +868,15 @@ public class EmployeeGUI extends JPanel {
         if (username.isEmpty() || password.isEmpty() || lastName.isEmpty() || firstName.isEmpty() || phone.isEmpty()) {
             JOptionPane.showMessageDialog(employeeFormDialog,
                     "Vui lòng nhập đầy đủ thông tin",
+                    "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        // Kiểm tra số điện thoại
+        if (!Tool.checkPhone(phone)) {
+            JOptionPane.showMessageDialog(employeeFormDialog,
+                    "Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại bắt đầu bằng số 0 và có 10 số.",
                     "Lỗi",
                     JOptionPane.ERROR_MESSAGE);
             return;

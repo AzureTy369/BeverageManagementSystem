@@ -6,6 +6,7 @@ import DTO.SupplierDTO;
 import GUI.components.SupplierDetailPanel;
 import DTO.SupplierProductDTO;
 import DTO.ProductCategoryDTO;
+import BUS.Tool;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -397,6 +398,7 @@ public class SupplierGUI extends JPanel {
         statusPanel.setBackground(new Color(248, 249, 250));
 
         JLabel statusLabel = new JLabel("Tổng số nhà cung cấp: " + supplierController.getAllSuppliers().size());
+        statusLabel.setName("statusLabel");
         statusLabel.setFont(new Font("Arial", Font.BOLD, 16));
         statusLabel.setForeground(new Color(33, 37, 41));
         statusLabel.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 0));
@@ -427,6 +429,34 @@ public class SupplierGUI extends JPanel {
         statusPanel.add(rightPanel, BorderLayout.EAST);
 
         return statusPanel;
+    }
+
+    /**
+     * Cập nhật hiển thị tổng số nhà cung cấp trong panel trạng thái
+     */
+    private void updateStatusPanel() {
+        // Đếm lại số lượng nhà cung cấp từ database
+        int supplierCount = supplierController.getAllSuppliers().size();
+
+        // Tìm tất cả các components trong GUI
+        for (Component comp : this.getComponents()) {
+            if (comp instanceof JPanel) {
+                searchStatusLabelInPanel((JPanel) comp, supplierCount);
+            }
+        }
+    }
+
+    private void searchStatusLabelInPanel(JPanel panel, int supplierCount) {
+        // Tìm kiếm trực tiếp trong panel này
+        for (Component comp : panel.getComponents()) {
+            if (comp instanceof JLabel && "statusLabel".equals(comp.getName())) {
+                ((JLabel) comp).setText("Tổng số nhà cung cấp: " + supplierCount);
+                return;
+            } else if (comp instanceof JPanel) {
+                // Tìm kiếm đệ quy trong các panel con
+                searchStatusLabelInPanel((JPanel) comp, supplierCount);
+            }
+        }
     }
 
     private JButton createOutlineButton(String text, Color color) {
@@ -934,6 +964,9 @@ public class SupplierGUI extends JPanel {
 
         // Add suppliers to table
         displaySuppliers(suppliers);
+
+        // Update status panel with new count
+        updateStatusPanel();
     }
 
     private void displaySupplierData(SupplierDTO supplier) {
@@ -1033,6 +1066,7 @@ public class SupplierGUI extends JPanel {
 
             supplierFormDialog.dispose();
             refreshSupplierData();
+            updateStatusPanel(); // Cập nhật hiển thị tổng số nhà cung cấp
         } else {
             JOptionPane.showMessageDialog(this, "Thêm nhà cung cấp thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
@@ -1103,6 +1137,7 @@ public class SupplierGUI extends JPanel {
 
             supplierFormDialog.dispose();
             refreshSupplierData();
+            updateStatusPanel(); // Cập nhật hiển thị tổng số nhà cung cấp
         } else {
             JOptionPane.showMessageDialog(this, "Cập nhật nhà cung cấp thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
         }
@@ -1130,6 +1165,7 @@ public class SupplierGUI extends JPanel {
                 JOptionPane.showMessageDialog(this, "Xóa nhà cung cấp thành công", "Thông báo",
                         JOptionPane.INFORMATION_MESSAGE);
                 refreshSupplierData();
+                updateStatusPanel(); // Cập nhật hiển thị tổng số nhà cung cấp
             } else {
                 JOptionPane.showMessageDialog(this,
                         "Xóa nhà cung cấp thất bại. Nhà cung cấp này có thể đang được sử dụng.",
@@ -1164,11 +1200,34 @@ public class SupplierGUI extends JPanel {
             return false;
         }
 
-        if (!phone.matches("\\d{10,11}")) {
-            JOptionPane.showMessageDialog(this, "Số điện thoại phải có 10-11 chữ số", "Lỗi dữ liệu",
-                    JOptionPane.ERROR_MESSAGE);
+        // Kiểm tra định dạng số điện thoại (bắt đầu bằng số 0 và có đúng 10 số)
+        if (!Tool.checkPhone(phone)) {
+            JOptionPane.showMessageDialog(this,
+                    "Số điện thoại không hợp lệ. Vui lòng nhập số điện thoại bắt đầu bằng số 0 và có đúng 10 số.",
+                    "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
             phoneField.requestFocus();
             return false;
+        }
+
+        // Kiểm tra tính duy nhất của số điện thoại
+        String id = idField.getText().trim();
+        if (supplierFormDialog.getTitle().contains("Thêm")) {
+            // Trường hợp thêm mới
+            if (supplierController.isPhoneExists(phone)) {
+                JOptionPane.showMessageDialog(this, "Số điện thoại đã được sử dụng bởi nhà cung cấp khác",
+                        "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
+                phoneField.requestFocus();
+                return false;
+            }
+        } else {
+            // Trường hợp cập nhật - kiểm tra trùng với số điện thoại khác (trừ nhà cung cấp
+            // hiện tại)
+            if (supplierController.isPhoneExists(phone, id)) {
+                JOptionPane.showMessageDialog(this, "Số điện thoại đã được sử dụng bởi nhà cung cấp khác",
+                        "Lỗi dữ liệu", JOptionPane.ERROR_MESSAGE);
+                phoneField.requestFocus();
+                return false;
+            }
         }
 
         // Validate address length

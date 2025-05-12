@@ -21,6 +21,10 @@ import java.util.List;
 import java.util.Calendar;
 import java.util.ArrayList;
 import java.util.Vector;
+import java.text.SimpleDateFormat;
+import java.text.ParseException;
+import java.util.Map;
+import java.util.HashMap;
 
 public class ProductStatisticsGUI extends JPanel {
     private ProductBUS productController;
@@ -42,6 +46,11 @@ public class ProductStatisticsGUI extends JPanel {
     private DatePicker toDatePicker;
     private JTextField minAmountField;
     private JTextField maxAmountField;
+
+    // Add these class variables after the existing DatePicker declarations (around
+    // line 48)
+    private DatePicker productFromDatePicker;
+    private DatePicker productToDatePicker;
 
     // Colors
     private Color primaryColor = new Color(0, 123, 255);
@@ -364,20 +373,18 @@ public class ProductStatisticsGUI extends JPanel {
         JLabel fromDateLabel = new JLabel("Từ ngày:");
         fromDateLabel.setFont(new Font("Arial", Font.PLAIN, 14));
 
-        DatePicker productFromDatePicker = new DatePicker(getDefaultStartDate());
+        productFromDatePicker = new DatePicker(getDefaultStartDate());
         productFromDatePicker.setPreferredSize(new Dimension(120, 30));
 
         JLabel toDateLabel = new JLabel("Đến ngày:");
         toDateLabel.setFont(new Font("Arial", Font.PLAIN, 14));
 
-        DatePicker productToDatePicker = new DatePicker(new java.util.Date());
+        productToDatePicker = new DatePicker(new java.util.Date());
         productToDatePicker.setPreferredSize(new Dimension(120, 30));
 
         JButton applyDateButton = new JButton("Lọc");
         applyDateButton.setFont(new Font("Arial", Font.PLAIN, 14));
-        applyDateButton.addActionListener(e -> filterProductsByDate(
-                productFromDatePicker.getDate(),
-                productToDatePicker.getDate()));
+        applyDateButton.addActionListener(e -> filterProductsByDate());
 
         rightFunctionPanel.add(fromDateLabel);
         rightFunctionPanel.add(productFromDatePicker);
@@ -513,56 +520,129 @@ public class ProductStatisticsGUI extends JPanel {
         }
     }
 
-    private void filterProductsByDate(java.util.Date fromDate, java.util.Date toDate) {
-        // Clear table
-        inventoryTableModel.setRowCount(0);
+    private void filterProductsByDate() {
+        try {
+            java.util.Date fromDate = productFromDatePicker.getDate();
+            java.util.Date toDate = productToDatePicker.getDate();
 
-        if (fromDate.after(toDate)) {
-            JOptionPane.showMessageDialog(this, "Ngày bắt đầu không thể sau ngày kết thúc!", "Lỗi",
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        }
+            if (fromDate == null || toDate == null) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày hợp lệ", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
-        // Get all import receipts that are completed
-        List<ImportReceipt> allReceipts = importReceiptController.getAllImportReceipts();
-        List<ImportReceipt> filteredReceipts = new ArrayList<>();
+            if (fromDate.after(toDate)) {
+                JOptionPane.showMessageDialog(this, "Ngày bắt đầu không thể sau ngày kết thúc!", "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
 
-        // Filter completed receipts within the date range
-        for (ImportReceipt receipt : allReceipts) {
-            if ("Đã hoàn thành".equals(receipt.getStatus())) {
+            // Format dates for display
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            String fromDateStr = sdf.format(fromDate);
+            String toDateStr = sdf.format(toDate);
+
+            // Set the end of day for the toDate to include the entire day
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(toDate);
+            calendar.set(Calendar.HOUR_OF_DAY, 23);
+            calendar.set(Calendar.MINUTE, 59);
+            calendar.set(Calendar.SECOND, 59);
+            toDate = calendar.getTime();
+
+            // Get all receipts
+            List<ImportReceipt> receipts = importReceiptController.getAllImportReceipts();
+
+            // Create a map to store total quantity for each product
+            Map<String, Integer> productQuantities = new HashMap<>();
+            Map<String, Double> productTotals = new HashMap<>();
+
+            // Track products added during filtered period
+            for (ImportReceipt receipt : receipts) {
                 try {
-                    java.util.Date receiptDate = java.sql.Date.valueOf(receipt.getImportDate());
-                    if (!receiptDate.before(fromDate) && !receiptDate.after(toDate)) {
-                        filteredReceipts.add(receipt);
+                    // Parse the receipt date
+                    java.util.Date receiptDate = null;
+                    Object dateObj = receipt.getImportDate();
+
+                    if (dateObj instanceof java.util.Date) {
+                        receiptDate = (java.util.Date) dateObj;
+                    } else if (dateObj instanceof String) {
+                        receiptDate = parseDate((String) dateObj);
+                    }
+
+                    // Skip receipts outside date range
+                    if (receiptDate == null || receiptDate.before(fromDate) || receiptDate.after(toDate)) {
+                        continue;
+                    }
+
+                    // Get receipt details
+                    ImportReceiptDetailBUS detailController = new ImportReceiptDetailBUS();
+                    List<ImportReceiptDetail> details = detailController
+                            .getImportReceiptDetailsByReceiptId(receipt.getImportId());
+
+                    for (ImportReceiptDetail detail : details) {
+                        String productId = detail.getProductId();
+                        int quantity = detail.getQuantity();
+                        double total = detail.getPrice() * quantity;
+
+                        // Update product maps
+                        if (productQuantities.containsKey(productId)) {
+                            productQuantities.put(productId, productQuantities.get(productId) + quantity);
+                            productTotals.put(productId, productTotals.get(productId) + total);
+                        } else {
+                            productQuantities.put(productId, quantity);
+                            productTotals.put(productId, total);
+                        }
                     }
                 } catch (Exception e) {
-                    // Handle date parsing errors
+                    System.out.println("Error processing receipt " + receipt.getImportId() + ": " + e.getMessage());
+                    e.printStackTrace();
                 }
             }
-        }
 
-        // If no filtered receipts, show empty message
-        if (filteredReceipts.isEmpty()) {
-            inventoryTableModel.addRow(new Object[] { "", "Không có dữ liệu trong khoảng thời gian này", "", "", "" });
-            return;
-        }
+            // Clear table
+            inventoryTableModel.setRowCount(0);
 
-        // Process each filtered receipt to get product details
-        for (ImportReceipt receipt : filteredReceipts) {
-            // Placeholder code similar to loadProductData
-            String importDate = receipt.getImportDate();
-
-            if (receipt.getImportId().equals("PN001")) {
-                inventoryTableModel.addRow(new Object[] { "SP101", "1", "1", "Danh mục 1", importDate });
-                inventoryTableModel.addRow(new Object[] { "SP102", "2", "1", "Danh mục 1", importDate });
-                inventoryTableModel.addRow(new Object[] { "SP103", "3", "1", "Danh mục 1", importDate });
-            } else if (receipt.getImportId().equals("PN002")) {
-                inventoryTableModel.addRow(new Object[] { "SP102", "2", "2", "Danh mục 2", importDate });
-            } else if (receipt.getImportId().equals("PN003")) {
-                inventoryTableModel.addRow(new Object[] { "SP103", "3", "2", "Danh mục 2", importDate });
+            // Check if we have any products in the date range
+            if (productQuantities.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "Không có sản phẩm nhập trong khoảng thời gian từ " + fromDateStr + " đến " + toDateStr,
+                        "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                inventoryTableModel
+                        .addRow(new Object[] { "", "Không có dữ liệu trong khoảng thời gian này", "", "", "" });
+                return;
             }
 
-            // Actual implementation would iterate through receipt details
+            // Add each product to the table
+            for (String productId : productQuantities.keySet()) {
+                try {
+                    // Get product details
+                    ProductDTO product = productController.getProductById(productId);
+
+                    if (product != null) {
+                        int quantity = productQuantities.get(productId);
+                        double total = productTotals.get(productId);
+
+                        inventoryTableModel.addRow(new Object[] {
+                                product.getProductId(),
+                                product.getProductName(),
+                                quantity,
+                                product.getCategoryName(),
+                                fromDateStr + " - " + toDateStr
+                        });
+                    }
+                } catch (Exception e) {
+                    System.out.println("Error adding product " + productId + " to table: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Lỗi khi lọc dữ liệu theo ngày: " + e.getMessage(), "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+
+            // Show error in table
+            inventoryTableModel.setRowCount(0);
+            inventoryTableModel.addRow(new Object[] { "", "Lỗi khi lọc dữ liệu", "", "", "" });
         }
     }
 
@@ -626,53 +706,86 @@ public class ProductStatisticsGUI extends JPanel {
     }
 
     private void loadRevenueStatistics(java.util.Date startDate, java.util.Date endDate) {
-        // Clear tables
-        revenueProductTableModel.setRowCount(0);
-        revenueCategoryTableModel.setRowCount(0);
+        try {
+            // Clear tables
+            revenueProductTableModel.setRowCount(0);
+            revenueCategoryTableModel.setRowCount(0);
 
-        // Get revenue by product
-        List<Object[]> productRevenue = productController.getRevenueByProduct(startDate, endDate);
+            // Validate dates
+            if (startDate == null || endDate == null) {
+                JOptionPane.showMessageDialog(this, "Ngày không hợp lệ. Vui lòng chọn lại ngày.", "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
 
-        // Check if product revenue data exists
-        if (productRevenue.isEmpty()) {
-            revenueProductTableModel.addRow(new Object[] { "", "Không có dữ liệu", "", "" });
-        } else {
-            // Add data to product table
-            for (Object[] row : productRevenue) {
-                String productId = (String) row[0];
-                String productName = (String) row[1];
-                Double revenue = ((Number) row[2]).doubleValue();
-
-                revenueProductTableModel.addRow(new Object[] {
-                        productId,
-                        productName,
-                        "1", // Số lượng mặc định là 1, hoặc có thể tính từ dữ liệu thực tế
-                        currencyFormatter.format(revenue)
-                });
+                // Show empty message
+                revenueProductTableModel.addRow(new Object[] { "", "Ngày không hợp lệ", "", "" });
+                revenueCategoryTableModel.addRow(new Object[] { "", "Ngày không hợp lệ", "", "", "" });
+                return;
             }
-        }
 
-        // Get revenue by category
-        List<Object[]> categoryRevenue = productController.getRevenueByCategory(startDate, endDate);
+            if (startDate.after(endDate)) {
+                JOptionPane.showMessageDialog(this, "Ngày bắt đầu không thể sau ngày kết thúc!", "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
 
-        // Check if category revenue data exists
-        if (categoryRevenue.isEmpty()) {
-            revenueCategoryTableModel.addRow(new Object[] { "", "Không có dữ liệu", "", "", "" });
-        } else {
-            // Add data to category table
-            for (Object[] row : categoryRevenue) {
-                String categoryId = (String) row[0];
-                String categoryName = (String) row[1];
-                Double revenue = ((Number) row[2]).doubleValue();
-
-                revenueCategoryTableModel.addRow(new Object[] {
-                        categoryId,
-                        categoryName,
-                        "1", // Số lượng sản phẩm mặc định (có thể thay đổi nếu có dữ liệu thực tế)
-                        "1", // Số lượng bán mặc định (có thể thay đổi nếu có dữ liệu thực tế)
-                        currencyFormatter.format(revenue)
-                });
+                // Show empty message
+                revenueProductTableModel.addRow(new Object[] { "", "Ngày không hợp lệ", "", "" });
+                revenueCategoryTableModel.addRow(new Object[] { "", "Ngày không hợp lệ", "", "", "" });
+                return;
             }
+
+            // Get revenue by product
+            List<Object[]> productRevenue = productController.getRevenueByProduct(startDate, endDate);
+
+            // Check if product revenue data exists
+            if (productRevenue == null || productRevenue.isEmpty()) {
+                revenueProductTableModel
+                        .addRow(new Object[] { "", "Không có dữ liệu trong khoảng thời gian này", "", "" });
+            } else {
+                // Add data to product table
+                for (Object[] row : productRevenue) {
+                    String productId = (String) row[0];
+                    String productName = (String) row[1];
+                    Double revenue = ((Number) row[2]).doubleValue();
+
+                    revenueProductTableModel.addRow(new Object[] {
+                            productId,
+                            productName,
+                            "1", // Số lượng mặc định là 1, hoặc có thể tính từ dữ liệu thực tế
+                            currencyFormatter.format(revenue)
+                    });
+                }
+            }
+
+            // Get revenue by category
+            List<Object[]> categoryRevenue = productController.getRevenueByCategory(startDate, endDate);
+
+            // Check if category revenue data exists
+            if (categoryRevenue == null || categoryRevenue.isEmpty()) {
+                revenueCategoryTableModel
+                        .addRow(new Object[] { "", "Không có dữ liệu trong khoảng thời gian này", "", "", "" });
+            } else {
+                // Add data to category table
+                for (Object[] row : categoryRevenue) {
+                    String categoryId = (String) row[0];
+                    String categoryName = (String) row[1];
+                    Double revenue = ((Number) row[2]).doubleValue();
+
+                    revenueCategoryTableModel.addRow(new Object[] {
+                            categoryId,
+                            categoryName,
+                            "1", // Số lượng sản phẩm mặc định (có thể thay đổi nếu có dữ liệu thực tế)
+                            "1", // Số lượng bán mặc định (có thể thay đổi nếu có dữ liệu thực tế)
+                            currencyFormatter.format(revenue)
+                    });
+                }
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Lỗi khi tải dữ liệu thống kê: " + e.getMessage(), "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+
+            // Show error in tables
+            revenueProductTableModel.addRow(new Object[] { "", "Lỗi khi tải dữ liệu", "", "" });
+            revenueCategoryTableModel.addRow(new Object[] { "", "Lỗi khi tải dữ liệu", "", "", "" });
         }
     }
 
@@ -707,8 +820,8 @@ public class ProductStatisticsGUI extends JPanel {
                     receipt.getImportId(),
                     receipt.getSupplierId(),
                     receipt.getEmployeeId(),
-                    receipt.getImportDate(),
-                    currencyFormatter.format(Double.parseDouble(receipt.getTotalAmount())),
+                    formatImportDate(receipt.getImportDate()),
+                    formatAmount(receipt.getTotalAmount()),
                     receipt.getStatus()
             });
         }
@@ -755,8 +868,8 @@ public class ProductStatisticsGUI extends JPanel {
                     receipt.getImportId(),
                     receipt.getSupplierId(),
                     receipt.getEmployeeId(),
-                    receipt.getImportDate(),
-                    currencyFormatter.format(Double.parseDouble(receipt.getTotalAmount())),
+                    formatImportDate(receipt.getImportDate()),
+                    formatAmount(receipt.getTotalAmount()),
                     receipt.getStatus()
             });
         }
@@ -775,50 +888,127 @@ public class ProductStatisticsGUI extends JPanel {
     }
 
     private void filterByDate() {
-        java.util.Date fromDate = fromDatePicker.getDate();
-        java.util.Date toDate = toDatePicker.getDate();
+        try {
+            java.util.Date fromDate = fromDatePicker.getDate();
+            java.util.Date toDate = toDatePicker.getDate();
 
-        if (fromDate.after(toDate)) {
-            JOptionPane.showMessageDialog(this, "Ngày bắt đầu không thể sau ngày kết thúc!", "Lỗi",
-                    JOptionPane.ERROR_MESSAGE);
-            return;
-        }
-
-        // Clear table
-        importReceiptTableModel.setRowCount(0);
-
-        // Get all receipts for filtering
-        List<ImportReceipt> allReceipts = importReceiptController.getAllImportReceipts();
-        List<ImportReceipt> filteredReceipts = new ArrayList<>();
-
-        // Filter by date range
-        for (ImportReceipt receipt : allReceipts) {
-            try {
-                java.util.Date receiptDate = java.sql.Date.valueOf(receipt.getImportDate());
-                if (!receiptDate.before(fromDate) && !receiptDate.after(toDate)) {
-                    filteredReceipts.add(receipt);
-                }
-            } catch (Exception e) {
-                // Handle date parsing errors
+            if (fromDate == null || toDate == null) {
+                JOptionPane.showMessageDialog(this, "Vui lòng chọn ngày hợp lệ", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return;
             }
+
+            if (fromDate.after(toDate)) {
+                JOptionPane.showMessageDialog(this, "Ngày bắt đầu không thể sau ngày kết thúc!", "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+
+            // Format dates for display
+            SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd");
+            String fromDateStr = sdf.format(fromDate);
+            String toDateStr = sdf.format(toDate);
+
+            // Set the end of day for the toDate to include the entire day
+            Calendar calendar = Calendar.getInstance();
+            calendar.setTime(toDate);
+            calendar.set(Calendar.HOUR_OF_DAY, 23);
+            calendar.set(Calendar.MINUTE, 59);
+            calendar.set(Calendar.SECOND, 59);
+            toDate = calendar.getTime();
+
+            // Get import receipts within date range
+            List<ImportReceipt> receipts = importReceiptController.getAllImportReceipts();
+            List<ImportReceipt> filteredReceipts = new ArrayList<>();
+
+            for (ImportReceipt receipt : receipts) {
+                try {
+                    java.util.Date importDate = null;
+                    Object dateObj = receipt.getImportDate();
+
+                    if (dateObj instanceof java.util.Date) {
+                        importDate = (java.util.Date) dateObj;
+                    } else if (dateObj instanceof String) {
+                        importDate = parseDate((String) dateObj);
+                    }
+
+                    if (importDate != null && !importDate.before(fromDate) && !importDate.after(toDate)) {
+                        filteredReceipts.add(receipt);
+                    }
+                } catch (Exception e) {
+                    System.out
+                            .println("Error parsing date for receipt " + receipt.getImportId() + ": " + e.getMessage());
+                    e.printStackTrace();
+                }
+            }
+
+            // Clear table
+            importReceiptTableModel.setRowCount(0);
+
+            // Check if we have any receipts
+            if (filteredReceipts.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "Không có phiếu nhập trong khoảng thời gian từ " + fromDateStr + " đến " + toDateStr,
+                        "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+                importReceiptTableModel
+                        .addRow(new Object[] { "", "Không có dữ liệu trong khoảng thời gian này", "", "", "", "" });
+                return;
+            }
+
+            // Populate table with filtered receipts
+            for (ImportReceipt receipt : filteredReceipts) {
+                importReceiptTableModel.addRow(new Object[] {
+                        receipt.getImportId(),
+                        receipt.getSupplierId(),
+                        receipt.getEmployeeId(),
+                        formatImportDate(receipt.getImportDate()),
+                        formatAmount(receipt.getTotalAmount()),
+                        receipt.getStatus()
+                });
+            }
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Lỗi khi lọc dữ liệu: " + e.getMessage(), "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
+
+            // Show error in table
+            importReceiptTableModel.setRowCount(0);
+            importReceiptTableModel.addRow(new Object[] { "", "Lỗi khi lọc dữ liệu", "", "", "", "" });
+        }
+    }
+
+    private String formatImportDate(Object dateObj) {
+        if (dateObj == null) {
+            return "";
         }
 
-        // Check if data exists
-        if (filteredReceipts.isEmpty()) {
-            importReceiptTableModel.addRow(new Object[] { "", "Không có dữ liệu", "", "", "", "" });
-            return;
+        if (dateObj instanceof java.util.Date) {
+            return new SimpleDateFormat("dd/MM/yyyy").format((java.util.Date) dateObj);
+        } else if (dateObj instanceof String) {
+            try {
+                java.util.Date date = parseDate((String) dateObj);
+                if (date != null) {
+                    return new SimpleDateFormat("dd/MM/yyyy").format(date);
+                }
+            } catch (ParseException e) {
+                // If parsing fails, return original string
+            }
+            return (String) dateObj;
         }
 
-        // Add filtered receipts to table
-        for (ImportReceipt receipt : filteredReceipts) {
-            importReceiptTableModel.addRow(new Object[] {
-                    receipt.getImportId(),
-                    receipt.getSupplierId(),
-                    receipt.getEmployeeId(),
-                    receipt.getImportDate(),
-                    currencyFormatter.format(Double.parseDouble(receipt.getTotalAmount())),
-                    receipt.getStatus()
-            });
+        // For any other type, return string representation
+        return dateObj.toString();
+    }
+
+    private String formatAmount(String amountStr) {
+        try {
+            if (amountStr == null || amountStr.trim().isEmpty()) {
+                return "0 VNĐ";
+            }
+            double amount = Double.parseDouble(amountStr);
+            return currencyFormatter.format(amount);
+        } catch (NumberFormatException e) {
+            System.out.println("Error parsing amount: " + amountStr + ": " + e.getMessage());
+            return amountStr; // Return original string if it can't be parsed
         }
     }
 
@@ -857,14 +1047,20 @@ public class ProductStatisticsGUI extends JPanel {
                 if (amount >= min && amount <= max) {
                     filteredReceipts.add(receipt);
                 }
-            } catch (Exception e) {
-                // Handle parsing errors
+            } catch (NumberFormatException e) {
+                // Skip receipts with invalid amount format
+                System.out.println("Error parsing amount for receipt " + receipt.getImportId() + ": " + e.getMessage());
             }
         }
 
         // Check if data exists
         if (filteredReceipts.isEmpty()) {
-            importReceiptTableModel.addRow(new Object[] { "", "Không có dữ liệu", "", "", "", "" });
+            JOptionPane.showMessageDialog(this,
+                    "Không có phiếu nhập trong khoảng tiền từ " + currencyFormatter.format(min) + " đến "
+                            + currencyFormatter.format(max),
+                    "Thông báo", JOptionPane.INFORMATION_MESSAGE);
+            importReceiptTableModel
+                    .addRow(new Object[] { "", "Không có dữ liệu trong khoảng giá trị này", "", "", "", "" });
             return;
         }
 
@@ -874,8 +1070,8 @@ public class ProductStatisticsGUI extends JPanel {
                     receipt.getImportId(),
                     receipt.getSupplierId(),
                     receipt.getEmployeeId(),
-                    receipt.getImportDate(),
-                    currencyFormatter.format(Double.parseDouble(receipt.getTotalAmount())),
+                    formatImportDate(receipt.getImportDate()),
+                    formatAmount(receipt.getTotalAmount()),
                     receipt.getStatus()
             });
         }
@@ -893,16 +1089,16 @@ public class ProductStatisticsGUI extends JPanel {
         JLabel fromLabel = new JLabel("Từ ngày:");
         fromLabel.setFont(new Font("Arial", Font.PLAIN, 14));
 
-        DatePicker fromDatePicker = new DatePicker(getDefaultStartDate());
-        fromDatePicker.setPreferredSize(new Dimension(120, 30));
-        fromDatePicker.setFont(new Font("Arial", Font.PLAIN, 14));
+        DatePicker revenueDateFrom = new DatePicker(getDefaultStartDate());
+        revenueDateFrom.setPreferredSize(new Dimension(120, 30));
+        revenueDateFrom.setFont(new Font("Arial", Font.PLAIN, 14));
 
         JLabel toLabel = new JLabel("Đến ngày:");
         toLabel.setFont(new Font("Arial", Font.PLAIN, 14));
 
-        DatePicker toDatePicker = new DatePicker(new java.util.Date());
-        toDatePicker.setPreferredSize(new Dimension(120, 30));
-        toDatePicker.setFont(new Font("Arial", Font.PLAIN, 14));
+        DatePicker revenueDateTo = new DatePicker(new java.util.Date());
+        revenueDateTo.setPreferredSize(new Dimension(120, 30));
+        revenueDateTo.setFont(new Font("Arial", Font.PLAIN, 14));
 
         JButton applyButton = new JButton("Áp dụng");
         applyButton.setFont(new Font("Arial", Font.PLAIN, 14));
@@ -911,15 +1107,52 @@ public class ProductStatisticsGUI extends JPanel {
         applyButton.setFocusPainted(false);
         applyButton.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
         applyButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-        applyButton.addActionListener(e -> loadRevenueStatistics(fromDatePicker.getDate(), toDatePicker.getDate()));
+        applyButton.addActionListener(e -> {
+            try {
+                java.util.Date fromDate = revenueDateFrom.getDate();
+                java.util.Date toDate = revenueDateTo.getDate();
+
+                if (fromDate == null || toDate == null) {
+                    JOptionPane.showMessageDialog(panel, "Vui lòng chọn ngày hợp lệ", "Lỗi",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                if (fromDate.after(toDate)) {
+                    JOptionPane.showMessageDialog(panel, "Ngày bắt đầu không thể sau ngày kết thúc!", "Lỗi",
+                            JOptionPane.ERROR_MESSAGE);
+                    return;
+                }
+
+                loadRevenueStatistics(fromDate, toDate);
+            } catch (Exception ex) {
+                JOptionPane.showMessageDialog(panel, "Lỗi khi lọc dữ liệu: " + ex.getMessage(), "Lỗi",
+                        JOptionPane.ERROR_MESSAGE);
+                ex.printStackTrace();
+            }
+        });
+
+        JButton resetButton = new JButton("Làm mới");
+        resetButton.setFont(new Font("Arial", Font.PLAIN, 14));
+        resetButton.setBackground(new Color(108, 117, 125));
+        resetButton.setForeground(Color.WHITE);
+        resetButton.setFocusPainted(false);
+        resetButton.setBorder(BorderFactory.createEmptyBorder(5, 10, 5, 10));
+        resetButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        resetButton.addActionListener(e -> {
+            revenueDateFrom.setDate(getDefaultStartDate());
+            revenueDateTo.setDate(new java.util.Date());
+            loadRevenueStatistics(getDefaultStartDate(), new java.util.Date());
+        });
 
         filterPanel.add(fromLabel);
-        filterPanel.add(fromDatePicker);
+        filterPanel.add(revenueDateFrom);
         filterPanel.add(Box.createHorizontalStrut(10));
         filterPanel.add(toLabel);
-        filterPanel.add(toDatePicker);
+        filterPanel.add(revenueDateTo);
         filterPanel.add(Box.createHorizontalStrut(10));
         filterPanel.add(applyButton);
+        filterPanel.add(resetButton);
 
         // Create tabbed pane for revenue tables
         JTabbedPane revenueTabbedPane = new JTabbedPane();
@@ -1238,5 +1471,37 @@ public class ProductStatisticsGUI extends JPanel {
             JOptionPane.showMessageDialog(this, "Lỗi khi cập nhật: " + ex.getMessage(), "Lỗi",
                     JOptionPane.ERROR_MESSAGE);
         }
+    }
+
+    /**
+     * Helper method to parse dates in multiple formats
+     * 
+     * @param dateString The date string to parse
+     * @return A Date object or null if parsing fails
+     */
+    private java.util.Date parseDate(String dateStr) throws ParseException {
+        if (dateStr == null || dateStr.trim().isEmpty()) {
+            return null;
+        }
+
+        // Try different date formats
+        String[] dateFormats = {
+                "yyyy-MM-dd", // SQL date format
+                "yyyy-MM-dd HH:mm:ss",
+                "dd/MM/yyyy"
+        };
+
+        for (String format : dateFormats) {
+            try {
+                SimpleDateFormat sdf = new SimpleDateFormat(format);
+                sdf.setLenient(false);
+                return sdf.parse(dateStr);
+            } catch (ParseException e) {
+                // Try next format
+            }
+        }
+
+        // If all formats fail, throw exception
+        throw new ParseException("Unable to parse date: " + dateStr, 0);
     }
 }

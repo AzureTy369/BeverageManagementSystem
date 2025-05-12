@@ -281,6 +281,28 @@ public class EmployeeBUS {
         return employeeDAO.isUsernameExists(username);
     }
 
+    /**
+     * Kiểm tra xem số điện thoại đã tồn tại trong hệ thống hay chưa
+     * 
+     * @param phone             Số điện thoại cần kiểm tra
+     * @param excludeEmployeeId ID của nhân viên cần loại trừ khỏi việc kiểm tra
+     *                          (dùng khi cập nhật)
+     * @return true nếu số điện thoại đã tồn tại, false nếu chưa
+     */
+    public boolean isPhoneExists(String phone, String excludeEmployeeId) {
+        return employeeDAO.isPhoneExists(phone, excludeEmployeeId);
+    }
+
+    /**
+     * Kiểm tra xem số điện thoại đã tồn tại trong hệ thống hay chưa
+     * 
+     * @param phone Số điện thoại cần kiểm tra
+     * @return true nếu số điện thoại đã tồn tại, false nếu chưa
+     */
+    public boolean isPhoneExists(String phone) {
+        return employeeDAO.isPhoneExists(phone);
+    }
+
     // Phương thức kiểm tra và sửa lỗi cơ sở dữ liệu
     public boolean repairDatabase() {
         System.out.println("Đang kiểm tra và sửa lỗi cơ sở dữ liệu...");

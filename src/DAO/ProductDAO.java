@@ -278,8 +278,8 @@ public class ProductDAO {
                 "ORDER BY DoanhThu DESC";
 
         try (PreparedStatement pstmt = connection.prepareStatement(query)) {
-            pstmt.setDate(1, new java.sql.Date(startDate.getTime()));
-            pstmt.setDate(2, new java.sql.Date(endDate.getTime()));
+            pstmt.setTimestamp(1, new java.sql.Timestamp(startDate.getTime()));
+            pstmt.setTimestamp(2, new java.sql.Timestamp(endDate.getTime()));
 
             try (ResultSet rs = pstmt.executeQuery()) {
                 while (rs.next()) {
@@ -330,6 +330,7 @@ public class ProductDAO {
             }
         } catch (SQLException e) {
             System.err.println("Error getting revenue by category: " + e.getMessage());
+            e.printStackTrace();
         }
 
         return results;
