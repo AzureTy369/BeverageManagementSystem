@@ -569,7 +569,7 @@ public class ProductGUI extends JPanel {
         gbc.gridx = 1;
         productIdField = new JTextField(20);
         productIdField.setFont(new Font("Arial", Font.PLAIN, 14));
-        productIdField.setEditable(false);
+        productIdField.setEditable(true);
         formPanel.add(productIdField, gbc);
 
         // Tên sản phẩm
@@ -671,7 +671,7 @@ public class ProductGUI extends JPanel {
     private void showAddProductDialog() {
         // Reset form fields
         productIdField.setText(productController.generateNewProductId());
-        productIdField.setEditable(false);
+        productIdField.setEditable(true);
         productNameField.setText("");
         descriptionField.setText("");
         imageField.setText("");
@@ -710,7 +710,7 @@ public class ProductGUI extends JPanel {
 
         // Set data to form
         productIdField.setText(product.getProductId());
-        productIdField.setEditable(false);
+        productIdField.setEditable(true);
         productNameField.setText(product.getProductName());
         descriptionField.setText(product.getDescription());
         imageField.setText(product.getImage());

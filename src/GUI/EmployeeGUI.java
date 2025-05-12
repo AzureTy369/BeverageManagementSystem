@@ -444,7 +444,7 @@ public class EmployeeGUI extends JPanel {
         gbc.gridx = 1;
         idField = new JTextField(20);
         idField.setFont(new Font("Arial", Font.PLAIN, 14));
-        idField.setEditable(false);
+        idField.setEditable(true);
         formPanel.add(idField, gbc);
 
         // Tên đăng nhập
@@ -559,7 +559,7 @@ public class EmployeeGUI extends JPanel {
 
         // Tạo ID mới
         idField.setText(employeeController.generateNewEmployeeId());
-        idField.setEditable(false);
+        idField.setEditable(true);
 
         // Đặt một tag để nhận biết đây là thêm mới
         System.out.println("Hiển thị dialog thêm nhân viên mới với ID: " + idField.getText());
@@ -585,7 +585,7 @@ public class EmployeeGUI extends JPanel {
         if (employee != null) {
             // Hiển thị thông tin nhân viên
             idField.setText(employee.getEmployeeId());
-            idField.setEditable(false);
+            idField.setEditable(true);
             usernameField.setText(employee.getUsername());
             passwordField.setText(employee.getPassword());
             lastNameField.setText(employee.getLastName());

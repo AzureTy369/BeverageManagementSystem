@@ -6,6 +6,8 @@ public class ImportReceiptDetail {
     private int quantity;
     private double price;
     private double total;
+    private String categoryId;
+    private String categoryName;
 
     public ImportReceiptDetail() {
     }
@@ -16,6 +18,17 @@ public class ImportReceiptDetail {
         this.quantity = quantity;
         this.price = price;
         this.total = total;
+    }
+
+    public ImportReceiptDetail(String receiptId, String productId, int quantity, double price, double total,
+            String categoryId, String categoryName) {
+        this.receiptId = receiptId;
+        this.productId = productId;
+        this.quantity = quantity;
+        this.price = price;
+        this.total = total;
+        this.categoryId = categoryId;
+        this.categoryName = categoryName;
     }
 
     public String getReceiptId() {
@@ -58,6 +71,22 @@ public class ImportReceiptDetail {
         this.total = total;
     }
 
+    public String getCategoryId() {
+        return categoryId;
+    }
+
+    public void setCategoryId(String categoryId) {
+        this.categoryId = categoryId;
+    }
+
+    public String getCategoryName() {
+        return categoryName;
+    }
+
+    public void setCategoryName(String categoryName) {
+        this.categoryName = categoryName;
+    }
+
     @Override
     public String toString() {
         return "ImportReceiptDetail{" +
@@ -66,6 +95,8 @@ public class ImportReceiptDetail {
                 ", quantity=" + quantity +
                 ", price=" + price +
                 ", total=" + total +
+                ", categoryId='" + categoryId + '\'' +
+                ", categoryName='" + categoryName + '\'' +
                 '}';
     }
 }

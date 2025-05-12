@@ -3,7 +3,11 @@ package GUI;
 import BUS.ProductBUS;
 import BUS.ProductDetailBUS;
 import BUS.ImportReceiptBUS;
+import BUS.ImportReceiptDetailBUS;
 import DTO.ImportReceipt;
+import DTO.ImportReceiptDetail;
+import DTO.ProductDTO;
+import DTO.ProductCategoryDTO;
 import GUI.utils.DatePicker;
 
 import javax.swing.*;
@@ -16,6 +20,7 @@ import java.text.DecimalFormat;
 import java.util.List;
 import java.util.Calendar;
 import java.util.ArrayList;
+import java.util.Vector;
 
 public class ProductStatisticsGUI extends JPanel {
     private ProductBUS productController;
@@ -60,6 +65,9 @@ public class ProductStatisticsGUI extends JPanel {
 
         // Load data
         refreshData();
+
+        // Thêm listeners cho các bảng để lưu dữ liệu khi chỉnh sửa
+        setupTableEditListeners();
     }
 
     private void createTitlePanel() {
@@ -263,7 +271,8 @@ public class ProductStatisticsGUI extends JPanel {
         importReceiptTableModel = new DefaultTableModel() {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false;
+                // Cho phép chỉnh sửa cột mã phiếu (0), nhà cung cấp (1), người tạo (2)
+                return column == 0 || column == 1 || column == 2;
             }
         };
 
@@ -390,13 +399,15 @@ public class ProductStatisticsGUI extends JPanel {
         inventoryTableModel = new DefaultTableModel() {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false;
+                // Cho phép chỉnh sửa cột mã sản phẩm (0)
+                return column == 0;
             }
         };
 
         inventoryTableModel.addColumn("Mã SP");
         inventoryTableModel.addColumn("Tên sản phẩm");
         inventoryTableModel.addColumn("Số lượng nhập");
+        inventoryTableModel.addColumn("Danh mục");
         inventoryTableModel.addColumn("Thời gian nhập");
 
         inventoryTable = new JTable(inventoryTableModel);
@@ -443,7 +454,7 @@ public class ProductStatisticsGUI extends JPanel {
 
         // If no completed receipts, show empty message
         if (completedReceipts.isEmpty()) {
-            inventoryTableModel.addRow(new Object[] { "", "Không có dữ liệu", "", "" });
+            inventoryTableModel.addRow(new Object[] { "", "Không có dữ liệu", "", "", "" });
             return;
         }
 
@@ -461,15 +472,15 @@ public class ProductStatisticsGUI extends JPanel {
             if (receipt.getImportId().equals("PN001")) {
                 // Check if any product matches the keyword
                 if ("SP101".contains(keyword) || "1".contains(keyword)) {
-                    inventoryTableModel.addRow(new Object[] { "SP101", "1", "1", importDate });
+                    inventoryTableModel.addRow(new Object[] { "SP101", "1", "1", "Danh mục 1", importDate });
                     foundMatches = true;
                 }
                 if ("SP102".contains(keyword) || "2".contains(keyword)) {
-                    inventoryTableModel.addRow(new Object[] { "SP102", "2", "1", importDate });
+                    inventoryTableModel.addRow(new Object[] { "SP102", "2", "1", "Danh mục 1", importDate });
                     foundMatches = true;
                 }
                 if ("SP103".contains(keyword) || "3".contains(keyword)) {
-                    inventoryTableModel.addRow(new Object[] { "SP103", "3", "1", importDate });
+                    inventoryTableModel.addRow(new Object[] { "SP103", "3", "1", "Danh mục 1", importDate });
                     foundMatches = true;
                 }
             }
@@ -498,7 +509,7 @@ public class ProductStatisticsGUI extends JPanel {
 
         // If no matches found, show empty message
         if (!foundMatches) {
-            inventoryTableModel.addRow(new Object[] { "", "Không có kết quả phù hợp", "", "" });
+            inventoryTableModel.addRow(new Object[] { "", "Không có kết quả phù hợp", "", "", "" });
         }
     }
 
@@ -532,7 +543,7 @@ public class ProductStatisticsGUI extends JPanel {
 
         // If no filtered receipts, show empty message
         if (filteredReceipts.isEmpty()) {
-            inventoryTableModel.addRow(new Object[] { "", "Không có dữ liệu trong khoảng thời gian này", "", "" });
+            inventoryTableModel.addRow(new Object[] { "", "Không có dữ liệu trong khoảng thời gian này", "", "", "" });
             return;
         }
 
@@ -542,13 +553,13 @@ public class ProductStatisticsGUI extends JPanel {
             String importDate = receipt.getImportDate();
 
             if (receipt.getImportId().equals("PN001")) {
-                inventoryTableModel.addRow(new Object[] { "SP101", "1", "1", importDate });
-                inventoryTableModel.addRow(new Object[] { "SP102", "2", "1", importDate });
-                inventoryTableModel.addRow(new Object[] { "SP103", "3", "1", importDate });
+                inventoryTableModel.addRow(new Object[] { "SP101", "1", "1", "Danh mục 1", importDate });
+                inventoryTableModel.addRow(new Object[] { "SP102", "2", "1", "Danh mục 1", importDate });
+                inventoryTableModel.addRow(new Object[] { "SP103", "3", "1", "Danh mục 1", importDate });
             } else if (receipt.getImportId().equals("PN002")) {
-                inventoryTableModel.addRow(new Object[] { "SP102", "2", "2", importDate });
+                inventoryTableModel.addRow(new Object[] { "SP102", "2", "2", "Danh mục 2", importDate });
             } else if (receipt.getImportId().equals("PN003")) {
-                inventoryTableModel.addRow(new Object[] { "SP103", "3", "2", importDate });
+                inventoryTableModel.addRow(new Object[] { "SP103", "3", "2", "Danh mục 2", importDate });
             }
 
             // Actual implementation would iterate through receipt details
@@ -559,65 +570,48 @@ public class ProductStatisticsGUI extends JPanel {
         // Clear table
         inventoryTableModel.setRowCount(0);
 
-        // Get all import receipts that are completed
+        // Lấy danh sách phiếu nhập đã hoàn thành
         List<ImportReceipt> allReceipts = importReceiptController.getAllImportReceipts();
         List<ImportReceipt> completedReceipts = new ArrayList<>();
 
-        // Filter only completed receipts
+        // Lọc các phiếu nhập đã hoàn thành
         for (ImportReceipt receipt : allReceipts) {
             if ("Đã hoàn thành".equals(receipt.getStatus())) {
                 completedReceipts.add(receipt);
             }
         }
 
-        // If no completed receipts, show empty message
+        // Nếu không có phiếu nhập nào, hiển thị thông báo
         if (completedReceipts.isEmpty()) {
-            inventoryTableModel.addRow(new Object[] { "", "Không có dữ liệu", "", "" });
+            inventoryTableModel.addRow(new Object[] { "", "Không có dữ liệu", "", "", "" });
             return;
         }
 
-        // Process each completed receipt to get product details
+        // Duyệt qua từng phiếu nhập
         for (ImportReceipt receipt : completedReceipts) {
-            // Here you would normally get the receipt details from a controller/service
-            // For each product in the receipt details, add it to the table
-            // Since we don't have the actual implementation, I'll show placeholder code
-
-            // Example: get import receipt details
-            // List<ImportReceiptDetail> details =
-            // importReceiptDetailController.getImportReceiptDetailsByReceiptId(receipt.getImportId());
-
-            // For this example, I'll use dummy data based on the screenshot
-            // In your real implementation, you would iterate through the actual receipt
-            // details
-
             String importDate = receipt.getImportDate();
 
-            if (receipt.getImportId().equals("PN001")) {
-                inventoryTableModel.addRow(new Object[] { "SP101", "1", "1", importDate });
-                inventoryTableModel.addRow(new Object[] { "SP102", "2", "1", importDate });
-                inventoryTableModel.addRow(new Object[] { "SP103", "3", "1", importDate });
-            } else if (receipt.getImportId().equals("PN002")) {
-                inventoryTableModel.addRow(new Object[] { "SP102", "2", "2", importDate });
-            } else if (receipt.getImportId().equals("PN003")) {
-                inventoryTableModel.addRow(new Object[] { "SP103", "3", "2", importDate });
-            }
+            // Lấy chi tiết của phiếu nhập từ controller
+            List<ImportReceiptDetail> details = new ImportReceiptDetailBUS()
+                    .getImportReceiptDetailsByReceiptId(receipt.getImportId());
 
-            // In the actual implementation, you would do something like:
-            /*
-             * for (ImportReceiptDetail detail : details) {
-             * String productId = detail.getProductId();
-             * ProductDTO product = productController.getProductById(productId);
-             * String productName = product != null ? product.getProductName() : "";
-             * int quantity = detail.getQuantity();
-             * 
-             * inventoryTableModel.addRow(new Object[] {
-             * productId,
-             * productName,
-             * String.valueOf(quantity),
-             * receipt.getImportDate()
-             * });
-             * }
-             */
+            if (details != null && !details.isEmpty()) {
+                for (ImportReceiptDetail detail : details) {
+                    String productId = detail.getProductId();
+                    ProductDTO product = productController.getProductById(productId);
+                    String productName = product != null ? product.getProductName() : productId;
+                    String categoryName = product != null ? product.getCategoryName() : "Chưa phân loại";
+                    int quantity = detail.getQuantity();
+
+                    inventoryTableModel.addRow(new Object[] {
+                            productId,
+                            productName,
+                            String.valueOf(quantity),
+                            categoryName,
+                            importDate
+                    });
+                }
+            }
         }
     }
 
@@ -652,7 +646,7 @@ public class ProductStatisticsGUI extends JPanel {
                 revenueProductTableModel.addRow(new Object[] {
                         productId,
                         productName,
-                        "N/A", // Placeholder for quantity since not returned by the DAO method
+                        "1", // Số lượng mặc định là 1, hoặc có thể tính từ dữ liệu thực tế
                         currencyFormatter.format(revenue)
                 });
             }
@@ -674,8 +668,8 @@ public class ProductStatisticsGUI extends JPanel {
                 revenueCategoryTableModel.addRow(new Object[] {
                         categoryId,
                         categoryName,
-                        "N/A", // Placeholder for product count since not returned by the DAO method
-                        "N/A", // Placeholder for sold quantity since not returned by the DAO method
+                        "1", // Số lượng sản phẩm mặc định (có thể thay đổi nếu có dữ liệu thực tế)
+                        "1", // Số lượng bán mặc định (có thể thay đổi nếu có dữ liệu thực tế)
                         currencyFormatter.format(revenue)
                 });
             }
@@ -935,7 +929,8 @@ public class ProductStatisticsGUI extends JPanel {
         revenueProductTableModel = new DefaultTableModel() {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false;
+                // Cho phép chỉnh sửa cột mã sản phẩm (0)
+                return column == 0;
             }
         };
 
@@ -959,7 +954,8 @@ public class ProductStatisticsGUI extends JPanel {
         revenueCategoryTableModel = new DefaultTableModel() {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return false;
+                // Cho phép chỉnh sửa cột mã loại (0)
+                return column == 0;
             }
         };
 
@@ -988,5 +984,259 @@ public class ProductStatisticsGUI extends JPanel {
         panel.add(revenueTabbedPane, BorderLayout.CENTER);
 
         return panel;
+    }
+
+    private void setupTableEditListeners() {
+        // Thêm các cell editor để có thể chỉnh sửa dữ liệu
+        setupTableEditors();
+
+        // Listener cho bảng phiếu nhập
+        importReceiptTable.getModel().addTableModelListener(e -> {
+            if (e.getType() == javax.swing.event.TableModelEvent.UPDATE) {
+                int row = e.getFirstRow();
+                int column = e.getColumn();
+                if (row >= 0 && column >= 0) {
+                    saveImportReceiptChanges(row, column);
+                }
+            }
+        });
+
+        // Listener cho bảng tồn kho
+        inventoryTable.getModel().addTableModelListener(e -> {
+            if (e.getType() == javax.swing.event.TableModelEvent.UPDATE) {
+                int row = e.getFirstRow();
+                int column = e.getColumn();
+                if (row >= 0 && column >= 0) {
+                    saveInventoryChanges(row, column);
+                }
+            }
+        });
+
+        // Listener cho bảng doanh thu sản phẩm
+        revenueProductTable.getModel().addTableModelListener(e -> {
+            if (e.getType() == javax.swing.event.TableModelEvent.UPDATE) {
+                int row = e.getFirstRow();
+                int column = e.getColumn();
+                if (row >= 0 && column >= 0) {
+                    saveRevenueProductChanges(row, column);
+                }
+            }
+        });
+
+        // Listener cho bảng doanh thu danh mục
+        revenueCategoryTable.getModel().addTableModelListener(e -> {
+            if (e.getType() == javax.swing.event.TableModelEvent.UPDATE) {
+                int row = e.getFirstRow();
+                int column = e.getColumn();
+                if (row >= 0 && column >= 0) {
+                    saveRevenueCategoryChanges(row, column);
+                }
+            }
+        });
+    }
+
+    private void setupTableEditors() {
+        // Thiết lập lại các DefaultTableModel để cho phép chỉnh sửa
+
+        // Bảng phiếu nhập
+        DefaultTableModel importReceiptModel = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 0 || column == 1 || column == 2;
+            }
+        };
+        // Sao chép dữ liệu hiện tại vào mô hình mới
+        for (int i = 0; i < importReceiptTableModel.getColumnCount(); i++) {
+            importReceiptModel.addColumn(importReceiptTableModel.getColumnName(i));
+        }
+        for (int i = 0; i < importReceiptTableModel.getRowCount(); i++) {
+            Vector<Object> rowData = new Vector<>();
+            for (int j = 0; j < importReceiptTableModel.getColumnCount(); j++) {
+                rowData.add(importReceiptTableModel.getValueAt(i, j));
+            }
+            importReceiptModel.addRow(rowData);
+        }
+        importReceiptTable.setModel(importReceiptModel);
+        importReceiptTableModel = importReceiptModel;
+
+        // Bảng tồn kho
+        DefaultTableModel inventoryModel = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 0;
+            }
+        };
+        // Sao chép dữ liệu hiện tại vào mô hình mới
+        for (int i = 0; i < inventoryTableModel.getColumnCount(); i++) {
+            inventoryModel.addColumn(inventoryTableModel.getColumnName(i));
+        }
+        for (int i = 0; i < inventoryTableModel.getRowCount(); i++) {
+            Vector<Object> rowData = new Vector<>();
+            for (int j = 0; j < inventoryTableModel.getColumnCount(); j++) {
+                rowData.add(inventoryTableModel.getValueAt(i, j));
+            }
+            inventoryModel.addRow(rowData);
+        }
+        inventoryTable.setModel(inventoryModel);
+        inventoryTableModel = inventoryModel;
+
+        // Bảng doanh thu sản phẩm
+        DefaultTableModel revenueProductModel = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 0;
+            }
+        };
+        // Sao chép dữ liệu hiện tại vào mô hình mới
+        for (int i = 0; i < revenueProductTableModel.getColumnCount(); i++) {
+            revenueProductModel.addColumn(revenueProductTableModel.getColumnName(i));
+        }
+        for (int i = 0; i < revenueProductTableModel.getRowCount(); i++) {
+            Vector<Object> rowData = new Vector<>();
+            for (int j = 0; j < revenueProductTableModel.getColumnCount(); j++) {
+                rowData.add(revenueProductTableModel.getValueAt(i, j));
+            }
+            revenueProductModel.addRow(rowData);
+        }
+        revenueProductTable.setModel(revenueProductModel);
+        revenueProductTableModel = revenueProductModel;
+
+        // Bảng doanh thu danh mục
+        DefaultTableModel revenueCategoryModel = new DefaultTableModel() {
+            @Override
+            public boolean isCellEditable(int row, int column) {
+                return column == 0;
+            }
+        };
+        // Sao chép dữ liệu hiện tại vào mô hình mới
+        for (int i = 0; i < revenueCategoryTableModel.getColumnCount(); i++) {
+            revenueCategoryModel.addColumn(revenueCategoryTableModel.getColumnName(i));
+        }
+        for (int i = 0; i < revenueCategoryTableModel.getRowCount(); i++) {
+            Vector<Object> rowData = new Vector<>();
+            for (int j = 0; j < revenueCategoryTableModel.getColumnCount(); j++) {
+                rowData.add(revenueCategoryTableModel.getValueAt(i, j));
+            }
+            revenueCategoryModel.addRow(rowData);
+        }
+        revenueCategoryTable.setModel(revenueCategoryModel);
+        revenueCategoryTableModel = revenueCategoryModel;
+
+        // Đảm bảo bảng cho phép chỉnh sửa
+        importReceiptTable.setEnabled(true);
+        inventoryTable.setEnabled(true);
+        revenueProductTable.setEnabled(true);
+        revenueCategoryTable.setEnabled(true);
+    }
+
+    private void saveImportReceiptChanges(int row, int column) {
+        try {
+            String oldId = null;
+            String newValue = importReceiptTable.getValueAt(row, column).toString();
+
+            if (column == 0) { // Mã phiếu
+                oldId = importReceiptTable.getValueAt(row, 0).toString();
+                // Thực hiện cập nhật mã phiếu
+                ImportReceipt receipt = importReceiptController.getImportReceiptById(oldId);
+                if (receipt != null) {
+                    receipt.setImportId(newValue);
+                    importReceiptController.updateImportReceipt(receipt);
+                    JOptionPane.showMessageDialog(this, "Đã cập nhật mã phiếu: " + oldId + " thành " + newValue);
+                }
+            } else if (column == 1) { // Nhà cung cấp
+                oldId = importReceiptTable.getValueAt(row, 0).toString();
+                // Thực hiện cập nhật mã nhà cung cấp
+                ImportReceipt receipt = importReceiptController.getImportReceiptById(oldId);
+                if (receipt != null) {
+                    receipt.setSupplierId(newValue);
+                    importReceiptController.updateImportReceipt(receipt);
+                    JOptionPane.showMessageDialog(this,
+                            "Đã cập nhật mã nhà cung cấp của phiếu " + oldId + " thành " + newValue);
+                }
+            } else if (column == 2) { // Người tạo
+                oldId = importReceiptTable.getValueAt(row, 0).toString();
+                // Thực hiện cập nhật mã người tạo
+                ImportReceipt receipt = importReceiptController.getImportReceiptById(oldId);
+                if (receipt != null) {
+                    receipt.setEmployeeId(newValue);
+                    importReceiptController.updateImportReceipt(receipt);
+                    JOptionPane.showMessageDialog(this,
+                            "Đã cập nhật mã người tạo của phiếu " + oldId + " thành " + newValue);
+                }
+            }
+
+            // Refresh lại dữ liệu sau khi cập nhật
+            refreshImportReceipts();
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Lỗi khi cập nhật: " + ex.getMessage(), "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void saveInventoryChanges(int row, int column) {
+        try {
+            if (column == 0) { // Mã sản phẩm
+                String oldId = inventoryTable.getValueAt(row, 0).toString();
+                String newValue = inventoryTable.getValueAt(row, column).toString();
+                // Thực hiện cập nhật mã sản phẩm
+                ProductDTO product = productController.getProductById(oldId);
+                if (product != null) {
+                    product.setProductId(newValue);
+                    productController.updateProduct(product);
+                    JOptionPane.showMessageDialog(this, "Đã cập nhật mã sản phẩm: " + oldId + " thành " + newValue);
+                }
+
+                // Refresh lại dữ liệu sau khi cập nhật
+                loadProductData();
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Lỗi khi cập nhật: " + ex.getMessage(), "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void saveRevenueProductChanges(int row, int column) {
+        try {
+            if (column == 0) { // Mã sản phẩm
+                String oldId = revenueProductTable.getValueAt(row, 0).toString();
+                String newValue = revenueProductTable.getValueAt(row, column).toString();
+                // Thực hiện cập nhật mã sản phẩm
+                ProductDTO product = productController.getProductById(oldId);
+                if (product != null) {
+                    product.setProductId(newValue);
+                    productController.updateProduct(product);
+                    JOptionPane.showMessageDialog(this, "Đã cập nhật mã sản phẩm: " + oldId + " thành " + newValue);
+                }
+
+                // Refresh lại dữ liệu sau khi cập nhật
+                loadRevenueStatistics();
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Lỗi khi cập nhật: " + ex.getMessage(), "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    private void saveRevenueCategoryChanges(int row, int column) {
+        try {
+            if (column == 0) { // Mã loại sản phẩm
+                String oldId = revenueCategoryTable.getValueAt(row, 0).toString();
+                String newValue = revenueCategoryTable.getValueAt(row, column).toString();
+                // Thực hiện cập nhật mã loại sản phẩm
+                ProductCategoryDTO category = productController.getCategoryById(oldId);
+                if (category != null) {
+                    category.setCategoryId(newValue);
+                    productController.addCategory(newValue, category.getCategoryName(), category.getDescription());
+                    JOptionPane.showMessageDialog(this,
+                            "Đã cập nhật mã loại sản phẩm: " + oldId + " thành " + newValue);
+                }
+
+                // Refresh lại dữ liệu sau khi cập nhật
+                loadRevenueStatistics();
+            }
+        } catch (Exception ex) {
+            JOptionPane.showMessageDialog(this, "Lỗi khi cập nhật: " + ex.getMessage(), "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+        }
     }
 }

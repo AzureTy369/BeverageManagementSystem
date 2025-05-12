@@ -176,8 +176,18 @@ public class ProductDAO {
                 ResultSet rs = stmt.executeQuery(query)) {
             if (rs.next() && rs.getString(1) != null) {
                 String lastId = rs.getString(1);
-                int number = Integer.parseInt(lastId.substring(2)) + 1;
-                newId = "SP" + String.format("%03d", number);
+                if (lastId.startsWith("SP")) {
+                    try {
+                        int number = Integer.parseInt(lastId.substring(2)) + 1;
+                        newId = "SP" + String.format("%03d", number);
+                    } catch (NumberFormatException e) {
+                        System.err.println("Không thể phân tích số từ mã sản phẩm: " + lastId);
+                        System.err.println("Sử dụng mã mặc định: " + newId);
+                    }
+                } else {
+                    System.err.println("Mã sản phẩm không đúng định dạng: " + lastId);
+                    System.err.println("Sử dụng mã mặc định: " + newId);
+                }
             }
         } catch (SQLException e) {
             System.err.println("Error generating new product ID: " + e.getMessage());

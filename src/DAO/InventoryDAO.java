@@ -212,6 +212,9 @@ public class InventoryDAO {
             SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy HH:mm:ss");
             String currentDate = sdf.format(new Date());
 
+            // Đảm bảo rằng mã danh mục của sản phẩm được giữ nguyên khi cập nhật tồn kho
+            // Danh mục sản phẩm được cập nhật riêng thông qua ProductBUS.updateProduct
+
             if (inventory == null) {
                 // Nếu sản phẩm chưa có trong tồn kho, tạo mới
                 inventory = new InventoryDTO(productId, addQuantity, currentDate);

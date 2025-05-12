@@ -19,7 +19,6 @@ import GUI.utils.ButtonHelper;
 
 public class InventoryGUI extends JPanel {
     private ProductBUS productController;
-    
 
     private JTable inventoryTable;
     private DefaultTableModel tableModel;
@@ -361,7 +360,6 @@ public class InventoryGUI extends JPanel {
         return ButtonHelper.createButton(text, color);
     }
 
-
     private void searchInventory() {
         String keyword = inventorySearchField.getText().trim();
         if (keyword.isEmpty()) {
@@ -507,10 +505,16 @@ public class InventoryGUI extends JPanel {
             double importPrice = getImportPrice(product.getProductId(), importReceiptDetailBUS);
             String formattedPrice = String.format("%,.0f", importPrice);
 
+            // Đảm bảo thông tin danh mục được hiển thị đúng
+            String categoryName = product.getCategoryName();
+            if (categoryName == null || categoryName.isEmpty()) {
+                categoryName = "Chưa phân loại";
+            }
+
             Object[] row = {
                     product.getProductId(),
                     product.getProductName(),
-                    product.getCategoryName(),
+                    categoryName,
                     product.getUnit(),
                     formattedPrice,
                     quantity,

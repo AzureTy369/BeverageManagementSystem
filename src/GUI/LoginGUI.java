@@ -44,9 +44,10 @@ public class LoginGUI extends JFrame {
         headerPanel.setPreferredSize(new Dimension(450, 70));
         headerPanel.setBorder(new EmptyBorder(10, 20, 10, 20));
 
-        JLabel lblAppName = new JLabel("BEVERAGE MANAGEMENT SYSTEM");
+        JLabel lblAppName = new JLabel("QUẢN LÝ ĐỒ UỐNG");
         lblAppName.setFont(new Font("Arial", Font.BOLD, 18));
         lblAppName.setForeground(Color.BLACK);
+        lblAppName.setHorizontalAlignment(SwingConstants.CENTER);
         headerPanel.add(lblAppName, BorderLayout.CENTER);
 
         mainPanel.add(headerPanel, BorderLayout.NORTH);

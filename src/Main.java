@@ -1,7 +1,6 @@
 import GUI.LoginGUI;
 import DAO.DBConnection;
 
-
 import javax.swing.*;
 
 public class Main {

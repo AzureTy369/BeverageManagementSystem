@@ -757,6 +757,16 @@ public class SupplierGUI extends JPanel {
                 product.setCategoryId(selectedCategory.getCategoryId());
                 product.setCategoryName(selectedCategory.getCategoryName());
 
+                // Tạo ID tạm thời để đánh dấu sản phẩm mới
+                String tempId = "TEMP" + System.currentTimeMillis();
+                product.setProductId(tempId);
+
+                // Nếu đã có mã nhà cung cấp, gán luôn
+                String supplierId = idField.getText().trim();
+                if (!supplierId.isEmpty()) {
+                    product.setSupplierId(supplierId);
+                }
+
                 if (selectedProducts == null) {
                     selectedProducts = new ArrayList<>();
                 }
@@ -764,6 +774,10 @@ public class SupplierGUI extends JPanel {
 
                 // Cập nhật bảng sản phẩm
                 updateProductTable();
+
+                System.out.println("Đã thêm sản phẩm: " + product.getProductName() +
+                        " với ID tạm thời: " + product.getProductId() +
+                        " - Tổng số sản phẩm hiện tại: " + selectedProducts.size());
 
                 // Đóng dialog
                 dialog.dispose();
@@ -840,14 +854,14 @@ public class SupplierGUI extends JPanel {
         // Clear form
         clearForm();
 
-        // // Clear product list
-        // selectedProducts.clear();
-        // updateProductTable();
+        // Clear product list - đảm bảo danh sách sản phẩm luôn được làm sạch
+        selectedProducts.clear();
+        updateProductTable();
 
         // Generate new ID
         String newId = generateNewSupplierId();
         idField.setText(newId);
-        idField.setEditable(false);
+        idField.setEditable(true);
 
         // Set title and show dialog
         supplierFormDialog.setTitle("Thêm nhà cung cấp mới");
@@ -869,7 +883,7 @@ public class SupplierGUI extends JPanel {
         if (supplier != null) {
             // Set form fields
             idField.setText(supplier.getSupplierId());
-            idField.setEditable(false);
+            idField.setEditable(true);
             nameField.setText(supplier.getSupplierName());
             addressField.setText(supplier.getAddress());
             phoneField.setText(supplier.getPhone());
@@ -949,6 +963,7 @@ public class SupplierGUI extends JPanel {
         // Clear selected products
         selectedProducts.clear();
         updateProductTable();
+        System.out.println("Đã làm trống form và danh sách sản phẩm");
     }
 
     private void addSupplier() {
@@ -966,23 +981,56 @@ public class SupplierGUI extends JPanel {
 
         SupplierDTO supplier = new SupplierDTO(id, name, address, phone, email);
 
+        System.out.println("=== Thông tin thêm nhà cung cấp mới ===");
+        System.out.println("ID: " + id);
+        System.out.println("Tên: " + name);
+        System.out.println("Số sản phẩm ban đầu: " + selectedProducts.size());
+
+        // Đặt danh sách sản phẩm vào đối tượng nhà cung cấp
+        supplier.setProducts(selectedProducts);
+
         // Add supplier without products first to get the supplier ID
         boolean success = supplierController.addSupplier(supplier);
 
         if (success && !selectedProducts.isEmpty()) {
+            // Đếm số sản phẩm thêm thành công
+            int successCount = 0;
+
             // Add products to supplier
             for (SupplierProductDTO product : selectedProducts) {
+                System.out.println("Đang xử lý sản phẩm: " + product.getProductName());
+
+                // Đảm bảo sản phẩm có ID nhà cung cấp
                 product.setSupplierId(id);
-                // Assign proper product ID
+
+                // Tạo ID sản phẩm mới
                 String productId = supplierController.generateNewSupplierProductId(id);
+                System.out.println("Tạo mã sản phẩm mới: " + productId + " cho " + product.getProductName());
                 product.setProductId(productId);
 
-                supplierController.addSupplierProduct(product);
+                // Thêm sản phẩm vào cơ sở dữ liệu
+                boolean addResult = supplierController.addSupplierProduct(product);
+                System.out.println("Kết quả thêm sản phẩm " + product.getProductName() + ": " +
+                        (addResult ? "thành công" : "thất bại"));
+                if (addResult) {
+                    successCount++;
+                }
             }
+
+            System.out
+                    .println("Đã thêm " + successCount + "/" + selectedProducts.size() + " sản phẩm vào nhà cung cấp");
         }
 
         if (success) {
-            JOptionPane.showMessageDialog(this, "Thêm nhà cung cấp thành công!");
+            if (!selectedProducts.isEmpty()) {
+                JOptionPane.showMessageDialog(this,
+                        "Thêm nhà cung cấp thành công!\n" +
+                                "Đã thêm " + (selectedProducts.isEmpty() ? 0 : selectedProducts.size())
+                                + " sản phẩm vào danh sách.");
+            } else {
+                JOptionPane.showMessageDialog(this, "Thêm nhà cung cấp thành công!");
+            }
+
             supplierFormDialog.dispose();
             refreshSupplierData();
         } else {
@@ -991,40 +1039,68 @@ public class SupplierGUI extends JPanel {
     }
 
     private void updateSupplier() {
-        // Validate input
         if (!validateInput()) {
             return;
         }
 
-        // Create supplier object
+        // Get form data
         String id = idField.getText().trim();
         String name = nameField.getText().trim();
         String address = addressField.getText().trim();
         String phone = phoneField.getText().trim();
         String email = emailField.getText().trim();
 
+        // Create supplier object
         SupplierDTO supplier = new SupplierDTO(id, name, address, phone, email);
 
-        // Update supplier with products
+        System.out.println("=== Thông tin cập nhật nhà cung cấp ===");
+        System.out.println("ID: " + id);
+        System.out.println("Tên: " + name);
+        System.out.println("Số sản phẩm hiện tại: " + selectedProducts.size());
+
+        // Đặt danh sách sản phẩm vào đối tượng nhà cung cấp
+        supplier.setProducts(selectedProducts);
+
+        // Update supplier
         boolean success = supplierController.updateSupplier(supplier);
 
         if (success) {
-            // Update products
-            supplierController.deleteAllSupplierProducts(id);
+            // Xóa tất cả sản phẩm cũ của nhà cung cấp
+            boolean deleteResult = supplierController.deleteAllSupplierProducts(id);
+            System.out.println("Đã xóa sản phẩm cũ: " + (deleteResult ? "thành công" : "thất bại"));
 
+            // Đếm số sản phẩm thêm thành công
+            int successCount = 0;
+
+            // Thêm lại các sản phẩm mới
             for (SupplierProductDTO product : selectedProducts) {
+                System.out.println("Đang xử lý sản phẩm: " + product.getProductName());
+
+                // Đảm bảo sản phẩm có ID nhà cung cấp
                 product.setSupplierId(id);
 
-                // If it's a temp ID, generate a new one
-                if (product.getProductId().startsWith("TEMP")) {
+                // Nếu sản phẩm là mới hoặc chưa có ID, cần tạo ID mới
+                if (product.getProductId() == null || product.getProductId().startsWith("TEMP")) {
                     String productId = supplierController.generateNewSupplierProductId(id);
+                    System.out.println("Tạo mã sản phẩm mới: " + productId + " cho " + product.getProductName());
                     product.setProductId(productId);
+                } else {
+                    System.out.println("Sử dụng mã sản phẩm hiện có: " + product.getProductId());
                 }
 
-                supplierController.addSupplierProduct(product);
+                // Thêm sản phẩm vào cơ sở dữ liệu
+                boolean addResult = supplierController.addSupplierProduct(product);
+                System.out.println("Kết quả thêm sản phẩm " + product.getProductName() + ": " +
+                        (addResult ? "thành công" : "thất bại"));
+                if (addResult) {
+                    successCount++;
+                }
             }
 
-            JOptionPane.showMessageDialog(this, "Cập nhật nhà cung cấp thành công!");
+            JOptionPane.showMessageDialog(this,
+                    "Cập nhật nhà cung cấp thành công!\n" +
+                            "Đã thêm " + successCount + "/" + selectedProducts.size() + " sản phẩm vào danh sách.");
+
             supplierFormDialog.dispose();
             refreshSupplierData();
         } else {
@@ -1136,7 +1212,7 @@ public class SupplierGUI extends JPanel {
             detailDialog.setModal(true);
 
             // Tạo supplier detail panel
-            SupplierDetailPanel detailPanel = new SupplierDetailPanel(supplier, supplierController);
+            SupplierDetailPanel detailPanel = new SupplierDetailPanel(supplier);
 
             detailDialog.add(detailPanel);
             detailDialog.setVisible(true);

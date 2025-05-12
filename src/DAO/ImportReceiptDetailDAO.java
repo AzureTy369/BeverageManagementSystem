@@ -221,6 +221,24 @@ public class ImportReceiptDetailDAO {
                     return false;
                 } else {
                     System.out.println("Sản phẩm " + detail.getProductId() + " tồn tại trong CSDL");
+
+                    // Cập nhật thông tin danh mục nếu có
+                    if (detail.getCategoryId() != null && !detail.getCategoryId().isEmpty()) {
+                        System.out.println("Cập nhật danh mục cho sản phẩm " + detail.getProductId() +
+                                " thành: " + detail.getCategoryId() + " - " + detail.getCategoryName());
+
+                        String updateCategorySql = "UPDATE sanpham SET MaLoaiSP = ? WHERE MaSanPham = ?";
+                        PreparedStatement updatePs = conn.prepareStatement(updateCategorySql);
+                        updatePs.setString(1, detail.getCategoryId());
+                        updatePs.setString(2, detail.getProductId());
+
+                        int result = updatePs.executeUpdate();
+                        if (result > 0) {
+                            System.out.println("Đã cập nhật danh mục cho sản phẩm " + detail.getProductId());
+                        } else {
+                            System.out.println("Không thể cập nhật danh mục cho sản phẩm " + detail.getProductId());
+                        }
+                    }
                 }
 
                 // Kiểm tra phiếu nhập có tồn tại không

@@ -499,7 +499,7 @@ public class PositionGUI extends JPanel {
         gbc.gridx = 1;
         idField = new JTextField(20);
         idField.setFont(new Font("Arial", Font.PLAIN, 14));
-        idField.setEditable(false);
+        idField.setEditable(true);
         formPanel.add(idField, gbc);
 
         // Tên chức vụ
@@ -560,7 +560,7 @@ public class PositionGUI extends JPanel {
         // Generate new ID
         String newId = generateNewPositionId();
         idField.setText(newId);
-        idField.setEditable(false); // Không cho phép sửa ID khi thêm mới
+        idField.setEditable(true); // Không cho phép sửa ID khi thêm mới
 
         // Set title and show dialog
         positionFormDialog.setTitle("Thêm chức vụ mới");

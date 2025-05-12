@@ -341,22 +341,39 @@ public class ImportReceiptDetailGUI extends JPanel {
     }
 
     private void createDetailTable() {
-        String[] columns = { "STT", "Mã SP", "Tên SP", "Số lượng", "Đơn giá", "Thành tiền" };
-        tableModel = new DefaultTableModel(columns, 0) {
+        // Tạo model cho bảng chi tiết
+        tableModel = new DefaultTableModel(
+                new Object[] { "STT", "Mã sản phẩm", "Tên sản phẩm", "Số lượng", "Đơn giá", "Thành tiền", "Mã loại",
+                        "Tên loại" },
+                0) {
             @Override
             public boolean isCellEditable(int row, int column) {
-                return isEditable && column == 3; // Chỉ cho phép sửa cột số lượng khi ở chế độ chỉnh sửa
+                return isEditable && column == 3; // Chỉ cho phép sửa cột số lượng nếu đang trong chế độ chỉnh sửa
             }
         };
 
         detailTable = new JTable(tableModel);
+        detailTable.setRowHeight(30);
         detailTable.setFont(new java.awt.Font("Arial", java.awt.Font.PLAIN, 14));
-        detailTable.setRowHeight(25);
-        detailTable.setGridColor(new Color(230, 230, 230));
         detailTable.getTableHeader().setFont(new java.awt.Font("Arial", java.awt.Font.BOLD, 14));
-        detailTable.getTableHeader().setReorderingAllowed(false);
-        detailTable.setBackground(Color.WHITE);
-        detailTable.getTableHeader().setBackground(Color.WHITE);
+        detailTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+
+        // Đặt chiều rộng cột
+        detailTable.getColumnModel().getColumn(0).setPreferredWidth(50); // STT
+        detailTable.getColumnModel().getColumn(1).setPreferredWidth(100); // Mã sản phẩm
+        detailTable.getColumnModel().getColumn(2).setPreferredWidth(200); // Tên sản phẩm
+        detailTable.getColumnModel().getColumn(3).setPreferredWidth(80); // Số lượng
+        detailTable.getColumnModel().getColumn(4).setPreferredWidth(100); // Đơn giá
+        detailTable.getColumnModel().getColumn(5).setPreferredWidth(120); // Thành tiền
+
+        // Ẩn cột mã loại và tên loại (chỉ để lưu thông tin)
+        detailTable.getColumnModel().getColumn(6).setMinWidth(0);
+        detailTable.getColumnModel().getColumn(6).setMaxWidth(0);
+        detailTable.getColumnModel().getColumn(6).setWidth(0);
+
+        detailTable.getColumnModel().getColumn(7).setMinWidth(0);
+        detailTable.getColumnModel().getColumn(7).setMaxWidth(0);
+        detailTable.getColumnModel().getColumn(7).setWidth(0);
 
         if (isEditable) {
             // Thêm cell editor cho cột số lượng
@@ -450,7 +467,9 @@ public class ImportReceiptDetailGUI extends JPanel {
                     productName,
                     detail.getQuantity(),
                     String.format("%,.0f", detail.getPrice()),
-                    String.format("%,.0f", detail.getTotal())
+                    String.format("%,.0f", detail.getTotal()),
+                    detail.getCategoryId(),
+                    detail.getCategoryName()
             });
 
             totalAmount += detail.getTotal();
@@ -541,34 +560,64 @@ public class ImportReceiptDetailGUI extends JPanel {
                 return;
             }
 
-            // Lấy thông tin sản phẩm
+            // Lấy thông tin sản phẩm - giữ nguyên mã sản phẩm gốc
             String productId = productTable.getValueAt(selectedRow, 0).toString();
             String productName = productTable.getValueAt(selectedRow, 1).toString();
             double price = Double.parseDouble(productTable.getValueAt(selectedRow, 3).toString());
             double total = price * quantity;
 
-            // Xác định mã sản phẩm gốc nếu đang dùng mã sản phẩm của nhà cung cấp
-            String baseProductId = productId;
+            // Lấy thông tin danh mục
+            String categoryId = "";
+            String categoryName = "";
 
-            // Nếu mã sản phẩm là của nhà cung cấp (SPNCC), cần lấy mã sản phẩm gốc
-            if (productId.startsWith("SPNCC")) {
-                // Mã sản phẩm gốc là 3 số cuối của mã SPNCC
-                // Ví dụ: SPNCC00101 -> SP001
-                String numberPart = productId.substring(productId.length() - 3);
-                baseProductId = "SP" + numberPart;
-
-                // Kiểm tra xem sản phẩm gốc có tồn tại không
-                ProductDTO baseProduct = productController.getProductById(baseProductId);
-                if (baseProduct == null) {
-                    System.out.println("Cảnh báo: Không tìm thấy sản phẩm gốc có mã " + baseProductId);
-                } else {
-                    System.out.println("Đã tìm thấy sản phẩm gốc: " + baseProduct.getProductName());
+            // Cố gắng lấy thông tin danh mục từ bảng
+            if (productTable.getColumnCount() > 4) {
+                try {
+                    categoryName = productTable.getValueAt(selectedRow, 4) != null
+                            ? productTable.getValueAt(selectedRow, 4).toString()
+                            : "Chưa phân loại";
+                } catch (Exception e) {
+                    System.out.println("Không thể lấy tên danh mục từ bảng: " + e.getMessage());
                 }
             }
 
-            // Kiểm tra sản phẩm đã có trong danh sách chưa
+            // Lấy thông tin danh mục từ supplier product nếu có
+            for (SupplierProductDTO product : supplierProducts) {
+                if (product.getProductId().equals(productId)) {
+                    if (product.getCategoryId() != null && !product.getCategoryId().isEmpty()) {
+                        categoryId = product.getCategoryId();
+                        categoryName = product.getCategoryName() != null ? product.getCategoryName() : categoryName;
+                        System.out.println("Lấy danh mục từ supplier product: " + categoryId + " - " + categoryName);
+                        break;
+                    }
+                }
+            }
+
+            // Nếu không tìm thấy từ supplier product, lấy từ product
+            if (categoryId.isEmpty()) {
+                ProductDTO product = productController.getProductById(productId);
+                if (product != null) {
+                    categoryId = product.getCategoryId();
+                    categoryName = product.getCategoryName();
+                    System.out.println("Lấy danh mục từ product: " + categoryId + " - " + categoryName);
+                }
+            }
+
+            // Nếu vẫn không có, sử dụng giá trị mặc định
+            if (categoryId == null || categoryId.isEmpty()) {
+                categoryId = "LSP001";
+                if (categoryName == null || categoryName.isEmpty() || "Chưa phân loại".equals(categoryName)) {
+                    categoryName = "Chưa phân loại";
+                }
+                System.out.println("Sử dụng danh mục mặc định: " + categoryId + " - " + categoryName);
+            }
+
+            System.out.println("Thêm sản phẩm: " + productId + ", danh mục: " + categoryId + " - " + categoryName);
+
+            // Kiểm tra sản phẩm đã có trong danh sách chưa - sử dụng mã gốc không chuyển
+            // đổi
             for (int i = 0; i < tableModel.getRowCount(); i++) {
-                if (tableModel.getValueAt(i, 1).equals(baseProductId)) {
+                if (tableModel.getValueAt(i, 1).equals(productId)) {
                     // Cập nhật số lượng
                     int oldQuantity = Integer.parseInt(tableModel.getValueAt(i, 3).toString());
                     int newQuantity = oldQuantity + quantity;
@@ -581,23 +630,25 @@ public class ImportReceiptDetailGUI extends JPanel {
                 }
             }
 
-            // Thêm sản phẩm mới
+            // Thêm sản phẩm mới - sử dụng mã gốc không chuyển đổi
             int stt = tableModel.getRowCount() + 1;
             Object[] row = {
                     stt,
-                    baseProductId, // Sử dụng mã sản phẩm gốc
+                    productId, // Sử dụng mã sản phẩm gốc không chuyển đổi
                     productName,
                     quantity,
-                    price,
-                    total
+                    String.format("%,.0f", price),
+                    String.format("%,.0f", total),
+                    categoryId,
+                    categoryName
             };
-
             tableModel.addRow(row);
 
             // Cập nhật tổng tiền
             updateTotalAmount();
-        } catch (NumberFormatException e) {
-            JOptionPane.showMessageDialog(this, "Số lượng phải là số nguyên dương", "Lỗi", JOptionPane.ERROR_MESSAGE);
+        } catch (Exception e) {
+            JOptionPane.showMessageDialog(this, "Lỗi khi thêm sản phẩm: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
@@ -697,48 +748,179 @@ public class ImportReceiptDetailGUI extends JPanel {
             // Tính tổng tiền
             double total = 0;
             for (int i = 0; i < tableModel.getRowCount(); i++) {
-                total += Double.parseDouble(tableModel.getValueAt(i, 5).toString());
+                // Đảm bảo lấy giá trị thành tiền đúng cách
+                Object value = tableModel.getValueAt(i, 5);
+                if (value != null) {
+                    // Xử lý cả trường hợp là String có định dạng và là số Double
+                    if (value instanceof String) {
+                        String valueStr = ((String) value).replaceAll("[^\\d.]", ""); // Loại bỏ các ký tự không phải số
+                        if (!valueStr.isEmpty()) {
+                            try {
+                                total += Double.parseDouble(valueStr);
+                            } catch (NumberFormatException e) {
+                                System.out.println("Lỗi chuyển đổi giá: " + valueStr);
+                            }
+                        }
+                    } else if (value instanceof Number) {
+                        total += ((Number) value).doubleValue();
+                    }
+                }
             }
+
+            // Kiểm tra nếu tổng tiền vượt quá giới hạn
+            if (total > 999999.99) {
+                // Giới hạn tổng tiền và hiển thị cảnh báo
+                total = 999999.99;
+                JOptionPane.showMessageDialog(this,
+                        "Tổng tiền vượt quá giới hạn cho phép và đã được điều chỉnh xuống 999,999.99.\n" +
+                                "Bạn nên chia nhỏ phiếu nhập để tránh lỗi dữ liệu.",
+                        "Cảnh báo", JOptionPane.WARNING_MESSAGE);
+            }
+
+            // Định dạng tổng tiền phù hợp với cột trong cơ sở dữ liệu (DECIMAL(10,2))
+            String formattedTotal = String.format(java.util.Locale.US, "%.2f", total);
+
+            // Hiển thị log để kiểm tra giá trị
+            System.out.println("Tổng tiền trước khi lưu: " + formattedTotal);
 
             // Cập nhật tổng tiền cho phiếu nhập
-            receipt.setTotalAmount(String.format("%.0f", total));
+            receipt.setTotalAmount(formattedTotal);
             boolean success = importReceiptController.updateImportReceipt(receipt);
 
-            if (success) {
-                // Xóa chi tiết cũ
-                importReceiptDetailBUS.deleteAllImportReceiptDetails(receiptId);
-
-                // Thêm chi tiết mới
-                List<ImportReceiptDetail> details = new ArrayList<>();
-                for (int i = 0; i < tableModel.getRowCount(); i++) {
-                    String productId = tableModel.getValueAt(i, 1).toString();
-                    int quantity = Integer.parseInt(tableModel.getValueAt(i, 3).toString());
-                    double price = Double.parseDouble(tableModel.getValueAt(i, 4).toString());
-                    double productTotal = Double.parseDouble(tableModel.getValueAt(i, 5).toString());
-
-                    ImportReceiptDetail detail = new ImportReceiptDetail(receiptId, productId, quantity, price,
-                            productTotal);
-                    details.add(detail);
-                }
-
-                boolean detailsSuccess = importReceiptDetailBUS.insertMultipleImportReceiptDetails(details);
-
-                if (detailsSuccess) {
-                    JOptionPane.showMessageDialog(this, "Cập nhật phiếu nhập thành công", "Thông báo",
-                            JOptionPane.INFORMATION_MESSAGE);
-                    return true;
-                } else {
-                    JOptionPane.showMessageDialog(this,
-                            "Cập nhật phiếu nhập thành công nhưng không thể lưu chi tiết phiếu nhập", "Cảnh báo",
-                            JOptionPane.WARNING_MESSAGE);
-                    return true;
-                }
-            } else {
-                JOptionPane.showMessageDialog(this, "Cập nhật phiếu nhập thất bại", "Lỗi", JOptionPane.ERROR_MESSAGE);
+            if (!success) {
+                JOptionPane.showMessageDialog(this,
+                        "Lỗi khi cập nhật phiếu nhập.\n" +
+                                "Có thể phiếu nhập đã bị xóa hoặc đang ở trạng thái không cho phép sửa.",
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
                 return false;
             }
+
+            // Xóa chi tiết cũ
+            boolean deleteSuccess = importReceiptDetailBUS.deleteAllImportReceiptDetails(receiptId);
+            if (!deleteSuccess) {
+                System.out.println("Cảnh báo: Không thể xóa chi tiết phiếu nhập cũ - mã phiếu: " + receiptId);
+                JOptionPane.showMessageDialog(this,
+                        "Không thể xóa chi tiết phiếu nhập cũ. Vui lòng kiểm tra lại dữ liệu.",
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
+                return false;
+            }
+
+            // Thêm chi tiết mới
+            List<ImportReceiptDetail> details = new ArrayList<>();
+            for (int i = 0; i < tableModel.getRowCount(); i++) {
+                String productId = tableModel.getValueAt(i, 1).toString();
+
+                // Chuyển đổi số lượng
+                int quantity = 0;
+                Object quantityObj = tableModel.getValueAt(i, 3);
+                if (quantityObj instanceof String) {
+                    quantity = Integer.parseInt(((String) quantityObj).replaceAll("[^\\d]", ""));
+                } else {
+                    quantity = ((Number) quantityObj).intValue();
+                }
+
+                // Chuyển đổi đơn giá
+                double price = 0;
+                Object priceObj = tableModel.getValueAt(i, 4);
+                if (priceObj instanceof String) {
+                    String priceStr = ((String) priceObj).replaceAll("[^\\d.]", "");
+                    if (!priceStr.isEmpty()) {
+                        try {
+                            price = Double.parseDouble(priceStr);
+                        } catch (NumberFormatException e) {
+                            System.out.println("Lỗi chuyển đổi giá: " + priceObj);
+                        }
+                    }
+                } else if (priceObj instanceof Number) {
+                    price = ((Number) priceObj).doubleValue();
+                }
+
+                // Giới hạn giá đơn vị nếu cần
+                if (price > 999999.99) {
+                    price = 999999.99;
+                    System.out.println("Đã giới hạn giá sản phẩm " + productId + " xuống 999,999.99");
+                }
+
+                // Chuyển đổi thành tiền
+                double productTotal = price * quantity;
+
+                // Giới hạn thành tiền sản phẩm nếu cần
+                if (productTotal > 999999.99) {
+                    productTotal = 999999.99;
+                    System.out.println("Đã giới hạn thành tiền sản phẩm " + productId + " xuống 999,999.99");
+                }
+
+                // Kiểm tra hợp lệ
+                if (quantity <= 0) {
+                    JOptionPane.showMessageDialog(this, "Số lượng sản phẩm " + productId + " phải lớn hơn 0", "Lỗi",
+                            JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
+                if (price <= 0) {
+                    JOptionPane.showMessageDialog(this, "Giá sản phẩm " + productId + " phải lớn hơn 0", "Lỗi",
+                            JOptionPane.ERROR_MESSAGE);
+                    return false;
+                }
+
+                // Lấy thông tin danh mục
+                String categoryId = "";
+                String categoryName = "";
+
+                // Thử lấy từ bảng nếu có cột danh mục ẩn
+                try {
+                    if (tableModel.getColumnCount() > 6) {
+                        categoryId = tableModel.getValueAt(i, 6) != null ? tableModel.getValueAt(i, 6).toString() : "";
+                        categoryName = tableModel.getValueAt(i, 7) != null ? tableModel.getValueAt(i, 7).toString()
+                                : "";
+                    }
+                } catch (Exception e) {
+                    System.out.println("Không thể đọc thông tin danh mục từ bảng: " + e.getMessage());
+                }
+
+                // Nếu không có từ bảng, lấy từ cơ sở dữ liệu
+                if (categoryId == null || categoryId.isEmpty()) {
+                    ProductDTO product = productController.getProductById(productId);
+                    if (product != null) {
+                        categoryId = product.getCategoryId();
+                        categoryName = product.getCategoryName();
+                    }
+                }
+
+                // Nếu vẫn không có, sử dụng giá trị mặc định
+                if (categoryId == null || categoryId.isEmpty()) {
+                    categoryId = "LSP001";
+                    categoryName = "Chưa phân loại";
+                }
+
+                ImportReceiptDetail detail = new ImportReceiptDetail(receiptId, productId, quantity, price,
+                        productTotal, categoryId, categoryName);
+                details.add(detail);
+
+                System.out.println("Chi tiết phiếu nhập: SP=" + productId + ", SL=" + quantity +
+                        ", Giá=" + price + ", Tổng=" + productTotal +
+                        ", Mã loại=" + categoryId + ", Tên loại=" + categoryName);
+            }
+
+            // Lưu chi tiết phiếu nhập vào cơ sở dữ liệu
+            boolean detailsSuccess = importReceiptDetailBUS.insertMultipleImportReceiptDetails(details);
+
+            if (!detailsSuccess) {
+                JOptionPane.showMessageDialog(this,
+                        "Cập nhật phiếu nhập thành công nhưng không thể lưu chi tiết phiếu nhập.\n" +
+                                "Vui lòng kiểm tra lại phiếu nhập trong danh sách.",
+                        "Cảnh báo",
+                        JOptionPane.WARNING_MESSAGE);
+                // Trả về true vì phiếu nhập đã được cập nhật thành công
+                return true;
+            } else {
+                JOptionPane.showMessageDialog(this, "Cập nhật phiếu nhập thành công", "Thông báo",
+                        JOptionPane.INFORMATION_MESSAGE);
+                return true;
+            }
         } catch (Exception e) {
-            JOptionPane.showMessageDialog(this, "Lỗi: " + e.getMessage(), "Lỗi", JOptionPane.ERROR_MESSAGE);
+            JOptionPane.showMessageDialog(this, "Lỗi khi lưu phiếu nhập: " + e.getMessage(), "Lỗi",
+                    JOptionPane.ERROR_MESSAGE);
+            e.printStackTrace();
             return false;
         }
     }

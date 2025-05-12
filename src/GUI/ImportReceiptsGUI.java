@@ -11,6 +11,8 @@ import BUS.InventoryBUS;
 import DTO.ImportReceiptDetail;
 import GUI.utils.ExcelUtils;
 import GUI.utils.ButtonHelper;
+import BUS.ProductBUS;
+import DTO.ProductDTO;
 
 import javax.swing.*;
 import javax.swing.border.EmptyBorder;
@@ -702,9 +704,16 @@ public class ImportReceiptsGUI extends JPanel {
 
         String currentStatus = receipt.getStatus();
 
-        // Kiểm tra nếu phiếu đã ở trạng thái "Đã hủy" thì không cho phép thay đổi
+        // Kiểm tra nếu phiếu đã ở trạng thái "Đã hủy" hoặc "Đã hoàn thành" thì không
+        // cho phép thay đổi
         if ("Đã hủy".equals(currentStatus)) {
             JOptionPane.showMessageDialog(this, "Không thể cập nhật trạng thái của phiếu nhập đã hủy.",
+                    "Thông báo", JOptionPane.WARNING_MESSAGE);
+            return;
+        }
+
+        if ("Đã hoàn thành".equals(currentStatus)) {
+            JOptionPane.showMessageDialog(this, "Không thể cập nhật trạng thái của phiếu nhập đã hoàn thành.",
                     "Thông báo", JOptionPane.WARNING_MESSAGE);
             return;
         }
@@ -721,6 +730,23 @@ public class ImportReceiptsGUI extends JPanel {
                 currentStatus == null ? statuses[0] : currentStatus);
 
         if (newStatus != null) {
+            // Nếu chọn "Đã hoàn thành", hiển thị cảnh báo về việc không thể thay đổi trạng
+            // thái sau đó
+            if ("Đã hoàn thành".equals(newStatus)) {
+                int confirmComplete = JOptionPane.showConfirmDialog(
+                        this,
+                        "Sau khi chuyển sang trạng thái 'Đã hoàn thành', phiếu nhập sẽ không thể thay đổi trạng thái nữa.\n"
+                                +
+                                "Bạn có chắc chắn muốn tiếp tục?",
+                        "Xác nhận trạng thái cuối cùng",
+                        JOptionPane.YES_NO_OPTION,
+                        JOptionPane.WARNING_MESSAGE);
+
+                if (confirmComplete != JOptionPane.YES_OPTION) {
+                    return;
+                }
+            }
+
             // Nếu chọn "Đã hoàn thành", hỏi người dùng có muốn cập nhật số lượng tồn kho
             // không
             boolean updateInventory = false;
@@ -733,10 +759,8 @@ public class ImportReceiptsGUI extends JPanel {
                 updateInventory = (confirm == JOptionPane.YES_OPTION);
             }
 
-            // Cập nhật cả status và note trong đối tượng receipt
-            receipt.setStatus(newStatus);
-            receipt.setNote(newStatus);
-            boolean success = importReceiptController.updateImportReceipt(receipt);
+            // Cập nhật trạng thái bằng phương thức chuyên dụng
+            boolean success = importReceiptController.updateImportReceiptStatus(receiptId, newStatus);
 
             if (success) {
                 // Cập nhật trạng thái trực tiếp trong bảng
@@ -754,7 +778,9 @@ public class ImportReceiptsGUI extends JPanel {
                 // Làm mới dữ liệu bảng
                 refreshReceiptData();
             } else {
-                JOptionPane.showMessageDialog(this, "Cập nhật trạng thái thất bại!", "Lỗi", JOptionPane.ERROR_MESSAGE);
+                JOptionPane.showMessageDialog(this, "Cập nhật trạng thái thất bại!\n" +
+                        "Có thể phiếu nhập đã ở trạng thái không cho phép thay đổi.",
+                        "Lỗi", JOptionPane.ERROR_MESSAGE);
             }
         }
     }
@@ -767,6 +793,7 @@ public class ImportReceiptsGUI extends JPanel {
     private void updateInventoryForReceipt(String receiptId) {
         ImportReceiptDetailBUS importReceiptDetailBUS = new ImportReceiptDetailBUS();
         InventoryBUS inventoryBUS = new InventoryBUS();
+        ProductBUS productBUS = new ProductBUS();
 
         List<ImportReceiptDetail> receiptDetails = importReceiptDetailBUS
                 .getImportReceiptDetailsByReceiptId(receiptId);
@@ -774,17 +801,70 @@ public class ImportReceiptsGUI extends JPanel {
         StringBuilder resultMessage = new StringBuilder(
                 "Kết quả cập nhật tồn kho:\n");
         boolean allSuccess = true;
+        int updatedCategoryCount = 0;
+
+        System.out.println("\n======== BẮT ĐẦU CẬP NHẬT TỒN KHO VÀ DANH MỤC (GUI) ========");
+        System.out.println("Số lượng sản phẩm cần cập nhật: " + receiptDetails.size());
 
         for (ImportReceiptDetail detail : receiptDetails) {
             String productId = detail.getProductId();
             int quantity = detail.getQuantity();
+            String categoryId = detail.getCategoryId();
+            String categoryName = detail.getCategoryName();
+
+            System.out.println("\n----- Xử lý sản phẩm: " + productId + " -----");
+            System.out.println("Số lượng cần cập nhật: " + quantity);
+            System.out.println("Danh mục từ chi tiết phiếu nhập: " +
+                    (categoryId != null ? categoryId : "N/A") + " - " +
+                    (categoryName != null ? categoryName : "Không xác định"));
+
+            // Kiểm tra và cập nhật danh mục sản phẩm nếu cần
+            if (categoryId != null && !categoryId.isEmpty()) {
+                ProductDTO product = productBUS.getProductById(productId);
+                if (product != null) {
+                    System.out.println("Danh mục hiện tại của sản phẩm: " +
+                            (product.getCategoryId() != null ? product.getCategoryId() : "null") + " - " +
+                            (product.getCategoryName() != null ? product.getCategoryName() : "null"));
+
+                    if (product.getCategoryId() == null || !product.getCategoryId().equals(categoryId)) {
+                        System.out.println("Cập nhật danh mục cho sản phẩm " + productId + " từ [" +
+                                (product.getCategoryId() != null ? product.getCategoryId() : "null") + " - " +
+                                (product.getCategoryName() != null ? product.getCategoryName() : "null") + "] thành [" +
+                                categoryId + " - " + categoryName + "]");
+
+                        product.setCategoryId(categoryId);
+                        product.setCategoryName(categoryName);
+                        boolean categoryUpdateResult = productBUS.updateProduct(product);
+
+                        if (categoryUpdateResult) {
+                            System.out.println("✓ Cập nhật danh mục thành công");
+                            updatedCategoryCount++;
+                        } else {
+                            System.out.println("✗ Cập nhật danh mục thất bại");
+                        }
+                    } else {
+                        System.out.println("→ Không cần cập nhật danh mục (đã giống nhau)");
+                    }
+                } else {
+                    System.out.println("✗ Không tìm thấy sản phẩm có mã " + productId + " để cập nhật danh mục");
+                }
+            } else {
+                System.out.println("✗ Không có thông tin danh mục để cập nhật");
+            }
 
             // Sử dụng tham số fromImportReceipt=false để thực sự cập nhật tồn kho
+            System.out.println("Cập nhật số lượng tồn kho cho sản phẩm " + productId + ": +" + quantity);
             boolean updateResult = inventoryBUS.updateInventoryQuantity(productId, quantity, false);
             if (updateResult) {
+                System.out.println("✓ Cập nhật tồn kho thành công");
                 resultMessage.append("- ").append(productId).append(": +").append(quantity)
-                        .append(" đơn vị\n");
+                        .append(" đơn vị");
+                if (categoryId != null && !categoryId.isEmpty()) {
+                    resultMessage.append(" (Danh mục: ").append(categoryName).append(")");
+                }
+                resultMessage.append("\n");
             } else {
+                System.out.println("✗ Cập nhật tồn kho thất bại");
                 resultMessage.append("- ").append(productId).append(": Lỗi cập nhật\n");
                 allSuccess = false;
             }
@@ -792,9 +872,16 @@ public class ImportReceiptsGUI extends JPanel {
 
         if (allSuccess) {
             resultMessage.append("\nTất cả sản phẩm đã được cập nhật thành công!");
+            if (updatedCategoryCount > 0) {
+                resultMessage.append("\nĐã cập nhật danh mục cho ").append(updatedCategoryCount).append(" sản phẩm.");
+            }
         } else {
             resultMessage.append("\nMột số sản phẩm không thể cập nhật. Vui lòng kiểm tra lại.");
         }
+
+        System.out.println("\n======== KẾT QUẢ CẬP NHẬT TỒN KHO VÀ DANH MỤC (GUI) ========");
+        System.out.println("Cập nhật danh mục cho " + updatedCategoryCount + " sản phẩm");
+        System.out.println("Kết quả xử lý: " + (allSuccess ? "Thành công" : "Thất bại một phần"));
 
         JOptionPane.showMessageDialog(this, resultMessage.toString(), "Kết quả cập nhật tồn kho",
                 JOptionPane.INFORMATION_MESSAGE);
